@@ -1,8 +1,21 @@
-from flask import render_template
+from flask import redirect, render_template, request, url_for
 
 from app.categories.a01_access_control import a01_bp
+from app.core.auth import get_current_user
+from app.core.models import User
+from app.extensions import db
 
 
 @a01_bp.route("/")
 def overview():
     return render_template("a01_access_control/overview.html")
+
+
+@a01_bp.route("/profile")
+@a01_bp.route("/profile/<int:user_id>")
+def idor(user_id=1):
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    profile = db.get_or_404(User, user_id)
+    return render_template("a01_access_control/idor.html", profile=profile, viewer=viewer)

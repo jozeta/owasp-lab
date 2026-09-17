@@ -1,0 +1,34 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+{% set badge_classes = {"Easy": "text-bg-success", "Medium": "text-bg-warning", "Hard": "text-bg-danger"} %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>{{ example_title }}</h1>
+  <span class="badge {{ badge_classes[example_difficulty] }}">{{ example_difficulty }}</span>
+</div>
+
+{% if settings.show_explanations %}
+<section class="card mb-4">
+  <div class="card-header">Explanation</div>
+  <div class="card-body">
+    {% block explanation %}{% endblock %}
+  </div>
+</section>
+{% endif %}
+
+{% if settings.show_exploit_instructions %}
+<section class="card mb-4 border-danger">
+  <div class="card-header bg-danger text-white">Exploitation</div>
+  <div class="card-body">
+    {% block exploitation %}{% endblock %}
+  </div>
+</section>
+{% endif %}
+
+<section class="card">
+  <div class="card-header">Try It</div>
+  <div class="card-body">
+    {% block live_example %}{% endblock %}
+  </div>
+</section>
+{% endblock %}

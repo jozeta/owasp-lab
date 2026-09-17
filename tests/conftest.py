@@ -18,3 +18,20 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture
+def login(app, client):
+    def _login(username):
+        from app.core.models import User
+        from app.core.seed import seed_database
+
+        seed_database(app)
+        with app.app_context():
+            user = User.query.filter_by(username=username).first()
+            user_id = user.id
+        with client.session_transaction() as sess:
+            sess["user_id"] = user_id
+        return user_id
+
+    return _login

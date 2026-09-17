@@ -1,0 +1,47 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "View Another User's Profile (IDOR)" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This profile page is fetched by <code>user_id</code> alone. The server never checks
+  whether the <code>user_id</code> in the URL belongs to the person who is logged in —
+  it just loads whatever row matches and renders it. This is a textbook Insecure Direct
+  Object Reference (IDOR).
+</p>
+<p>Impact here: any logged-in user can read every other user's private notes.</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in as <strong>alice</strong> using the login page.</li>
+  <li>Visit <code>/a01/profile/1</code> — this is your own profile.</li>
+  <li>Change the URL to a different id, e.g. <code>/a01/profile/2</code> or
+      <code>/a01/profile/4</code>, and reload.</li>
+  <li>The page renders that user's private notes even though you never authenticated as them.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<p>Logged in as:
+  {% if viewer %}<strong>{{ viewer.username }}</strong> (id {{ viewer.id }})
+  {% else %}<a href="{{ url_for('core.switch_user', next=request.path) }}">log in</a>{% endif %}
+</p>
+
+{% if profile %}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">{{ profile.display_name }} <span class="text-muted">@{{ profile.username }}</span> (id {{ profile.id }})</h5>
+    <p class="card-text">{{ profile.bio }}</p>
+    <p class="card-text"><strong>Private notes:</strong> {{ profile.private_notes }}</p>
+  </div>
+</div>
+<p class="mt-3">
+  Try another id:
+  {% for uid in range(1, 5) %}
+  <a href="{{ url_for('a01_access_control.idor', user_id=uid) }}" class="btn btn-sm btn-outline-secondary">{{ uid }}</a>
+  {% endfor %}
+</p>
+{% endif %}
+{% endblock %}
