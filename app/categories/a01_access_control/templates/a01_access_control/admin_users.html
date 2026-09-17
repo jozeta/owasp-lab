@@ -1,0 +1,52 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Hidden Admin Panel" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This admin user-management page has no link anywhere in the normal navigation — but the
+  route itself is reachable by anyone with a session, because the code checks "are you
+  logged in?" and stops there. It never checks "are you an <em>admin</em>?" This is a
+  missing function-level access control: security by obscurity, not by enforcement.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in as <strong>alice</strong> (a regular, non-admin user).</li>
+  <li>Navigate directly to <code>/a01/admin/users</code> — there is no link to it, but it loads anyway.</li>
+  <li>Pick any user in the table and submit "admin" as their new role.</li>
+  <li>That user now has admin privileges, granted by a non-admin session.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<p>Logged in as:
+  {% if viewer %}<strong>{{ viewer.username }}</strong> (role: {{ viewer.role }})
+  {% else %}<a href="{{ url_for('core.switch_user', next=request.path) }}">log in</a>{% endif %}
+</p>
+{% if viewer %}
+<table class="table">
+  <thead><tr><th>User</th><th>Role</th><th>Set role</th></tr></thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>{{ user.role }}</td>
+      <td>
+        <form method="post" class="d-flex gap-2">
+          <input type="hidden" name="user_id" value="{{ user.id }}">
+          <select name="role" class="form-select form-select-sm" style="width:auto">
+            <option value="user" {% if user.role == "user" %}selected{% endif %}>user</option>
+            <option value="admin" {% if user.role == "admin" %}selected{% endif %}>admin</option>
+          </select>
+          <button type="submit" class="btn btn-sm btn-outline-danger">Save</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

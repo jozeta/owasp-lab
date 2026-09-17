@@ -19,3 +19,16 @@ def idor(user_id=1):
         return redirect(url_for("core.switch_user", next=request.path))
     profile = db.get_or_404(User, user_id)
     return render_template("a01_access_control/idor.html", profile=profile, viewer=viewer)
+
+
+@a01_bp.route("/admin/users", methods=["GET", "POST"])
+def admin_users():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    if request.method == "POST":
+        target = User.query.get_or_404(int(request.form["user_id"]))
+        target.role = request.form["role"]
+        db.session.commit()
+    users = User.query.order_by(User.username).all()
+    return render_template("a01_access_control/admin_users.html", users=users, viewer=viewer)
