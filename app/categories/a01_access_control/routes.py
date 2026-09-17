@@ -1,4 +1,4 @@
-from flask import redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request, url_for
 
 from app.categories.a01_access_control import a01_bp
 from app.core.auth import get_current_user
@@ -32,3 +32,19 @@ def admin_users():
         db.session.commit()
     users = User.query.order_by(User.username).all()
     return render_template("a01_access_control/admin_users.html", users=users, viewer=viewer)
+
+
+@a01_bp.route("/account/update", methods=["GET", "POST"])
+def account_update():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    if request.method == "POST":
+        for key, value in request.form.items():
+            if key == "id":
+                continue
+            setattr(viewer, key, value)
+        db.session.commit()
+        flash("Account updated.")
+        return redirect(url_for("a01_access_control.account_update"))
+    return render_template("a01_access_control/account_update.html", viewer=viewer)

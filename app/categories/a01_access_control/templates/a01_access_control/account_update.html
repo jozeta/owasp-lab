@@ -1,0 +1,46 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Account Update Role Escalation" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This "update my profile" endpoint accepts a form submission and applies every field
+  in it directly onto your user record — <code>for key, value in request.form.items():
+  setattr(user, key, value)</code>. It was written to save the trouble of listing which
+  fields are editable. The cost: any field on the model, including <code>role</code>,
+  can be set by the client. This class of bug is called mass assignment.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>Log in as <strong>alice</strong>, then submit the form below with an extra field.
+  The browser form only submits the visible fields, so use curl to add
+  <code>role=admin</code> to the request (copy your session cookie from the browser's
+  dev tools first):</p>
+<pre><code class="language-bash">curl -i 'http://localhost:5000/a01/account/update' \
+  -b 'session=&lt;your session cookie&gt;' \
+  -d 'display_name=Alice' \
+  -d 'bio=hiking' \
+  -d 'role=admin'</code></pre>
+<p>Reload this page afterward — your role now reads <strong>admin</strong>.</p>
+{% endblock %}
+
+{% block live_example %}
+{% if viewer %}
+<p>Logged in as <strong>{{ viewer.username }}</strong> — current role: <strong>{{ viewer.role }}</strong></p>
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Display name</label>
+    <input type="text" class="form-control" name="display_name" value="{{ viewer.display_name }}">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Bio</label>
+    <textarea class="form-control" name="bio">{{ viewer.bio }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Save profile</button>
+</form>
+{% else %}
+<a href="{{ url_for('core.switch_user', next=request.path) }}">Log in to try this example</a>
+{% endif %}
+{% endblock %}
