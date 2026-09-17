@@ -25,6 +25,10 @@ def create_app(config_object=None):
 
     register_core(app)
 
+    from app.categories.a01_access_control import a01_bp
+
+    app.register_blueprint(a01_bp)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

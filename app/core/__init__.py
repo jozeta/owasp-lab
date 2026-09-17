@@ -1,4 +1,4 @@
-from flask import request
+from flask import current_app, request
 
 
 def register_core(app):
@@ -24,4 +24,5 @@ def register_core(app):
             categories=CATEGORIES,
             current_user=get_current_user(),
             active_category=active_category,
+            registered_endpoints=set(current_app.view_functions.keys()),
         )
