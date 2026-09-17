@@ -1,0 +1,11 @@
+#sidebar .nav-link {
+  color: #212529;
+}
+
+#sidebar .nav-link.active {
+  color: #0d6efd;
+}
+
+pre code {
+  font-size: 0.85rem;
+}
