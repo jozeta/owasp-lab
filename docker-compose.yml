@@ -23,7 +23,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "127.0.0.1:5000:5000"
+      - "127.0.0.1:5001:5000"
 
 volumes:
   pgdata:
