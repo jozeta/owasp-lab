@@ -21,6 +21,10 @@ def create_app(config_object=None):
 
     db.init_app(app)
 
+    from app.core import register_core
+
+    register_core(app)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

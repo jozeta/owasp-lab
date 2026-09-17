@@ -1,0 +1,18 @@
+{% extends "core/base.html" %}
+{% block title %}OWASP Top 10 Training Lab{% endblock %}
+{% block content %}
+<h1>OWASP Top 10 (2021) Training Lab</h1>
+<p class="lead">Pick a category above to see its overview and graduated, exploitable examples.</p>
+<div class="row row-cols-1 row-cols-md-2 g-3 mt-2">
+  {% for category in categories %}
+  <div class="col">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title">{{ category.short_id }}: {{ category.title }}</h5>
+        <a href="{{ url_for(category.overview_endpoint) }}" class="btn btn-outline-primary btn-sm">Open overview</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

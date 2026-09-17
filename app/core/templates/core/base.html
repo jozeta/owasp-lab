@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}OWASP Top 10 Training Lab{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/highlightjs/github.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/lab.css') }}">
+</head>
+<body>
+  <div id="lab-warning-banner" class="alert alert-danger rounded-0 mb-0 text-center py-2" role="alert">
+    <strong>Intentionally vulnerable lab.</strong>
+    Never expose this application to an untrusted or public network.
+    <button type="button" class="btn-close float-end" aria-label="Dismiss" onclick="dismissLabBanner()"></button>
+  </div>
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{{ url_for('core.home') }}">OWASP Top 10 Lab</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav me-auto">
+          {% for category in categories %}
+          <li class="nav-item">
+            <a class="nav-link {% if active_category and active_category.id == category.id %}active{% endif %}"
+               href="{{ url_for(category.overview_endpoint) }}">{{ category.short_id }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+        <ul class="navbar-nav">
+          {% if current_user %}
+          <li class="nav-item d-flex align-items-center text-light me-3">Logged in as {{ current_user.username }}</li>
+          <li class="nav-item">
+            <form action="{{ url_for('core.logout') }}" method="post" class="d-inline">
+              <button type="submit" class="btn btn-outline-light btn-sm">Log out</button>
+            </form>
+          </li>
+          {% else %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('core.switch_user') }}">Log in</a></li>
+          {% endif %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('core.settings_page') }}">Settings</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      {% if active_category %}
+      <nav class="col-12 col-md-3 col-lg-2 bg-light border-end py-3" id="sidebar">
+        <div class="fw-bold mb-2">{{ active_category.short_id }}: {{ active_category.title }}</div>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == active_category.overview_endpoint %}active fw-bold{% endif %}"
+               href="{{ url_for(active_category.overview_endpoint) }}">Overview</a>
+          </li>
+          {% for example in active_category.examples %}
+          <li class="nav-item d-flex justify-content-between align-items-center">
+            <a class="nav-link {% if request.endpoint == example.endpoint %}active fw-bold{% endif %}"
+               href="{{ url_for(example.endpoint) }}">{{ example.title }}</a>
+            <span class="badge {{ example.difficulty_badge_class() }}">{{ example.difficulty }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </nav>
+      {% endif %}
+
+      <main class="{% if active_category %}col-12 col-md-9 col-lg-10{% else %}col-12{% endif %} py-4">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-info">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='vendor/highlightjs/highlight.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='vendor/mermaid/mermaid.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/lab.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
