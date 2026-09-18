@@ -18,7 +18,7 @@
   The browser form only submits the visible fields, so use curl to add
   <code>role=admin</code> to the request (copy your session cookie from the browser's
   dev tools first):</p>
-<pre><code class="language-bash">curl -i 'http://localhost:5000/a01/account/update' \
+<pre><code class="language-bash">curl -i '{{ request.host_url }}a01/account/update' \
   -b 'session=&lt;your session cookie&gt;' \
   -d 'display_name=Alice' \
   -d 'bio=hiking' \

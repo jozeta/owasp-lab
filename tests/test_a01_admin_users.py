@@ -1,4 +1,5 @@
 from app.core.models import User
+from app.extensions import db
 
 
 def test_admin_users_reachable_by_non_admin(client, login):
@@ -19,7 +20,7 @@ def test_admin_users_role_change_has_no_role_check(app, client, login):
     assert response.status_code == 200
 
     with app.app_context():
-        assert User.query.get(bob_id).role == "admin"
+        assert db.session.get(User, bob_id).role == "admin"
 
 
 def test_admin_users_link_appears_in_overview_once_registered(client):

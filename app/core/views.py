@@ -7,6 +7,10 @@ from app.extensions import db
 core_bp = Blueprint("core", __name__, template_folder="templates")
 
 
+def _is_safe_redirect_target(target):
+    return bool(target) and target.startswith("/") and not target.startswith("//")
+
+
 @core_bp.route("/")
 def home():
     return render_template("core/home.html")
@@ -16,7 +20,10 @@ def home():
 def switch_user():
     if request.method == "POST":
         session["user_id"] = int(request.form["user_id"])
-        return redirect(request.args.get("next") or url_for("core.home"))
+        next_url = request.args.get("next")
+        if _is_safe_redirect_target(next_url):
+            return redirect(next_url)
+        return redirect(url_for("core.home"))
     users = User.query.order_by(User.username).all()
     return render_template("core/switch_user.html", users=users)
 

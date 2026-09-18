@@ -27,7 +27,7 @@ def admin_users():
     if viewer is None:
         return redirect(url_for("core.switch_user", next=request.path))
     if request.method == "POST":
-        target = User.query.get_or_404(int(request.form["user_id"]))
+        target = db.get_or_404(User, int(request.form["user_id"]))
         target.role = request.form["role"]
         db.session.commit()
     users = User.query.order_by(User.username).all()
