@@ -151,3 +151,34 @@ def test_about_page_loads(client):
     assert "WebGoat" in body
     assert "PostgreSQL" in body
     assert "127.0.0.1" in body
+
+
+def test_home_page_has_hamburger_dropdown_menu(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert 'data-bs-toggle="dropdown"' in body
+    assert 'class="dropdown-menu dropdown-menu-end"' in body
+
+
+def test_home_page_dropdown_contains_theme_tools_about_settings(client):
+    response = client.get("/")
+    body = response.data.decode()
+    assert 'id="theme-toggle"' in body
+    assert 'class="dropdown-item" href="{}"'.format("/tools") in body
+    assert 'class="dropdown-item" href="{}"'.format("/about") in body
+    assert 'class="dropdown-item" href="{}"'.format("/settings") in body
+
+
+def test_logged_out_home_page_has_no_logout_dropdown_item(client):
+    response = client.get("/")
+    body = response.data.decode()
+    assert "Log out" not in body
+    assert 'href="/switch-user"' in body
+
+
+def test_logged_in_home_page_has_logout_as_dropdown_item(app, client, login):
+    login("alice")
+    response = client.get("/")
+    body = response.data.decode()
+    assert 'class="dropdown-item">Log out</button>' in body

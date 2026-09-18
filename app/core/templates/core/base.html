@@ -56,20 +56,33 @@
         <ul class="navbar-nav">
           {% if current_user %}
           <li class="nav-item d-flex align-items-center text-light me-3">Logged in as {{ current_user.username }}</li>
-          <li class="nav-item">
-            <form action="{{ url_for('core.logout') }}" method="post" class="d-inline">
-              <button type="submit" class="btn btn-outline-light btn-sm">Log out</button>
-            </form>
-          </li>
           {% else %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('core.switch_user') }}">Log in</a></li>
           {% endif %}
-          <li class="nav-item">
-            <button type="button" id="theme-toggle" class="btn btn-outline-light btn-sm" onclick="toggleLabTheme()">🌓 Theme</button>
+          <li class="nav-item dropdown">
+            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu">
+              ☰
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <button type="button" id="theme-toggle" class="dropdown-item" onclick="toggleLabTheme()">
+                  🌗 Toggle theme
+                </button>
+              </li>
+              <li><a class="dropdown-item" href="{{ url_for('core.tools_page') }}">Tools</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('core.about_page') }}">About</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('core.settings_page') }}">Settings</a></li>
+              {% if current_user %}
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form action="{{ url_for('core.logout') }}" method="post">
+                  <button type="submit" class="dropdown-item">Log out</button>
+                </form>
+              </li>
+              {% endif %}
+            </ul>
           </li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('core.tools_page') }}">Tools</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('core.about_page') }}">About</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('core.settings_page') }}">Settings</a></li>
         </ul>
       </div>
     </div>
