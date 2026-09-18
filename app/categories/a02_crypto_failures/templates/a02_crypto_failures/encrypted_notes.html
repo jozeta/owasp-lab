@@ -15,6 +15,17 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Scan the ciphertext column below for any two identical values before decrypting
+  anything. Finding a repeat is the detection step: with a properly randomized cipher
+  mode (e.g. AES-GCM or AES-CBC with a fresh IV per encryption), even identical plaintexts
+  produce completely different ciphertexts every time — so a repeat here proves the
+  encryption is deterministic per-block, which is the ECB-mode weakness, before you've
+  decrypted a single byte.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Compare the ciphertext values in the table below — two rows are byte-for-byte
@@ -23,6 +34,32 @@
   <li>Since the key is hardcoded and disclosed above, paste any ciphertext (hex) into the
       decrypt tool below to recover the plaintext directly.</li>
 </ol>
+<p>
+  ECB-mode pattern leakage is a textbook cryptography failure precisely because it's
+  visible without ever recovering the key — the classic illustration is encrypting an
+  image in ECB mode and still being able to make out its outline in the ciphertext, purely
+  from repeated blocks. Combined with a hardcoded key (recoverable from any source leak,
+  decompiled binary, or misconfigured backup), this pattern has been the root cause of
+  real incidents where "encrypted" data turned out to be decryptable by anyone who ever
+  had access to the application's source.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}AES_KEY = b"0123456789abcdef"  # hardcoded
+
+def encrypt_ecb(plaintext):
+    cipher = AES.new(AES_KEY, AES.MODE_ECB)
+    padded = pad(plaintext.encode(), AES.block_size)
+    return cipher.encrypt(padded).hex()
+{% endblock %}
+
+{% block secure_code %}import os
+
+def encrypt_gcm(plaintext, key):  # key from a secrets manager, never hardcoded
+    nonce = os.urandom(12)  # fresh, random per encryption
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode())
+    return nonce + ciphertext + tag
 {% endblock %}
 
 {% block live_example %}

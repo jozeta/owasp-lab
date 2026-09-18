@@ -38,3 +38,10 @@ def test_credential_dump_still_works_with_teaching_text_hidden(app, client):
     assert b"admin" in response.data
     assert b"Explanation" not in response.data
     assert b"Exploitation" not in response.data
+
+
+def test_credential_dump_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a02/credential-dump")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"generate_password_hash" in response.data

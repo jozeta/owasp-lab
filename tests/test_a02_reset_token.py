@@ -87,3 +87,10 @@ def test_reset_token_attack_chain_still_works_with_teaching_text_hidden(app, cli
     assert b"takeover confirmed" in login_response.data
     assert b"Explanation" not in login_response.data
     assert b"Exploitation" not in login_response.data
+
+
+def test_forgot_password_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a02/forgot-password")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"secrets.token_urlsafe" in response.data

@@ -54,3 +54,10 @@ def test_encrypted_notes_still_works_with_teaching_text_hidden(app, client):
     post_response = client.post("/a02/encrypted-notes", data={"ciphertext_hex": ciphertext_hex})
     assert post_response.status_code == 200
     assert b"Rex" in post_response.data
+
+
+def test_encrypted_notes_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a02/encrypted-notes")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"MODE_GCM" in response.data
