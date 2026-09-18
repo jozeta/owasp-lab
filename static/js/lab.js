@@ -12,6 +12,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (window.hljs) {
     hljs.highlightAll();
+    if (window.hljs.initLineNumbersOnLoad) {
+      hljs.initLineNumbersOnLoad();
+    }
   }
   if (window.mermaid) {
     mermaid.initialize({ startOnLoad: true, theme: "default" });
