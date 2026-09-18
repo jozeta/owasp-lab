@@ -5,6 +5,7 @@ a02_bp = Blueprint(
 )
 
 from app.categories.a02_crypto_failures import routes  # noqa: E402,F401
+from app.categories.a02_crypto_failures.seed import seed_legacy_credentials  # noqa: E402
 from app.core.nav import CATEGORIES, CategoryNav, ExampleNav  # noqa: E402
 
 CATEGORIES.append(
@@ -34,5 +35,6 @@ CATEGORIES.append(
                 endpoint="a02_crypto_failures.forgot_password",
             ),
         ],
+        seed_fn=seed_legacy_credentials,
     )
 )
