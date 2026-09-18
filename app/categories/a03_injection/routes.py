@@ -53,3 +53,15 @@ def greet():
     # VULNERABLE: HTML built by hand, then rendered with |safe -- no escaping at all
     greeting_html = f"<p>Hello, {name}! Welcome back.</p>"
     return render_template("a03_injection/greet.html", greeting_html=greeting_html, name=name)
+
+
+@a03_bp.route("/check-username")
+def check_username():
+    username = request.args.get("username", "")
+    exists = None
+    if username:
+        # VULNERABLE: raw string-concatenated SQL, no parameterization
+        query = f"SELECT COUNT(*) FROM injection_accounts WHERE username = '{username}'"
+        count = db.session.execute(text(query)).scalar()
+        exists = bool(count)
+    return render_template("a03_injection/check_username.html", username=username, exists=exists)

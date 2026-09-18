@@ -1,0 +1,50 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Blind Time-Based SQL Injection" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "is this username taken?" check only ever tells you true or false — it never
+  echoes back any data, so a classic UNION-based attack (like the search example) doesn't
+  apply here. But the query is still built with raw string concatenation:
+  <code>SELECT COUNT(*) FROM injection_accounts WHERE username = 'INPUT'</code>. When
+  there's no data to read directly, an attacker can still extract information one bit at
+  a time by injecting conditions that make the database pause — and measuring how long
+  the response takes.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Enter a username that definitely doesn't exist, e.g. <code>nobody</code>, and note
+      the response is fast and reports "available."</li>
+  <li>Now enter:
+      <code>nobody' OR (SELECT 1 FROM pg_sleep(5))=1-- </code></li>
+  <li>The page takes about 5 seconds to respond — even though the result is the same
+      "available" you already know. That delay is entirely attacker-controlled: swap
+      <code>5</code> for a boolean sub-query (e.g. testing one character of another
+      user's password at a time) and the response time itself becomes the leaked signal,
+      one true/false bit per request.</li>
+</ol>
+<p class="text-muted">
+  Note: <code>pg_sleep</code> is PostgreSQL-specific — this timing behavior only shows up
+  when running against the real Postgres-backed app under <code>docker compose up</code>,
+  not in the lab's fast automated tests (which run against SQLite for speed).
+</p>
+{% endblock %}
+
+{% block live_example %}
+<form method="get">
+  <div class="input-group mb-3">
+    <input type="text" class="form-control" name="username" value="{{ username }}" placeholder="Check if a username is taken">
+    <button type="submit" class="btn btn-primary">Check</button>
+  </div>
+</form>
+{% if exists is not none %}
+<p>
+  {% if exists %}That username is <strong>already taken</strong>.
+  {% else %}That username is <strong>available</strong>.{% endif %}
+</p>
+{% endif %}
+{% endblock %}
