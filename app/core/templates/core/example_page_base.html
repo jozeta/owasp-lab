@@ -17,6 +17,13 @@
 {% endif %}
 
 {% if settings.show_exploit_instructions %}
+<section class="card mb-4">
+  <div class="card-header">Detect</div>
+  <div class="card-body">
+    {% block detect %}{% endblock %}
+  </div>
+</section>
+
 <section class="card mb-4 border-danger">
   <div class="card-header bg-danger text-white">Exploitation</div>
   <div class="card-body">
@@ -24,6 +31,22 @@
   </div>
 </section>
 {% endif %}
+
+<section class="card mb-4">
+  <div class="card-header">Vulnerable vs. Secure</div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6>Vulnerable</h6>
+        <pre><code class="language-{{ code_language|default('python') }}">{% block vulnerable_code %}{% endblock %}</code></pre>
+      </div>
+      <div class="col-md-6">
+        <h6>Secure</h6>
+        <pre><code class="language-{{ code_language|default('python') }}">{% block secure_code %}{% endblock %}</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="card">
   <div class="card-header">Try It</div>
