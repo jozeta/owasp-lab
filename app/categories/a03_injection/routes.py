@@ -1,11 +1,15 @@
+import os
 import subprocess
 
 from flask import redirect, render_template, request, session, url_for
+from lxml import etree
 from sqlalchemy import text
 
 from app.categories.a03_injection import a03_bp
 from app.categories.a03_injection.models import Comment, InjectionAccount
 from app.extensions import db
+
+XXE_SECRET_PATH = os.path.join(os.path.dirname(__file__), "xxe_secret.txt")
 
 
 @a03_bp.route("/")
@@ -100,3 +104,23 @@ def comments():
         return redirect(url_for("a03_injection.comments"))
     all_comments = Comment.query.order_by(Comment.id.desc()).all()
     return render_template("a03_injection/comments.html", comments=all_comments)
+
+
+@a03_bp.route("/xml-import", methods=["GET", "POST"])
+def xml_import():
+    xml_input = ""
+    result = None
+    error = None
+    if request.method == "POST":
+        xml_input = request.form.get("xml_input", "")
+        try:
+            # VULNERABLE: resolve_entities=True allows external entities to be expanded
+            parser = etree.XMLParser(resolve_entities=True)
+            tree = etree.fromstring(xml_input.encode(), parser=parser)
+            name_el = tree.find("name")
+            result = name_el.text if name_el is not None else "(no <name> element found)"
+        except Exception as e:
+            error = str(e)
+    return render_template(
+        "a03_injection/xml_import.html", xml_input=xml_input, result=result, error=error
+    )

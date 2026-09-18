@@ -1,0 +1,78 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "XXE File Disclosure via Contact Import" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "import a contact" feature accepts raw XML and parses it with
+  <code>lxml.etree.XMLParser(resolve_entities=True)</code>. Setting
+  <code>resolve_entities=True</code> tells the parser to actually expand any
+  external entities declared in a <code>&lt;!DOCTYPE&gt;</code> block —
+  including ones that read arbitrary files from the server's filesystem and
+  substitute their contents directly into the parsed document.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit a <code>&lt;!DOCTYPE&gt;</code> declaring a harmless internal
+  entity that just repeats a string:
+</p>
+<pre><code class="language-xml">&lt;!DOCTYPE contact [&lt;!ENTITY test "probe-ok"&gt;]&gt;
+&lt;contact&gt;&lt;name&gt;&amp;test;&lt;/name&gt;&lt;/contact&gt;</code></pre>
+<p>
+  If the response shows <code>probe-ok</code> instead of an error, you've
+  confirmed the parser expands entities at all — external file access is the
+  next, more dangerous step, not something you need to try yet to prove the
+  bug exists.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Submit the following XML:
+      <pre><code class="language-xml">&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE contact [
+  &lt;!ENTITY xxe SYSTEM "file:///app/app/categories/a03_injection/xxe_secret.txt"&gt;
+]&gt;
+&lt;contact&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;/contact&gt;</code></pre>
+  </li>
+  <li>The response displays the contents of a file on the server's
+      filesystem that this "contact name" field was never meant to
+      expose.</li>
+</ol>
+<p>
+  XXE file disclosure has been used in the wild to read application source
+  code, configuration files containing database credentials, and SSH
+  private keys directly off application servers — often through features
+  that look as innocuous as "import a spreadsheet" or "upload an XML
+  config." Any endpoint that parses attacker-supplied XML with entity
+  resolution enabled is a potential full-filesystem-read vulnerability.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}parser = etree.XMLParser(resolve_entities=True)
+tree = etree.fromstring(xml_input.encode(), parser=parser)
+{% endblock %}
+
+{% block secure_code %}parser = etree.XMLParser()  # resolve_entities defaults to False
+tree = etree.fromstring(xml_input.encode(), parser=parser)
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Contact XML</label>
+    <textarea class="form-control" name="xml_input" rows="4"
+              placeholder="&lt;contact&gt;&lt;name&gt;Alice&lt;/name&gt;&lt;/contact&gt;">{{ xml_input }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Import contact</button>
+</form>
+{% if result %}
+<p class="mt-3">Imported name: <strong>{{ result }}</strong></p>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

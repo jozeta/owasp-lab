@@ -59,6 +59,13 @@ CATEGORIES.append(
                 difficulty="Hard",
                 endpoint="a03_injection.host_lookup",
             ),
+            ExampleNav(
+                id="xml-import",
+                title="XXE File Disclosure via Contact Import",
+                group="XML External Entity Injection (XXE)",
+                difficulty="Easy",
+                endpoint="a03_injection.xml_import",
+            ),
         ],
         seed_fn=seed_injection_data,
     )
