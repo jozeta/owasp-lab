@@ -4,3 +4,4 @@ psycopg[binary]==3.2.4
 gunicorn==22.0.0
 python-dotenv==1.0.1
 pytest==8.2.2
+pycryptodome==3.20.0

@@ -1,0 +1,30 @@
+from app.core.seed import seed_database
+
+
+def test_encrypted_notes_shows_identical_ciphertext_for_shared_answer(app, client):
+    seed_database(app)
+
+    response = client.get("/a02/encrypted-notes")
+    assert response.status_code == 200
+
+    from app.categories.a02_crypto_failures.crypto import encrypt_ecb
+
+    shared_ciphertext = encrypt_ecb("Rex")
+    assert response.data.count(shared_ciphertext.encode()) == 2
+
+
+def test_encrypted_notes_decrypt_tool_recovers_plaintext(client):
+    from app.categories.a02_crypto_failures.crypto import encrypt_ecb
+
+    ciphertext_hex = encrypt_ecb("Rex")
+
+    response = client.post("/a02/encrypted-notes", data={"ciphertext_hex": ciphertext_hex})
+    assert response.status_code == 200
+    assert b"Rex" in response.data
+
+
+def test_encrypted_notes_link_appears_in_overview_once_registered(client):
+    response = client.get("/a02/")
+    assert response.status_code == 200
+    assert b"Weak Encryption (ECB Mode)" in response.data
+    assert b'href="/a02/encrypted-notes"' in response.data

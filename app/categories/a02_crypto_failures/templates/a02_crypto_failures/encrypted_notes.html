@@ -1,0 +1,57 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Weak Encryption (ECB Mode)" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A02{% endblock %}
+
+{% block explanation %}
+<p>
+  Each user's security-question answer below is "encrypted" with AES in ECB mode using a
+  key hardcoded directly in the application's source code: <code>b"0123456789abcdef"</code>.
+  ECB mode encrypts each 16-byte block independently, so identical plaintext blocks always
+  produce identical ciphertext blocks — patterns in the plaintext leak straight through to
+  the ciphertext. And because the key is hardcoded, anyone with access to the source code
+  (a leaked repo, a decompiled binary, a misconfigured backup) can decrypt everything
+  instantly, no cryptanalysis required.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Compare the ciphertext values in the table below — two rows are byte-for-byte
+      identical, meaning those two users gave the exact same answer, without decrypting
+      anything at all.</li>
+  <li>Since the key is hardcoded and disclosed above, paste any ciphertext (hex) into the
+      decrypt tool below to recover the plaintext directly.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<table class="table">
+  <thead><tr><th>Username</th><th>Encrypted answer (hex)</th></tr></thead>
+  <tbody>
+    {% for username, ciphertext_hex in encrypted_rows %}
+    <tr>
+      <td>{{ username }}</td>
+      <td><code>{{ ciphertext_hex }}</code></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<hr>
+
+<h6>Decrypt tool</h6>
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Ciphertext (hex)</label>
+    <input type="text" class="form-control" name="ciphertext_hex" placeholder="paste a hex value from the table above">
+  </div>
+  <button type="submit" class="btn btn-primary">Decrypt</button>
+</form>
+{% if decrypted_result %}
+<p class="mt-3">Decrypted plaintext: <strong>{{ decrypted_result }}</strong></p>
+{% endif %}
+{% if decrypt_error %}
+<p class="mt-3 text-danger">{{ decrypt_error }}</p>
+{% endif %}
+{% endblock %}
