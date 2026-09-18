@@ -51,7 +51,11 @@ def test_category_nav_defaults_to_empty_blurb():
     assert category.blurb == ""
 
 
-def test_every_registered_category_has_a_nonempty_blurb():
+def test_every_registered_category_has_a_nonempty_blurb(app):
+    # `app` fixture forces create_app() to run, which is what actually
+    # imports every category blueprint and populates CATEGORIES -- without
+    # it this test could vacuously pass on an empty list depending on
+    # pytest's collection order.
     from app.core.nav import CATEGORIES
 
     for category in CATEGORIES:
