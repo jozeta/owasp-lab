@@ -5,6 +5,7 @@ a03_bp = Blueprint(
 )
 
 from app.categories.a03_injection import routes  # noqa: E402,F401
+from app.categories.a03_injection.seed import seed_injection_data  # noqa: E402
 from app.core.nav import CATEGORIES, CategoryNav, ExampleNav  # noqa: E402
 
 CATEGORIES.append(
@@ -52,5 +53,6 @@ CATEGORIES.append(
                 endpoint="a03_injection.comments",
             ),
         ],
+        seed_fn=seed_injection_data,
     )
 )
