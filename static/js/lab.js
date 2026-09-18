@@ -16,6 +16,12 @@ document.addEventListener("DOMContentLoaded", function () {
   if (window.mermaid) {
     mermaid.initialize({ startOnLoad: true, theme: "default" });
   }
+
+  if (window.bootstrap) {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+      new bootstrap.Tooltip(el);
+    });
+  }
 });
 
 function dismissLabBanner() {

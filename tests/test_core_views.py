@@ -113,3 +113,11 @@ def test_force_reset_does_not_require_template_rendering(client, monkeypatch):
 
     response = client.get("/force-reset")
     assert response.status_code == 200
+
+
+def test_home_page_category_links_include_tooltip_attributes(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert 'data-bs-toggle="tooltip"' in body
+    assert "Access control that is not enforced on the server" in body
