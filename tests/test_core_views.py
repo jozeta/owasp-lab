@@ -61,3 +61,12 @@ def test_switch_user_allows_safe_relative_redirect_target(app, client):
     )
     assert response.status_code == 302
     assert response.headers["Location"] == "/a01/profile/2"
+
+
+def test_home_page_lists_categories_sorted_by_short_id(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.data.decode()
+    a01_index = body.index("A01")
+    a02_index = body.index("A02")
+    assert a01_index < a02_index

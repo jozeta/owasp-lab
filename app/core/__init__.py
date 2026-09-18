@@ -21,7 +21,7 @@ def register_core(app):
         )
         return dict(
             settings=Settings.get(),
-            categories=CATEGORIES,
+            categories=sorted(CATEGORIES, key=lambda c: c.short_id),
             current_user=get_current_user(),
             active_category=active_category,
             registered_endpoints=set(current_app.view_functions.keys()),
