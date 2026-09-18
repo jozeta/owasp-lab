@@ -12,6 +12,15 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Apply the <code>WELCOME10</code> code once and note the total. Apply it a second time.
+  If the total drops again instead of the app rejecting the code as "already used," that's
+  the whole detection step — no need to go further to confirm the missing usage check
+  exists.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Enter the coupon code <code>WELCOME10</code> and submit it.</li>
@@ -19,6 +28,25 @@
   <li>Each submission knocks another $5.00 off the price — keep going and the
       $29.99 mouse becomes free.</li>
 </ol>
+<p>
+  Business-logic flaws like unlimited coupon or promo-code reuse are a well-documented
+  category of real-world e-commerce abuse — automated scripts that just replay the same
+  request in a loop have been used to drive real transactions to $0 or even negative
+  totals. Unlike injection bugs, this class of flaw is often invisible to traditional
+  vulnerability scanners: every individual request is perfectly well-formed, and the flaw
+  is purely in the missing state tracking.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}if submitted_code == COUPON_CODE:
+    session["a04_coupon_uses"] = session.get("a04_coupon_uses", 0) + 1
+{% endblock %}
+
+{% block secure_code %}if submitted_code == COUPON_CODE and not session.get("a04_coupon_applied"):
+    session["a04_coupon_applied"] = True
+    discount_cents = COUPON_DISCOUNT_CENTS
+# a real system also tracks this server-side per account/order, not just in a
+# client-trusted session, so clearing cookies can't reset the usage count
 {% endblock %}
 
 {% block live_example %}

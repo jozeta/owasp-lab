@@ -45,3 +45,10 @@ def test_quantity_cart_reset_clears_session(client):
     response = client.get("/a04/quantity-cart")
     assert response.status_code == 200
     assert b"Total: $29.99" in response.data
+
+
+def test_quantity_cart_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a04/quantity-cart")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"min(quantity, 99)" in response.data

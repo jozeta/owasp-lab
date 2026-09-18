@@ -12,12 +12,43 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Set the quantity field to <code>-1</code> and submit. If the total goes negative instead
+  of the app rejecting a nonsensical quantity, that confirms there's no bounds validation
+  — no need to go further to prove the bug exists.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Set the quantity field to <code>-1</code> and submit.</li>
   <li>The total now reads <code>-$29.99</code> — a negative charge that a real payment
       processor might interpret as a refund.</li>
 </ol>
+<p>
+  Missing bounds validation on quantity or price-affecting fields is a recurring
+  real-world e-commerce bug class — a negative quantity that a downstream payment
+  processor interprets literally can trigger an actual refund or credit instead of a
+  charge, and this exact category of flaw has resulted in real financial loss in
+  production systems that trusted client-submitted numeric fields without server-side
+  range checks.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}try:
+    quantity = int(request.form.get("quantity", "1"))
+except (ValueError, OverflowError):
+    quantity = 1
+session["a04_quantity"] = quantity
+{% endblock %}
+
+{% block secure_code %}try:
+    quantity = int(request.form.get("quantity", "1"))
+except (ValueError, OverflowError):
+    quantity = 1
+quantity = max(1, min(quantity, 99))  # clamp to a sane, positive range
+session["a04_quantity"] = quantity
 {% endblock %}
 
 {% block live_example %}

@@ -12,6 +12,16 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Without going through shipping or payment at all, navigate directly to
+  <a href="{{ url_for('a04_insecure_design.checkout_confirm') }}">the confirmation page</a>.
+  If you land on a "Thank you for your order!" page anyway, that confirms the server never
+  checks that the earlier steps happened — you don't need to look at the order's paid
+  status yet to know the flow itself is unenforced.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>You could go through the normal flow below: Shipping → Payment → Confirm.</li>
@@ -21,6 +31,36 @@
   <li>Either way, you land on a "confirmed" order — but only the first path actually
       charged anything. The skipped order is created with <code>paid = False</code>.</li>
 </ol>
+<p>
+  Workflow/state bypass is a hallmark A04 finding precisely because each individual step
+  is implemented correctly in isolation — the payment page really does charge correctly
+  when used normally. The flaw is that no step actually depends on the previous one having
+  happened. In real checkout, booking, or approval flows, this class of bug has let
+  attackers skip payment steps entirely, jump straight to a "confirmed" or "approved"
+  state, or bypass required verification/moderation steps by simply requesting the
+  final-state URL directly.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@a04_bp.route("/checkout/confirm")
+def checkout_confirm():
+    order_id = session.get("a04_order_id")
+    order = db.session.get(Order, order_id) if order_id else None
+    if order is None:
+        order = Order(total_cents=DEMO_PRODUCT_PRICE_CENTS, paid=False)
+        db.session.add(order)
+        db.session.commit()
+        session["a04_order_id"] = order.id
+    ...
+{% endblock %}
+
+{% block secure_code %}@a04_bp.route("/checkout/confirm")
+def checkout_confirm():
+    order_id = session.get("a04_order_id")
+    order = db.session.get(Order, order_id) if order_id else None
+    if order is None or not order.paid:
+        abort(400)  # no valid, paid order in this session -- can't confirm
+    ...
 {% endblock %}
 
 {% block live_example %}

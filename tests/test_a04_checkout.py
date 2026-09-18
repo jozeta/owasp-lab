@@ -67,3 +67,10 @@ def test_checkout_confirm_recovers_after_reset_lab(app, client):
         order = Order.query.order_by(Order.id.desc()).first()
         assert order is not None
         assert order.paid is False
+
+
+def test_checkout_shipping_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a04/checkout/shipping")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"not order.paid" in response.data
