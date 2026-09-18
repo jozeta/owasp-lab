@@ -28,3 +28,29 @@ def test_encrypted_notes_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Weak Encryption (ECB Mode)" in response.data
     assert b'href="/a02/encrypted-notes"' in response.data
+
+
+def test_encrypted_notes_still_works_with_teaching_text_hidden(app, client):
+    from app.core.models import Settings
+    from app.extensions import db
+
+    seed_database(app)
+    with app.app_context():
+        settings = Settings.get()
+        settings.show_explanations = False
+        settings.show_exploit_instructions = False
+        db.session.commit()
+
+    from app.categories.a02_crypto_failures.crypto import encrypt_ecb
+
+    response = client.get("/a02/encrypted-notes")
+    assert response.status_code == 200
+    assert b"Explanation" not in response.data
+    assert b"Exploitation" not in response.data
+    shared_ciphertext = encrypt_ecb("Rex")
+    assert response.data.count(shared_ciphertext.encode()) == 2
+
+    ciphertext_hex = encrypt_ecb("Rex")
+    post_response = client.post("/a02/encrypted-notes", data={"ciphertext_hex": ciphertext_hex})
+    assert post_response.status_code == 200
+    assert b"Rex" in post_response.data

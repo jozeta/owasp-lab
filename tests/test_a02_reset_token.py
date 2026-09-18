@@ -51,3 +51,39 @@ def test_reset_token_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Predictable Password Reset Token" in response.data
     assert b'href="/a02/forgot-password"' in response.data
+
+
+def test_reset_token_attack_chain_still_works_with_teaching_text_hidden(app, client):
+    from app.core.models import Settings
+    from app.extensions import db
+
+    seed_database(app)
+    with app.app_context():
+        settings = Settings.get()
+        settings.show_explanations = False
+        settings.show_exploit_instructions = False
+        db.session.commit()
+
+    forgot_response = client.post("/a02/forgot-password", data={"username": "admin"})
+    assert forgot_response.status_code == 200
+    assert b"Explanation" not in forgot_response.data
+    assert b"Exploitation" not in forgot_response.data
+
+    token = _token_for("admin")
+    reset_response = client.post(
+        f"/a02/reset-password/{token}",
+        data={"new_password": "hacked123"},
+    )
+    assert reset_response.status_code == 200
+    assert b"Password updated" in reset_response.data
+    assert b"Explanation" not in reset_response.data
+    assert b"Exploitation" not in reset_response.data
+
+    login_response = client.post(
+        "/a02/legacy-login",
+        data={"username": "admin", "password": "hacked123"},
+    )
+    assert login_response.status_code == 200
+    assert b"takeover confirmed" in login_response.data
+    assert b"Explanation" not in login_response.data
+    assert b"Exploitation" not in login_response.data

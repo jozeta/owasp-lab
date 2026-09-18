@@ -15,8 +15,9 @@ is, why it matters, how it's exploited, real-world impact) plus multiple graduat
 examples (Easy → Medium → Hard) that are genuinely exploitable, not simulated.
 
 Currently implemented: **A01 Broken Access Control** (IDOR, missing function-level
-authorization, mass assignment / role escalation). Remaining categories (A02–A10)
-are tracked separately and follow the same pattern.
+authorization, mass assignment / role escalation) and **A02 Cryptographic Failures**
+(leaked credential dump, weak ECB encryption, predictable password-reset token).
+Remaining categories (A03–A10) are tracked separately and follow the same pattern.
 
 ## Quick start
 

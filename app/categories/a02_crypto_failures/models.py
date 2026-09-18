@@ -6,4 +6,4 @@ class LegacyCredential(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    weak_password_hash = db.Column(db.String(32), nullable=False)
+    weak_password_hash = db.Column(db.String(32), nullable=False)  # unsalted MD5 on purpose -- this IS the vulnerability
