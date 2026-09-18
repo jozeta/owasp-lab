@@ -42,8 +42,11 @@
 
 <section>
   <h2>Examples in This Category</h2>
-  <ul class="list-group">
-    {% for example in active_category.examples %}
+  {% for group_name, group_examples in active_category.grouped_examples() %}
+  {% if group_examples | selectattr("endpoint", "in", registered_endpoints) | list %}
+  <h3 class="h6 mt-3">{{ group_name }}</h3>
+  <ul class="list-group mb-2">
+    {% for example in group_examples %}
     {% if example.endpoint in registered_endpoints %}
     <li class="list-group-item d-flex justify-content-between align-items-center">
       <a href="{{ url_for(example.endpoint) }}">{{ example.title }}</a>
@@ -52,5 +55,7 @@
     {% endif %}
     {% endfor %}
   </ul>
+  {% endif %}
+  {% endfor %}
 </section>
 {% endblock %}

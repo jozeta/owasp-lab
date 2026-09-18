@@ -29,3 +29,10 @@ def test_a04_examples_grouped_by_vulnerability_subtype(app):
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
         assert ranks == sorted(ranks), "group examples must be Easy-to-Hard"
+
+
+def test_a04_overview_shows_vulnerability_subtype_group_headings(client):
+    response = client.get("/a04/")
+    body = response.data.decode()
+    assert "Business Logic Abuse" in body
+    assert "Workflow Bypass" in body

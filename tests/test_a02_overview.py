@@ -28,3 +28,11 @@ def test_a02_examples_grouped_by_vulnerability_subtype(app):
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
         assert ranks == sorted(ranks), "group examples must be Easy-to-Hard"
+
+
+def test_a02_overview_shows_vulnerability_subtype_group_headings(client):
+    response = client.get("/a02/")
+    body = response.data.decode()
+    assert "Weak Hashing" in body
+    assert "Weak Encryption" in body
+    assert "Predictable Tokens" in body

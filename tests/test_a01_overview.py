@@ -28,3 +28,11 @@ def test_a01_examples_grouped_by_vulnerability_subtype(app):
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
         assert ranks == sorted(ranks), "group examples must be Easy-to-Hard"
+
+
+def test_a01_overview_shows_vulnerability_subtype_group_headings(client):
+    response = client.get("/a01/")
+    body = response.data.decode()
+    assert "Insecure Direct Object References (IDOR)" in body
+    assert "Missing Function-Level Access Control" in body
+    assert "Mass Assignment" in body

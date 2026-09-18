@@ -48,3 +48,11 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
         assert ranks == sorted(ranks), "group examples must be Easy-to-Hard"
+
+
+def test_a03_overview_shows_vulnerability_subtype_group_headings(client):
+    response = client.get("/a03/")
+    body = response.data.decode()
+    assert "SQL Injection" in body
+    assert "Cross-Site Scripting (XSS)" in body
+    assert "OS Command Injection" in body
