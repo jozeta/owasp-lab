@@ -22,3 +22,35 @@ pre code {
 [data-bs-theme="dark"] #sidebar .nav-link.active {
   color: var(--bs-link-color);
 }
+
+.hljs-ln-numbers {
+  padding-right: 1em;
+  text-align: right;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.hljs-ln-code {
+  padding-left: 1em;
+}
+
+.card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="dark"] .card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.card-header {
+  font-weight: 600;
+}
+
+#sidebar .nav-link:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-radius: 0.25rem;
+}
+
+[data-bs-theme="dark"] #sidebar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
