@@ -1,10 +1,10 @@
 import subprocess
 
-from flask import render_template, request, session
+from flask import redirect, render_template, request, session, url_for
 from sqlalchemy import text
 
 from app.categories.a03_injection import a03_bp
-from app.categories.a03_injection.models import InjectionAccount
+from app.categories.a03_injection.models import Comment, InjectionAccount
 from app.extensions import db
 
 
@@ -88,3 +88,15 @@ def host_lookup():
         except subprocess.TimeoutExpired:
             output = "(lookup timed out)"
     return render_template("a03_injection/host_lookup.html", host=host, output=output)
+
+
+@a03_bp.route("/comments", methods=["GET", "POST"])
+def comments():
+    if request.method == "POST":
+        author = request.form.get("author", "Anonymous")
+        body = request.form.get("body", "")
+        db.session.add(Comment(author=author, body=body))
+        db.session.commit()
+        return redirect(url_for("a03_injection.comments"))
+    all_comments = Comment.query.order_by(Comment.id.desc()).all()
+    return render_template("a03_injection/comments.html", comments=all_comments)

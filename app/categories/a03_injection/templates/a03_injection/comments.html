@@ -1,0 +1,45 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Stored XSS in Comments" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This public comment form stores whatever you submit and renders it back to every
+  future visitor without escaping the HTML — the template deliberately disables Jinja's
+  automatic escaping for comment bodies. Unlike the reflected XSS example, this payload
+  is <strong>stored</strong>: once submitted, it executes for every single visitor to
+  this page, not just someone who clicks a crafted link.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Submit a comment with the body:
+      <code>&lt;script&gt;alert('stored XSS')&lt;/script&gt;</code></li>
+  <li>Reload the page — the script executes immediately, with no link-clicking required.</li>
+  <li>Every other visitor who loads this page from now on runs your script too, until
+      "Reset lab" clears the comments table. A real attacker would use this to steal
+      session cookies or perform actions as any visitor who views the page.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<form method="post" class="mb-4">
+  <div class="mb-2">
+    <label class="form-label">Name</label>
+    <input type="text" class="form-control" name="author" value="Guest">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Comment</label>
+    <textarea class="form-control" name="body" rows="2"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Post comment</button>
+</form>
+{% for comment in comments %}
+<div class="border-bottom py-2">
+  <strong>{{ comment.author }}</strong>
+  <div>{{ comment.body|safe }}</div>
+</div>
+{% endfor %}
+{% endblock %}
