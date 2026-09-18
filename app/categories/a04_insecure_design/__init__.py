@@ -12,6 +12,7 @@ CATEGORIES.append(
         id="a04_insecure_design",
         short_id="A04",
         title="Insecure Design",
+        blurb="Missing security controls baked into the design itself, not just a coding mistake.",
         blueprint_name="a04_insecure_design",
         overview_endpoint="a04_insecure_design.overview",
         examples=[

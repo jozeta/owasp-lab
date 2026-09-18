@@ -13,6 +13,7 @@ CATEGORIES.append(
         id="a02_crypto_failures",
         short_id="A02",
         title="Cryptographic Failures",
+        blurb="Weak or misused cryptography that exposes passwords and sensitive data instead of protecting them.",
         blueprint_name="a02_crypto_failures",
         overview_endpoint="a02_crypto_failures.overview",
         examples=[

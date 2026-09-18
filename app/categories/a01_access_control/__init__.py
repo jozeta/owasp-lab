@@ -12,6 +12,7 @@ CATEGORIES.append(
         id="a01_access_control",
         short_id="A01",
         title="Broken Access Control",
+        blurb="Access control that is not enforced on the server, letting users act outside their intended permissions.",
         blueprint_name="a01_access_control",
         overview_endpoint="a01_access_control.overview",
         examples=[

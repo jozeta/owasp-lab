@@ -25,6 +25,7 @@ class CategoryNav:
     overview_endpoint: str
     examples: list = field(default_factory=list)
     seed_fn: object = None
+    blurb: str = ""
 
 
 CATEGORIES: list = []

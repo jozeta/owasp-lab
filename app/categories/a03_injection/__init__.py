@@ -13,6 +13,7 @@ CATEGORIES.append(
         id="a03_injection",
         short_id="A03",
         title="Injection",
+        blurb="Untrusted input executed by an interpreter, such as SQL, a shell, or the browser, instead of being treated as data.",
         blueprint_name="a03_injection",
         overview_endpoint="a03_injection.overview",
         examples=[
