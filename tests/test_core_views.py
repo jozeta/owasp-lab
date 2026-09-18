@@ -182,3 +182,12 @@ def test_logged_in_home_page_has_logout_as_dropdown_item(app, client, login):
     response = client.get("/")
     body = response.data.decode()
     assert 'class="dropdown-item">Log out</button>' in body
+
+
+def test_tools_page_lists_zproxy(client):
+    response = client.get("/tools")
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert "zproxy" in body
+    assert 'href="https://github.com/jozeta/zproxy"' in body
+    assert "lightweight alternative to Burp Suite" in body
