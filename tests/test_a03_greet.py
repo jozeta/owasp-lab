@@ -39,3 +39,9 @@ def test_greet_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"autoescaping" in response.data
+
+
+def test_greet_shows_detect_content(client):
+    response = client.get("/a03/greet")
+    assert response.status_code == 200
+    assert b"before ever running JavaScript" in response.data

@@ -94,3 +94,9 @@ def test_forgot_password_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"secrets.token_urlsafe" in response.data
+
+
+def test_forgot_password_shows_detect_content(client):
+    response = client.get("/a02/forgot-password")
+    assert response.status_code == 200
+    assert b"reset link has been sent, with no token shown" in response.data

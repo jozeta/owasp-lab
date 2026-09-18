@@ -39,3 +39,10 @@ def test_account_update_shows_vulnerable_vs_secure_code(client, login):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"ALLOWED_FIELDS" in response.data
+
+
+def test_account_update_shows_detect_content(client, login):
+    login("alice")
+    response = client.get("/a01/account/update")
+    assert response.status_code == 200
+    assert b"private_notes=PROBE" in response.data

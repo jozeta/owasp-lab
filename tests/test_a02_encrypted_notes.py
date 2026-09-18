@@ -61,3 +61,9 @@ def test_encrypted_notes_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"MODE_GCM" in response.data
+
+
+def test_encrypted_notes_shows_detect_content(client):
+    response = client.get("/a02/encrypted-notes")
+    assert response.status_code == 200
+    assert b"any two identical values" in response.data

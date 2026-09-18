@@ -58,7 +58,7 @@ done</code></pre>
 
 {% block secure_code %}def idor(user_id=1):
     viewer = get_current_user()
-    if user_id != viewer.id and not viewer.is_admin:
+    if user_id != viewer.id and viewer.role != "admin":
         abort(403)
     profile = db.get_or_404(User, user_id)
     return render_template("idor.html", profile=profile, viewer=viewer)

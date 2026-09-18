@@ -60,3 +60,9 @@ def test_check_username_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b":username" in response.data
+
+
+def test_check_username_shows_detect_content(client):
+    response = client.get("/a03/check-username")
+    assert response.status_code == 200
+    assert b"Enter a single quote on its own" in response.data

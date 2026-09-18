@@ -19,9 +19,11 @@
   just confirms your profile updated. The bug isn't visible in the UI at all; it only
   shows up when you check what fields the <em>server</em> actually accepts versus what the
   <em>form</em> exposes. Add one harmless extra field the form doesn't include, e.g.
-  <code>nickname=test</code>, via curl, and confirm your profile object now reflects it
-  even though the browser form never offered that field — that's the detection step: the
-  server applies <em>any</em> submitted field, not just the ones the UI shows you.
+  <code>private_notes=PROBE</code>, via curl, and confirm your profile object now reflects
+  it even though the browser form never offered that field — reload
+  <code>/a01/profile/1</code> (your own profile, alice's id) afterward and the private
+  notes field now reads <code>PROBE</code>. That's the detection step: the server applies
+  <em>any</em> submitted field, not just the ones the UI shows you.
 </p>
 {% endblock %}
 

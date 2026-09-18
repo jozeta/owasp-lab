@@ -47,3 +47,9 @@ def test_search_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b":pattern" in response.data
+
+
+def test_search_shows_detect_content(client):
+    response = client.get("/a03/search")
+    assert response.status_code == 200
+    assert b"Search for a term containing a single quote" in response.data

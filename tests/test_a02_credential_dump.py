@@ -45,3 +45,9 @@ def test_credential_dump_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"generate_password_hash" in response.data
+
+
+def test_credential_dump_shows_detect_content(client):
+    response = client.get("/a02/credential-dump")
+    assert response.status_code == 200
+    assert b"signature of raw MD5" in response.data

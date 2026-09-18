@@ -61,3 +61,10 @@ def test_idor_shows_vulnerable_vs_secure_with_teaching_text_hidden(app, client, 
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"abort(403)" in response.data
+
+
+def test_idor_shows_detect_content(client, login):
+    login("alice")
+    response = client.get("/a01/profile/1")
+    assert response.status_code == 200
+    assert b"200 OK" in response.data

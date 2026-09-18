@@ -75,3 +75,9 @@ def test_login_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b":username AND password = :password" in response.data
+
+
+def test_login_shows_detect_content(client):
+    response = client.get("/a03/login")
+    assert response.status_code == 200
+    assert b"username containing a single quote" in response.data

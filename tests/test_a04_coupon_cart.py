@@ -57,3 +57,9 @@ def test_coupon_cart_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"a04_coupon_applied" in response.data
+
+
+def test_coupon_cart_shows_detect_content(client):
+    response = client.get("/a04/coupon-cart")
+    assert response.status_code == 200
+    assert b"code once and note the total" in response.data

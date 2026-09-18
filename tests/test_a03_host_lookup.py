@@ -42,3 +42,9 @@ def test_host_lookup_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"shell=False" in response.data
+
+
+def test_host_lookup_shows_detect_content(client):
+    response = client.get("/a03/host-lookup")
+    assert response.status_code == 200
+    assert b"without running anything destructive" in response.data

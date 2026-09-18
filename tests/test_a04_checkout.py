@@ -74,3 +74,9 @@ def test_checkout_shipping_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"not order.paid" in response.data
+
+
+def test_checkout_shipping_shows_detect_content(client):
+    response = client.get("/a04/checkout/shipping")
+    assert response.status_code == 200
+    assert b"that confirms the server never" in response.data

@@ -17,12 +17,15 @@
 {% endif %}
 
 {% if settings.show_exploit_instructions %}
+{% set detect_content = self.detect() %}
+{% if detect_content|trim %}
 <section class="card mb-4">
   <div class="card-header">Detect</div>
   <div class="card-body">
     {% block detect %}{% endblock %}
   </div>
 </section>
+{% endif %}
 
 <section class="card mb-4 border-danger">
   <div class="card-header bg-danger text-white">Exploitation</div>
@@ -32,6 +35,9 @@
 </section>
 {% endif %}
 
+{% set vulnerable_content = self.vulnerable_code() %}
+{% set secure_content = self.secure_code() %}
+{% if vulnerable_content|trim or secure_content|trim %}
 <section class="card mb-4">
   <div class="card-header">Vulnerable vs. Secure</div>
   <div class="card-body">
@@ -47,6 +53,7 @@
     </div>
   </div>
 </section>
+{% endif %}
 
 <section class="card">
   <div class="card-header">Try It</div>

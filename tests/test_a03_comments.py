@@ -53,3 +53,9 @@ def test_comments_shows_vulnerable_vs_secure_code(client):
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
     assert b"comment.body|safe" in response.data
+
+
+def test_comments_shows_detect_content(client):
+    response = client.get("/a03/comments")
+    assert response.status_code == 200
+    assert b"the comment body is being interpreted as" in response.data
