@@ -29,8 +29,11 @@
     <p class="card-text"><strong>Total: {{ total_display }}</strong></p>
   </div>
 </div>
-<form method="post" class="d-flex gap-2">
+<form method="post" class="d-flex gap-2 mb-2">
   <input type="number" class="form-control" name="quantity" value="{{ quantity }}">
   <button type="submit" class="btn btn-primary">Update quantity</button>
+</form>
+<form method="post" action="{{ url_for('a04_insecure_design.quantity_cart_reset') }}">
+  <button type="submit" class="btn btn-outline-secondary btn-sm">Start over</button>
 </form>
 {% endblock %}

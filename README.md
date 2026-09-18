@@ -48,6 +48,12 @@ Both toggles are global and stored in the database — they affect every example
 immediately for every visitor. Hiding the teaching text never disables the underlying
 vulnerability; it only conceals the walkthrough, so you can attempt exploitation blind.
 
+Reset lab restores database state (seeded accounts, secrets, comments, orders, etc.)
+to its clean starting point. Per-browser example state — like a demo cart or coupon
+count stored only in your session — isn't part of that database and is cleared by
+that example's own "Start over" control (where provided) or by clearing your browser's
+cookies for this site.
+
 ## Category summary
 
 | Category | Status | Examples |

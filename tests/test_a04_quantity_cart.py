@@ -32,3 +32,16 @@ def test_quantity_cart_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Negative Quantity Price Manipulation" in response.data
     assert b'href="/a04/quantity-cart"' in response.data
+
+
+def test_quantity_cart_handles_pathologically_large_quantity_without_crashing(client):
+    response = client.post("/a04/quantity-cart", data={"quantity": "9" * 320})
+    assert response.status_code == 200
+
+
+def test_quantity_cart_reset_clears_session(client):
+    client.post("/a04/quantity-cart", data={"quantity": "-1"})
+    client.post("/a04/quantity-cart/reset")
+    response = client.get("/a04/quantity-cart")
+    assert response.status_code == 200
+    assert b"Total: $29.99" in response.data

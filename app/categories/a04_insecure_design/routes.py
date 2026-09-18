@@ -12,7 +12,13 @@ COUPON_DISCOUNT_CENTS = 500
 
 def _format_cents(cents):
     sign = "-" if cents < 0 else ""
-    return f"{sign}${abs(cents) / 100:.2f}"
+    try:
+        return f"{sign}${abs(cents) / 100:.2f}"
+    except OverflowError:
+        # A pathologically large (e.g. hundreds-of-digits) quantity/total can make
+        # the float division above overflow. This is a display robustness fix only --
+        # it doesn't add bounds validation, it just keeps the page from crashing.
+        return f"{sign}$(number too large to display)"
 
 
 @a04_bp.route("/")
@@ -56,7 +62,7 @@ def quantity_cart():
     if request.method == "POST":
         try:
             quantity = int(request.form.get("quantity", "1"))
-        except ValueError:
+        except (ValueError, OverflowError):
             quantity = 1
         # VULNERABLE: no validation that quantity is non-negative or has a sane upper bound
         session["a04_quantity"] = quantity
@@ -71,9 +77,17 @@ def quantity_cart():
     )
 
 
+@a04_bp.route("/quantity-cart/reset", methods=["POST"])
+def quantity_cart_reset():
+    session.pop("a04_quantity", None)
+    return redirect(url_for("a04_insecure_design.quantity_cart"))
+
+
 @a04_bp.route("/checkout/shipping", methods=["GET", "POST"])
 def checkout_shipping():
     if request.method == "POST":
+        # Recorded but deliberately never checked anywhere -- the app tracks that
+        # this step happened without ever enforcing that it must have.
         session["a04_shipping_done"] = True
         return redirect(url_for("a04_insecure_design.checkout_payment"))
     return render_template("a04_insecure_design/checkout_shipping.html")
@@ -93,11 +107,11 @@ def checkout_payment():
 @a04_bp.route("/checkout/confirm")
 def checkout_confirm():
     order_id = session.get("a04_order_id")
-    if order_id:
-        order = db.session.get(Order, order_id)
-    else:
+    order = db.session.get(Order, order_id) if order_id else None
+    if order is None:
         # VULNERABLE: no verification that the shipping/payment steps ever ran --
-        # visiting this URL directly still produces a "confirmed" order, unpaid.
+        # visiting this URL directly (or with a stale/reset session) still produces
+        # a "confirmed" order, unpaid.
         order = Order(total_cents=DEMO_PRODUCT_PRICE_CENTS, paid=False)
         db.session.add(order)
         db.session.commit()

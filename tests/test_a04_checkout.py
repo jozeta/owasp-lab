@@ -50,3 +50,20 @@ def test_checkout_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Multi-Step Checkout Bypass" in response.data
     assert b'href="/a04/checkout/shipping"' in response.data
+
+
+def test_checkout_confirm_recovers_after_reset_lab(app, client):
+    from app.core.seed import reset_database
+
+    client.get("/a04/checkout/confirm")  # creates an order, stores id in session
+
+    reset_database(app)  # simulates "Reset lab" -- drops/recreates a04_orders
+
+    response = client.get("/a04/checkout/confirm")
+    assert response.status_code == 200
+    assert b"Thank you for your order" in response.data
+
+    with app.app_context():
+        order = Order.query.order_by(Order.id.desc()).first()
+        assert order is not None
+        assert order.paid is False
