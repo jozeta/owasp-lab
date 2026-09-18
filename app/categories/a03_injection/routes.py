@@ -1,8 +1,36 @@
-from flask import render_template
+from flask import render_template, request, session
+from sqlalchemy import text
 
 from app.categories.a03_injection import a03_bp
+from app.categories.a03_injection.models import InjectionAccount
+from app.extensions import db
 
 
 @a03_bp.route("/")
 def overview():
     return render_template("a03_injection/overview.html")
+
+
+@a03_bp.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        # VULNERABLE: raw string-concatenated SQL, no parameterization -- this IS the lesson
+        query = (
+            f"SELECT * FROM injection_accounts "
+            f"WHERE username = '{username}' AND password = '{password}'"
+        )
+        row = db.session.execute(text(query)).mappings().first()
+        if row:
+            session["a03_login_as"] = row["username"]
+            session["a03_login_is_admin"] = row["is_admin"]
+        else:
+            error = "Invalid username or password."
+    return render_template(
+        "a03_injection/login.html",
+        error=error,
+        logged_in_as=session.get("a03_login_as"),
+        is_admin=session.get("a03_login_is_admin", False),
+    )

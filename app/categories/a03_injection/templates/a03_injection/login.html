@@ -1,0 +1,49 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Authentication Bypass via SQL Injection" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This login form builds its SQL query by directly concatenating the submitted username
+  and password into the query string — something like
+  <code>SELECT * FROM injection_accounts WHERE username = 'USERNAME' AND password = 'PASSWORD'</code>.
+  Because the input is never escaped or parameterized, anything you type becomes part of
+  the SQL itself — including SQL syntax.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>In the username field, enter: <code>' OR '1'='1' -- </code></li>
+  <li>Leave the password field blank (or put anything — it's commented out).</li>
+  <li>The injected <code>OR '1'='1'</code> makes the WHERE clause true for every row, and
+      <code>--</code> comments out the rest of the query, so the password check never
+      happens. You're logged in as whichever account the database returns first.</li>
+  <li>To log in specifically as <code>admin</code> without knowing the password, try
+      <code>admin' -- </code> as the username instead.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+{% if logged_in_as %}
+<div class="alert alert-success">
+  Logged in as <strong>{{ logged_in_as }}</strong>{% if is_admin %} (admin){% endif %} —
+  authentication bypassed.
+</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input type="text" class="form-control" name="username">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input type="text" class="form-control" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% endblock %}
