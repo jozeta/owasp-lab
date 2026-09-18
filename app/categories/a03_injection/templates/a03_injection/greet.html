@@ -1,0 +1,38 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Reflected XSS in Greeting Page" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This page takes a <code>name</code> query parameter and builds a greeting by
+  concatenating it directly into an HTML string on the server, then marks that string
+  as safe in the template so Jinja's automatic escaping is deliberately bypassed.
+  Whatever you put in <code>name</code> is inserted into the page verbatim — including
+  HTML and JavaScript.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Visit this page with
+      <code>?name=&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code>
+      appended to the URL.</li>
+  <li>The script executes in your browser as soon as the page loads — this is a
+      <em>reflected</em> XSS because the payload comes straight from the URL and is
+      never stored.</li>
+  <li>In a real attack, a victim would click a link crafted by the attacker (e.g. in a
+      phishing email) containing this payload, executing arbitrary JavaScript in the
+      victim's authenticated session.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<form method="get" class="mb-3">
+  <div class="input-group">
+    <input type="text" class="form-control" name="name" value="{{ name }}">
+    <button type="submit" class="btn btn-primary">Greet me</button>
+  </div>
+</form>
+<div>{{ greeting_html|safe }}</div>
+{% endblock %}

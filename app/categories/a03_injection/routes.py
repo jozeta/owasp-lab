@@ -45,3 +45,11 @@ def search():
         query = f"SELECT id, username FROM injection_accounts WHERE username LIKE '%{q}%'"
         results = db.session.execute(text(query)).all()
     return render_template("a03_injection/search.html", q=q, results=results)
+
+
+@a03_bp.route("/greet")
+def greet():
+    name = request.args.get("name", "friend")
+    # VULNERABLE: HTML built by hand, then rendered with |safe -- no escaping at all
+    greeting_html = f"<p>Hello, {name}! Welcome back.</p>"
+    return render_template("a03_injection/greet.html", greeting_html=greeting_html, name=name)
