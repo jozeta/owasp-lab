@@ -1,0 +1,36 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Legacy Login (proof of takeover)" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}Legacy Login — A02{% endblock %}
+
+{% block explanation %}
+<p>
+  A small standalone login form checking credentials against the same
+  <code>LegacyCredential</code> table used by the credential-dump and password-reset
+  examples on this page — use it to prove a cracked or reset password actually works.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>Log in with a password you cracked from the credential dump, or one you just set via
+  the password-reset flow.</p>
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input type="text" class="form-control" name="username">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input type="text" class="form-control" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if result == "success" %}
+<p class="mt-3 text-success">Login succeeded — account takeover confirmed.</p>
+{% elif result == "failure" %}
+<p class="mt-3 text-danger">Invalid username or password.</p>
+{% endif %}
+{% endblock %}
