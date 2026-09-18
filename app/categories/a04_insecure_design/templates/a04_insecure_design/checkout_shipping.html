@@ -1,0 +1,35 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Multi-Step Checkout Bypass" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A04{% endblock %}
+
+{% block explanation %}
+<p>
+  This checkout has three steps: shipping, payment, and confirmation. The confirmation
+  page is supposed to be the final reward for completing the first two — but nothing on
+  the server actually checks that payment happened before confirming the order. The app
+  trusts that visitors will follow the steps in order, instead of enforcing it.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>You could go through the normal flow below: Shipping → Payment → Confirm.</li>
+  <li>Or skip straight to
+      <a href="{{ url_for('a04_insecure_design.checkout_confirm') }}">the confirmation page</a>
+      without ever visiting shipping or payment.</li>
+  <li>Either way, you land on a "confirmed" order — but only the first path actually
+      charged anything. The skipped order is created with <code>paid = False</code>.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <p>Step 1 of 3: Shipping</p>
+  <div class="mb-2">
+    <label class="form-label">Shipping address</label>
+    <input type="text" class="form-control" name="address" value="123 Demo St">
+  </div>
+  <button type="submit" class="btn btn-primary">Continue to payment</button>
+</form>
+{% endblock %}

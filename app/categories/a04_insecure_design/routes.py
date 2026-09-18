@@ -1,6 +1,8 @@
 from flask import redirect, render_template, request, session, url_for
 
 from app.categories.a04_insecure_design import a04_bp
+from app.categories.a04_insecure_design.models import Order
+from app.extensions import db
 
 DEMO_PRODUCT_NAME = "Wireless Mouse"
 DEMO_PRODUCT_PRICE_CENTS = 2999
@@ -66,4 +68,42 @@ def quantity_cart():
         product_price_display=_format_cents(DEMO_PRODUCT_PRICE_CENTS),
         quantity=quantity,
         total_display=_format_cents(total_cents),
+    )
+
+
+@a04_bp.route("/checkout/shipping", methods=["GET", "POST"])
+def checkout_shipping():
+    if request.method == "POST":
+        session["a04_shipping_done"] = True
+        return redirect(url_for("a04_insecure_design.checkout_payment"))
+    return render_template("a04_insecure_design/checkout_shipping.html")
+
+
+@a04_bp.route("/checkout/payment", methods=["GET", "POST"])
+def checkout_payment():
+    if request.method == "POST":
+        order = Order(total_cents=DEMO_PRODUCT_PRICE_CENTS, paid=True)
+        db.session.add(order)
+        db.session.commit()
+        session["a04_order_id"] = order.id
+        return redirect(url_for("a04_insecure_design.checkout_confirm"))
+    return render_template("a04_insecure_design/checkout_payment.html")
+
+
+@a04_bp.route("/checkout/confirm")
+def checkout_confirm():
+    order_id = session.get("a04_order_id")
+    if order_id:
+        order = db.session.get(Order, order_id)
+    else:
+        # VULNERABLE: no verification that the shipping/payment steps ever ran --
+        # visiting this URL directly still produces a "confirmed" order, unpaid.
+        order = Order(total_cents=DEMO_PRODUCT_PRICE_CENTS, paid=False)
+        db.session.add(order)
+        db.session.commit()
+        session["a04_order_id"] = order.id
+    return render_template(
+        "a04_insecure_design/checkout_confirm.html",
+        order=order,
+        total_display=_format_cents(order.total_cents),
     )

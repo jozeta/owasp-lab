@@ -1,0 +1,25 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Multi-Step Checkout Bypass" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}Payment — A04{% endblock %}
+
+{% block explanation %}
+<p>See the <a href="{{ url_for('a04_insecure_design.checkout_shipping') }}">shipping step</a>
+  for how this multi-step flow can be bypassed entirely.</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>Complete this step normally, or skip straight to
+  <a href="{{ url_for('a04_insecure_design.checkout_confirm') }}">confirmation</a> instead.</p>
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <p>Step 2 of 3: Payment</p>
+  <div class="mb-2">
+    <label class="form-label">Card number</label>
+    <input type="text" class="form-control" value="4242 4242 4242 4242" readonly>
+  </div>
+  <button type="submit" class="btn btn-primary">Pay and continue</button>
+</form>
+{% endblock %}

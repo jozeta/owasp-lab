@@ -1,0 +1,19 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Multi-Step Checkout Bypass" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}Order Confirmed — A04{% endblock %}
+
+{% block explanation %}
+<p>See the <a href="{{ url_for('a04_insecure_design.checkout_shipping') }}">shipping step</a>
+  for how this page can be reached without ever paying.</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>If you arrived here directly, notice the order below is marked
+  <code>paid = False</code> below — the "confirmation" happened anyway.</p>
+{% endblock %}
+
+{% block live_example %}
+<div class="alert alert-success">Thank you for your order!</div>
+<p>Order #{{ order.id }} — total {{ total_display }} — paid: <strong>{{ order.paid }}</strong></p>
+{% endblock %}
