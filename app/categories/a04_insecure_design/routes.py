@@ -47,3 +47,23 @@ def coupon_cart():
 def coupon_cart_reset():
     session.pop("a04_coupon_uses", None)
     return redirect(url_for("a04_insecure_design.coupon_cart"))
+
+
+@a04_bp.route("/quantity-cart", methods=["GET", "POST"])
+def quantity_cart():
+    if request.method == "POST":
+        try:
+            quantity = int(request.form.get("quantity", "1"))
+        except ValueError:
+            quantity = 1
+        # VULNERABLE: no validation that quantity is non-negative or has a sane upper bound
+        session["a04_quantity"] = quantity
+    quantity = session.get("a04_quantity", 1)
+    total_cents = DEMO_PRODUCT_PRICE_CENTS * quantity
+    return render_template(
+        "a04_insecure_design/quantity_cart.html",
+        product_name=DEMO_PRODUCT_NAME,
+        product_price_display=_format_cents(DEMO_PRODUCT_PRICE_CENTS),
+        quantity=quantity,
+        total_display=_format_cents(total_cents),
+    )

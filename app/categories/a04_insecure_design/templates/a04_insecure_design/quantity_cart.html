@@ -1,0 +1,36 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Negative Quantity Price Manipulation" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A04{% endblock %}
+
+{% block explanation %}
+<p>
+  This cart lets you set the quantity for an item directly, and the total is computed as
+  <code>quantity × price</code> with no check that quantity is a sane, positive number.
+  Submit a negative quantity and the "total" goes negative too — as if the store owed
+  you money instead of the other way around.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Set the quantity field to <code>-1</code> and submit.</li>
+  <li>The total now reads <code>-$29.99</code> — a negative charge that a real payment
+      processor might interpret as a refund.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">{{ product_name }}</h5>
+    <p class="card-text">Price: {{ product_price_display }}</p>
+    <p class="card-text">Quantity: {{ quantity }}</p>
+    <p class="card-text"><strong>Total: {{ total_display }}</strong></p>
+  </div>
+</div>
+<form method="post" class="d-flex gap-2">
+  <input type="number" class="form-control" name="quantity" value="{{ quantity }}">
+  <button type="submit" class="btn btn-primary">Update quantity</button>
+</form>
+{% endblock %}
