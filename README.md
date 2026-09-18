@@ -48,7 +48,8 @@ vulnerability; it only conceals the walkthrough, so you can attempt exploitation
 | Category | Status | Examples |
 | --- | --- | --- |
 | A01 Broken Access Control | Implemented | IDOR (Easy), Hidden Admin Panel (Medium), Mass Assignment Role Escalation (Hard) |
-| A02–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
+| A02 Cryptographic Failures | Implemented | Leaked Credential Dump (Easy), Weak Encryption / ECB Mode (Medium), Predictable Password Reset Token (Hard) |
+| A03–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
 
 ## Safety model
 
