@@ -124,3 +124,24 @@ def xml_import():
     return render_template(
         "a03_injection/xml_import.html", xml_input=xml_input, result=result, error=error
     )
+
+
+@a03_bp.route("/xxe-ssrf", methods=["GET", "POST"])
+def xxe_ssrf():
+    xml_input = ""
+    result = None
+    error = None
+    if request.method == "POST":
+        xml_input = request.form.get("xml_input", "")
+        try:
+            # VULNERABLE: same resolve_entities=True flaw as xml_import(), reused
+            # in a different feature -- here the entity target is a URL, not a file.
+            parser = etree.XMLParser(resolve_entities=True)
+            tree = etree.fromstring(xml_input.encode(), parser=parser)
+            message_el = tree.find("message")
+            result = message_el.text if message_el is not None else "(no <message> element found)"
+        except Exception as e:
+            error = str(e)
+    return render_template(
+        "a03_injection/xxe_ssrf.html", xml_input=xml_input, result=result, error=error
+    )

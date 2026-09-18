@@ -66,6 +66,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a03_injection.xml_import",
             ),
+            ExampleNav(
+                id="xxe-ssrf",
+                title="XXE SSRF via Status Feed Importer",
+                group="XML External Entity Injection (XXE)",
+                difficulty="Hard",
+                endpoint="a03_injection.xxe_ssrf",
+            ),
         ],
         seed_fn=seed_injection_data,
     )

@@ -1,0 +1,81 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "XXE SSRF via Status Feed Importer" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "status feed" importer parses vendor-supplied XML with the exact
+  same vulnerable pattern as the contact importer —
+  <code>lxml.etree.XMLParser(resolve_entities=True)</code> — but here the
+  entity you control isn't limited to reading local files. Because the
+  parser fetches whatever URI the <code>SYSTEM</code> identifier names, an
+  attacker can point it at an internal network address instead of a file
+  path, turning the server itself into an unwitting HTTP client under the
+  attacker's control — this is Server-Side Request Forgery (SSRF) via XXE.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit a <code>&lt;!DOCTYPE&gt;</code> declaring an entity that points at
+  this very app's own health-check endpoint:
+</p>
+<pre><code class="language-xml">&lt;!DOCTYPE status [&lt;!ENTITY probe SYSTEM "http://127.0.0.1:5000/healthz"&gt;]&gt;
+&lt;status&gt;&lt;message&gt;&amp;probe;&lt;/message&gt;&lt;/status&gt;</code></pre>
+<p>
+  If the response includes <code>{"status": "ok"}</code> — the exact body
+  <code>/healthz</code> returns — you've confirmed the server itself issued
+  an outbound HTTP request on your behalf, before trying to reach anything
+  more sensitive.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Submit the XML from the Detect step above.</li>
+  <li>The response shows <code>{"status": "ok"}</code> — content that only
+      exists on this server's own internal network, fetched entirely
+      server-side. Your browser never made that request; the vulnerable
+      parser did.</li>
+</ol>
+<p>
+  In this lab, <code>/healthz</code> happens to also be reachable directly
+  by an external visitor, which makes the effect easy to verify but slightly
+  undersells the real danger: in production deployments, the whole point of
+  SSRF is reaching resources an external attacker canNOT reach directly at
+  all. The textbook real-world target is a cloud provider's instance
+  metadata endpoint (e.g. <code>http://169.254.169.254/</code> on AWS/GCP/
+  Azure) — a well-documented, internal-only address that often hands back
+  temporary cloud credentials to anything that can reach it from inside the
+  virtual machine. An XXE bug is exactly the kind of "the server does an
+  HTTP request I control" primitive that's been used to reach exactly that
+  address and pivot from a single XML upload into full cloud-account
+  compromise.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}parser = etree.XMLParser(resolve_entities=True)
+tree = etree.fromstring(xml_input.encode(), parser=parser)
+{% endblock %}
+
+{% block secure_code %}parser = etree.XMLParser()  # resolve_entities defaults to False
+tree = etree.fromstring(xml_input.encode(), parser=parser)
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Status feed XML</label>
+    <textarea class="form-control" name="xml_input" rows="4"
+              placeholder="&lt;status&gt;&lt;message&gt;All systems normal&lt;/message&gt;&lt;/status&gt;">{{ xml_input }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Import status feed</button>
+</form>
+{% if result %}
+<p class="mt-3">Status message: <strong>{{ result }}</strong></p>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}
