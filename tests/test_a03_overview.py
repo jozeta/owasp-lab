@@ -53,6 +53,6 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
 def test_a03_overview_shows_vulnerability_subtype_group_headings(client):
     response = client.get("/a03/")
     body = response.data.decode()
-    assert "SQL Injection" in body
-    assert "Cross-Site Scripting (XSS)" in body
-    assert "OS Command Injection" in body
+    assert '<h3 class="h6 mt-3">SQL Injection</h3>' in body
+    assert '<h3 class="h6 mt-3">Cross-Site Scripting (XSS)</h3>' in body
+    assert '<h3 class="h6 mt-3">OS Command Injection</h3>' in body

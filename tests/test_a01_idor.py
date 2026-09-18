@@ -35,7 +35,7 @@ def test_idor_still_leaks_data_with_teaching_text_hidden(app, client, login):
     response = client.get(f"/a01/profile/{bob_id}")
     assert response.status_code == 200
     assert bob_notes.encode() in response.data
-    assert b"textbook Insecure Direct Object Reference" not in response.data
+    assert b"textbook Insecure Direct" not in response.data
     assert b"Change the URL to a different id" not in response.data
 
 

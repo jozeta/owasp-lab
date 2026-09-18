@@ -91,3 +91,15 @@ def test_grouped_examples_empty_category():
         overview_endpoint="core.home",
     )
     assert category.grouped_examples() == []
+
+
+def test_every_example_has_a_nonempty_group(app):
+    # Same rationale as test_every_registered_category_has_a_nonempty_blurb:
+    # the `app` fixture forces create_app() to run, populating CATEGORIES.
+    from app.core.nav import CATEGORIES
+
+    for category in CATEGORIES:
+        for example in category.examples:
+            assert example.group.strip() != "", (
+                f"{category.short_id}/{example.id} is missing a group"
+            )

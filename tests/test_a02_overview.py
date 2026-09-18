@@ -33,6 +33,6 @@ def test_a02_examples_grouped_by_vulnerability_subtype(app):
 def test_a02_overview_shows_vulnerability_subtype_group_headings(client):
     response = client.get("/a02/")
     body = response.data.decode()
-    assert "Weak Hashing" in body
-    assert "Weak Encryption" in body
-    assert "Predictable Tokens" in body
+    assert '<h3 class="h6 mt-3">Weak Hashing</h3>' in body
+    assert '<h3 class="h6 mt-3">Weak Encryption</h3>' in body
+    assert '<h3 class="h6 mt-3">Predictable Tokens</h3>' in body
