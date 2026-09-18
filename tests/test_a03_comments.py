@@ -46,3 +46,10 @@ def test_comments_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Stored XSS in Comments" in response.data
     assert b'href="/a03/comments"' in response.data
+
+
+def test_comments_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a03/comments")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"comment.body|safe" in response.data

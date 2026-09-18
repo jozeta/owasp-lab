@@ -1,6 +1,7 @@
 {% extends "core/example_page_base.html" %}
 {% set example_title = "Stored XSS in Comments" %}
 {% set example_difficulty = "Hard" %}
+{% set code_language = "html" %}
 {% block title %}{{ example_title }} — A03{% endblock %}
 
 {% block explanation %}
@@ -13,6 +14,15 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Post a comment with the body <code>&lt;b&gt;test&lt;/b&gt;</code>. If it renders bold on
+  the page instead of showing the literal tags, the comment body is being interpreted as
+  HTML — and because it's stored, that confirmation persists for every future visitor, not
+  just you.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Submit a comment with the body:
@@ -22,6 +32,21 @@
       "Reset lab" clears the comments table. A real attacker would use this to steal
       session cookies or perform actions as any visitor who views the page.</li>
 </ol>
+<p>
+  Stored XSS is considered more severe than reflected XSS precisely because it requires no
+  social engineering at all — once the payload is saved, it fires automatically for every
+  single visitor who loads the page, indefinitely. Real-world stored-XSS incidents have
+  been used to build self-propagating worms (a payload that, when it runs, posts a copy of
+  itself as a new comment or post, infecting every subsequent viewer) and to harvest
+  session cookies at scale from an entire user base with zero further attacker interaction
+  after the initial post.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}{% raw %}<div>{{ comment.body|safe }}</div>{% endraw %}
+{% endblock %}
+
+{% block secure_code %}{% raw %}<div>{{ comment.body }}</div>{% endraw %}
 {% endblock %}
 
 {% block live_example %}

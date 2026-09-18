@@ -13,6 +13,16 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Try a lookup with a semicolon appended to a harmless hostname, e.g.
+  <code>localhost;echo test</code>. If the output includes the word "test" anywhere, your
+  input reached a real shell — the semicolon terminated the intended
+  <code>getent</code> command and started a second one, which is all it takes to confirm
+  command injection without running anything destructive.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Try a normal lookup first, e.g. <code>localhost</code>.</li>
@@ -23,6 +33,32 @@
   <li>Command substitution also works: <code>$(id)</code> runs <code>id</code> and
       substitutes its output directly into the "hostname" being looked up.</li>
 </ol>
+<p>
+  OS command injection is consistently rated among the most severe web vulnerabilities
+  because a successful exploit doesn't just leak data — it hands the attacker arbitrary
+  code execution on the server itself, at whatever privilege level the app process runs
+  as. In the wild this has been used to install web shells, pivot deeper into internal
+  networks, exfiltrate entire filesystems, and establish persistent backdoors, all
+  starting from a single unsanitized field passed to a shell.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}result = subprocess.run(
+    f"getent hosts {host}",
+    shell=True,
+    capture_output=True,
+    text=True,
+    timeout=10,
+)
+{% endblock %}
+
+{% block secure_code %}result = subprocess.run(
+    ["getent", "hosts", host],
+    shell=False,
+    capture_output=True,
+    text=True,
+    timeout=10,
+)
 {% endblock %}
 
 {% block live_example %}

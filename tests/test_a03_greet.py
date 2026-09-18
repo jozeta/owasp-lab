@@ -32,3 +32,10 @@ def test_greet_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Reflected XSS in Greeting Page" in response.data
     assert b'href="/a03/greet"' in response.data
+
+
+def test_greet_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a03/greet")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"autoescaping" in response.data

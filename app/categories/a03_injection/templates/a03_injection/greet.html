@@ -13,6 +13,15 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Visit the page with <code>?name=&lt;b&gt;test&lt;/b&gt;</code> in the URL. If the word
+  "test" renders bold instead of showing the literal text <code>&lt;b&gt;test&lt;/b&gt;</code>,
+  your input is being interpreted as HTML rather than escaped — that alone confirms the
+  injection point, before ever running JavaScript.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Visit this page with
@@ -25,6 +34,25 @@
       phishing email) containing this payload, executing arbitrary JavaScript in the
       victim's authenticated session.</li>
 </ol>
+<p>
+  Reflected XSS is a favorite in real phishing campaigns precisely because the malicious
+  code lives entirely in a URL, not on the server — an attacker crafts a link, distributes
+  it via email, social media, or a shortened URL, and the victim's own browser executes
+  the payload the moment they click, inside their own authenticated session. This has been
+  used in the wild to steal session cookies, silently perform actions as the victim, and
+  pivot into full account takeover, all without ever compromising the server itself.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}greeting_html = f"<p>Hello, {name}! Welcome back.</p>"
+return render_template("greet.html", greeting_html=greeting_html, name=name)
+# template: {% raw %}{{ greeting_html|safe }}{% endraw %}
+{% endblock %}
+
+{% block secure_code %}# Let Jinja's autoescaping do its job -- never build HTML by hand,
+# never use |safe on user input
+return render_template("greet.html", name=name)
+# template: &lt;p&gt;Hello, {% raw %}{{ name }}{% endraw %}! Welcome back.&lt;/p&gt;
 {% endblock %}
 
 {% block live_example %}
