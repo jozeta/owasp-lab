@@ -43,10 +43,10 @@
 </p>
 {% endblock %}
 
-{% block vulnerable_code %}{% raw %}<div>{{ comment.body|safe }}</div>{% endraw %}
+{% block vulnerable_code %}&lt;div&gt;{% raw %}{{ comment.body|safe }}{% endraw %}&lt;/div&gt;
 {% endblock %}
 
-{% block secure_code %}{% raw %}<div>{{ comment.body }}</div>{% endraw %}
+{% block secure_code %}&lt;div&gt;{% raw %}{{ comment.body }}{% endraw %}&lt;/div&gt;
 {% endblock %}
 
 {% block live_example %}

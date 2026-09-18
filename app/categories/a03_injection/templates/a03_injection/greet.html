@@ -44,7 +44,7 @@
 </p>
 {% endblock %}
 
-{% block vulnerable_code %}greeting_html = f"<p>Hello, {name}! Welcome back.</p>"
+{% block vulnerable_code %}greeting_html = f"&lt;p&gt;Hello, {name}! Welcome back.&lt;/p&gt;"
 return render_template("greet.html", greeting_html=greeting_html, name=name)
 # template: {% raw %}{{ greeting_html|safe }}{% endraw %}
 {% endblock %}
