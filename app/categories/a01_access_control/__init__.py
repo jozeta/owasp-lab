@@ -19,18 +19,21 @@ CATEGORIES.append(
             ExampleNav(
                 id="idor",
                 title="View Another User's Profile (IDOR)",
+                group="Insecure Direct Object References (IDOR)",
                 difficulty="Easy",
                 endpoint="a01_access_control.idor",
             ),
             ExampleNav(
                 id="admin-users",
                 title="Hidden Admin Panel",
+                group="Missing Function-Level Access Control",
                 difficulty="Medium",
                 endpoint="a01_access_control.admin_users",
             ),
             ExampleNav(
                 id="mass-assignment",
                 title="Account Update Role Escalation",
+                group="Mass Assignment",
                 difficulty="Hard",
                 endpoint="a01_access_control.account_update",
             ),

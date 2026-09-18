@@ -19,18 +19,21 @@ CATEGORIES.append(
             ExampleNav(
                 id="unlimited-coupon",
                 title="Unlimited Coupon Reuse",
+                group="Business Logic Abuse",
                 difficulty="Easy",
                 endpoint="a04_insecure_design.coupon_cart",
             ),
             ExampleNav(
                 id="negative-quantity",
                 title="Negative Quantity Price Manipulation",
+                group="Business Logic Abuse",
                 difficulty="Medium",
                 endpoint="a04_insecure_design.quantity_cart",
             ),
             ExampleNav(
                 id="checkout-bypass",
                 title="Multi-Step Checkout Bypass",
+                group="Workflow Bypass",
                 difficulty="Hard",
                 endpoint="a04_insecure_design.checkout_shipping",
             ),

@@ -20,18 +20,21 @@ CATEGORIES.append(
             ExampleNav(
                 id="credential-dump",
                 title="Leaked Credential Dump",
+                group="Weak Hashing",
                 difficulty="Easy",
                 endpoint="a02_crypto_failures.credential_dump",
             ),
             ExampleNav(
                 id="encrypted-notes",
                 title="Weak Encryption (ECB Mode)",
+                group="Weak Encryption",
                 difficulty="Medium",
                 endpoint="a02_crypto_failures.encrypted_notes",
             ),
             ExampleNav(
                 id="reset-token",
                 title="Predictable Password Reset Token",
+                group="Predictable Tokens",
                 difficulty="Hard",
                 endpoint="a02_crypto_failures.forgot_password",
             ),

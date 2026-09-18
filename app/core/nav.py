@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 class ExampleNav:
     id: str
     title: str
+    group: str
     difficulty: str
     endpoint: str
 
@@ -26,6 +27,16 @@ class CategoryNav:
     examples: list = field(default_factory=list)
     seed_fn: object = None
     blurb: str = ""
+
+    def grouped_examples(self):
+        groups = {}
+        order = []
+        for example in self.examples:
+            if example.group not in groups:
+                groups[example.group] = []
+                order.append(example.group)
+            groups[example.group].append(example)
+        return [(name, groups[name]) for name in order]
 
 
 CATEGORIES: list = []

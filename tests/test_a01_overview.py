@@ -12,3 +12,19 @@ def test_a01_registered_in_nav(app):
     a01 = next(c for c in CATEGORIES if c.id == "a01_access_control")
     assert a01.short_id == "A01"
     assert [e.difficulty for e in a01.examples] == ["Easy", "Medium", "Hard"]
+
+
+def test_a01_examples_grouped_by_vulnerability_subtype(app):
+    from app.core.nav import CATEGORIES
+
+    a01 = next(c for c in CATEGORIES if c.id == "a01_access_control")
+    grouped = a01.grouped_examples()
+    assert [name for name, _ in grouped] == [
+        "Insecure Direct Object References (IDOR)",
+        "Missing Function-Level Access Control",
+        "Mass Assignment",
+    ]
+    difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
+    for _, examples in grouped:
+        ranks = [difficulty_rank[e.difficulty] for e in examples]
+        assert ranks == sorted(ranks), "group examples must be Easy-to-Hard"

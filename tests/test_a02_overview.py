@@ -12,3 +12,19 @@ def test_a02_registered_in_nav(app):
     a02 = next(c for c in CATEGORIES if c.id == "a02_crypto_failures")
     assert a02.short_id == "A02"
     assert [e.difficulty for e in a02.examples] == ["Easy", "Medium", "Hard"]
+
+
+def test_a02_examples_grouped_by_vulnerability_subtype(app):
+    from app.core.nav import CATEGORIES
+
+    a02 = next(c for c in CATEGORIES if c.id == "a02_crypto_failures")
+    grouped = a02.grouped_examples()
+    assert [name for name, _ in grouped] == [
+        "Weak Hashing",
+        "Weak Encryption",
+        "Predictable Tokens",
+    ]
+    difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
+    for _, examples in grouped:
+        ranks = [difficulty_rank[e.difficulty] for e in examples]
+        assert ranks == sorted(ranks), "group examples must be Easy-to-Hard"
