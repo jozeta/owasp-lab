@@ -12,6 +12,16 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Log in as any non-admin user (e.g. <strong>alice</strong>) and navigate directly to
+  <code>/a01/admin/users</code> — there's no link to it anywhere in the UI. If the page
+  loads at all instead of redirecting or showing a 403, that alone confirms the route has
+  no role check — you haven't changed anyone's role yet, just confirmed the door is
+  unlocked.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Log in as <strong>alice</strong> (a regular, non-admin user).</li>
@@ -19,6 +29,39 @@
   <li>Pick any user in the table and submit "admin" as their new role.</li>
   <li>That user now has admin privileges, granted by a non-admin session.</li>
 </ol>
+<p>
+  Missing function-level access control is exactly the class of bug that automated
+  scanners and directory-brute-forcers are built to find — tools like <code>ffuf</code> or
+  <code>gobuster</code> can enumerate hundreds of guessable admin-style paths
+  (<code>/admin</code>, <code>/admin/users</code>, <code>/manage</code>,
+  <code>/internal</code>) in seconds against a target, and every one that returns 200
+  instead of 403/404 is a candidate for exactly this kind of unauthorized privilege
+  escalation.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}def admin_users():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    if request.method == "POST":
+        target = db.get_or_404(User, int(request.form["user_id"]))
+        target.role = request.form["role"]
+        db.session.commit()
+    ...
+{% endblock %}
+
+{% block secure_code %}def admin_users():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    if viewer.role != "admin":
+        abort(403)
+    if request.method == "POST":
+        target = db.get_or_404(User, int(request.form["user_id"]))
+        target.role = request.form["role"]
+        db.session.commit()
+    ...
 {% endblock %}
 
 {% block live_example %}

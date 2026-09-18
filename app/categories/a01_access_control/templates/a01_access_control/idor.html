@@ -13,6 +13,17 @@
 <p>Impact here: any logged-in user can read every other user's private notes.</p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Log in, note your own id in the URL (e.g. <code>/a01/profile/1</code>), then change just
+  that number by one (<code>/a01/profile/2</code>) and reload. You don't need to read
+  anything on the page to detect the bug — the mere fact that you get a <code>200 OK</code>
+  with <em>someone else's</em> profile at all, instead of a <code>403</code> or a redirect
+  back to your own, already confirms there's no ownership check. That's the whole probe: no
+  data extraction required to prove the bug exists.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Log in as <strong>alice</strong> using the login page.</li>
@@ -21,6 +32,36 @@
       <code>/a01/profile/4</code>, and reload.</li>
   <li>The page renders that user's private notes even though you never authenticated as them.</li>
 </ol>
+<p>
+  IDOR is one of the most common findings in real-world bug bounty reports precisely
+  because it scales trivially: once you know the check is missing, there's no reason to
+  stop at one record. A short loop turns a single leaked private note into the entire
+  user table:
+</p>
+<pre><code class="language-bash">for id in $(seq 1 50); do
+  curl -s -b "session=&lt;your session cookie&gt;" \
+    http://127.0.0.1:5001/a01/profile/$id \
+    | grep -o 'Private notes:[^&lt;]*'
+done</code></pre>
+<p>
+  Run against a real production app instead of this lab, that same loop is a full
+  customer-data breach — the technique behind several large-scale IDOR disclosures has
+  been exactly this: iterate a numeric ID, harvest whatever comes back.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}def idor(user_id=1):
+    viewer = get_current_user()
+    profile = db.get_or_404(User, user_id)
+    return render_template("idor.html", profile=profile, viewer=viewer)
+{% endblock %}
+
+{% block secure_code %}def idor(user_id=1):
+    viewer = get_current_user()
+    if user_id != viewer.id and not viewer.is_admin:
+        abort(403)
+    profile = db.get_or_404(User, user_id)
+    return render_template("idor.html", profile=profile, viewer=viewer)
 {% endblock %}
 
 {% block live_example %}

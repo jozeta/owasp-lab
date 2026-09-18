@@ -31,3 +31,11 @@ def test_account_update_link_appears_in_overview_once_registered(client):
     assert b"Account Update" in response.data
     assert b"Role Escalation" in response.data
     assert b'href="/a01/account/update' in response.data
+
+
+def test_account_update_shows_vulnerable_vs_secure_code(client, login):
+    login("alice")
+    response = client.get("/a01/account/update")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"ALLOWED_FIELDS" in response.data

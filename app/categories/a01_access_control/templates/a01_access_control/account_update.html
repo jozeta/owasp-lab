@@ -13,6 +13,18 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Submit the visible form normally (display name + bio) — nothing looks wrong, the page
+  just confirms your profile updated. The bug isn't visible in the UI at all; it only
+  shows up when you check what fields the <em>server</em> actually accepts versus what the
+  <em>form</em> exposes. Add one harmless extra field the form doesn't include, e.g.
+  <code>nickname=test</code>, via curl, and confirm your profile object now reflects it
+  even though the browser form never offered that field — that's the detection step: the
+  server applies <em>any</em> submitted field, not just the ones the UI shows you.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <p>Log in as <strong>alice</strong>, then submit the form below with an extra field.
   The browser form only submits the visible fields, so use curl to add
@@ -24,6 +36,31 @@
   -d 'bio=hiking' \
   -d 'role=admin'</code></pre>
 <p>Reload this page afterward — your role now reads <strong>admin</strong>.</p>
+<p>
+  Mass assignment is a well-documented, repeatedly-disclosed bug class — frameworks that
+  blindly bind form data onto model attributes have caused real privilege-escalation
+  incidents when a "hidden" or internal-only field (<code>role</code>,
+  <code>is_admin</code>, <code>account_balance</code>) turns out to be settable by anyone
+  who knows the field name, which is often guessable directly from the model itself or
+  leaked API documentation.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}if request.method == "POST":
+    for key, value in request.form.items():
+        if key == "id":
+            continue
+        setattr(viewer, key, value)
+    db.session.commit()
+{% endblock %}
+
+{% block secure_code %}ALLOWED_FIELDS = {"display_name", "bio"}
+
+if request.method == "POST":
+    for key, value in request.form.items():
+        if key in ALLOWED_FIELDS:
+            setattr(viewer, key, value)
+    db.session.commit()
 {% endblock %}
 
 {% block live_example %}

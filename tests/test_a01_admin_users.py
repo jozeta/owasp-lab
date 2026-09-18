@@ -28,3 +28,11 @@ def test_admin_users_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Hidden Admin Panel" in response.data
     assert b'href="/a01/admin/users' in response.data
+
+
+def test_admin_users_shows_vulnerable_vs_secure_code(client, login):
+    login("alice")
+    response = client.get("/a01/admin/users")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b'viewer.role != "admin"' in response.data

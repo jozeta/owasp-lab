@@ -45,3 +45,19 @@ def test_idor_link_appears_in_overview_once_registered(client):
     assert b"View Another User" in response.data
     assert b"Profile (IDOR)" in response.data
     assert b'href="/a01/profile' in response.data
+
+
+def test_idor_shows_vulnerable_vs_secure_with_teaching_text_hidden(app, client, login):
+    from app.core.models import Settings
+
+    login("alice")
+    with app.app_context():
+        settings = Settings.get()
+        settings.show_explanations = False
+        settings.show_exploit_instructions = False
+        db.session.commit()
+
+    response = client.get("/a01/profile/1")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b"abort(403)" in response.data
