@@ -1,0 +1,62 @@
+{% extends "core/overview_base.html" %}
+{% set category_short_id = "A04" %}
+{% set category_title = "Insecure Design" %}
+{% block title %}A04: Insecure Design{% endblock %}
+
+{% block what_it_is %}
+<p>
+  Insecure Design covers flaws that exist in the blueprint of an application, not just
+  bugs in its implementation — missing rate limits, business rules that were never
+  actually enforced on the server, and multi-step workflows that assume users (and
+  attackers) will only ever interact with them in the intended order.
+</p>
+{% endblock %}
+
+{% block why_it_matters %}
+<p>
+  Unlike a typo'd SQL query or a missing escape call, these flaws often can't be patched
+  with a single line of code — they require rethinking how the feature was designed in
+  the first place: what state the server tracks, what it validates, and what it assumes
+  the client will never attempt.
+</p>
+{% endblock %}
+
+{% block how_exploited %}
+<p>
+  Attackers look for the gap between what a UI shows and what the server actually
+  enforces: a coupon field with no usage counter behind it, a quantity input with no
+  lower bound, a "confirm" page reachable without ever completing the steps before it.
+  None of these require special tools — just noticing what the server forgot to check.
+</p>
+{% endblock %}
+
+{% block attack_flow_diagram %}
+sequenceDiagram
+    participant Attacker
+    participant App as Vulnerable App
+    Attacker->>App: Repeat an action, submit an out-of-range value, or skip a step
+    Note over App: No server-side usage limit, bounds check, or workflow-state enforcement
+    App-->>Attacker: Accepts it anyway, as if every rule had been followed
+{% endblock %}
+
+{% block real_world_impact %}
+<p>
+  Real incidents in this category include discount codes stacked into free orders at
+  scale, shopping carts manipulated into negative totals that issued real refunds, and
+  checkout flows completed without payment ever being captured — all without a single
+  line of "hacking" in the traditional sense.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/checkout/confirm")
+def confirm():
+    return render_template("confirm.html")
+    # No check that payment actually happened first.
+{% endblock %}
+
+{% block secure_code %}@app.route("/checkout/confirm")
+def confirm():
+    if not session.get("payment_completed"):
+        abort(403)
+    return render_template("confirm.html")
+{% endblock %}
