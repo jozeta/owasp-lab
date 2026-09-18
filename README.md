@@ -54,6 +54,14 @@ count stored only in your session — isn't part of that database and is cleared
 that example's own "Start over" control (where provided) or by clearing your browser's
 cookies for this site.
 
+## More pages
+
+- **Tools** (`/tools`) — what tools are useful for which kinds of exercises, with
+  download links.
+- **About** (`/about`) — what this app is, its infrastructure, and its safety model.
+- A 🌓 **Theme** button in the top nav toggles dark mode; the choice is remembered
+  per browser.
+
 ## Category summary
 
 | Category | Status | Examples |
