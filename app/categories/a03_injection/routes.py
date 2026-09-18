@@ -34,3 +34,14 @@ def login():
         logged_in_as=session.get("a03_login_as"),
         is_admin=session.get("a03_login_is_admin", False),
     )
+
+
+@a03_bp.route("/search")
+def search():
+    q = request.args.get("q", "")
+    results = []
+    if q:
+        # VULNERABLE: raw string-concatenated SQL, no parameterization
+        query = f"SELECT id, username FROM injection_accounts WHERE username LIKE '%{q}%'"
+        results = db.session.execute(text(query)).all()
+    return render_template("a03_injection/search.html", q=q, results=results)

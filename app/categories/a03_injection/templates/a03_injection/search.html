@@ -1,0 +1,46 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "UNION-Based SQL Injection Data Exfiltration" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This account-search box builds its query by concatenating your search term directly
+  into a <code>LIKE '%...%'</code> clause. Because the query always selects exactly two
+  columns (an id and a username), an attacker who can guess or discover that column count
+  can append a <code>UNION SELECT</code> to pull rows from a completely different table —
+  one never meant to be exposed here.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Search for something normal first, e.g. <code>alice</code>, to see the expected
+      two-column output.</li>
+  <li>Now search for:
+      <code>' UNION SELECT id, value FROM a03_secrets -- </code></li>
+  <li>The results table now shows rows from the <code>a03_secrets</code> table — internal
+      data this search box was never supposed to expose.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<form method="get">
+  <div class="input-group mb-3">
+    <input type="text" class="form-control" name="q" value="{{ q }}" placeholder="Search accounts by username">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </div>
+</form>
+{% if results %}
+<table class="table">
+  <thead><tr><th>id</th><th>username</th></tr></thead>
+  <tbody>
+    {% for row in results %}
+    <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% elif q %}
+<p class="text-muted">No results.</p>
+{% endif %}
+{% endblock %}
