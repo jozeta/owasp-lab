@@ -1,0 +1,48 @@
+{% extends "core/base.html" %}
+{% block title %}About{% endblock %}
+
+{% block content %}
+<h1>About This Lab</h1>
+
+<section class="mb-4">
+  <h2>What This Is</h2>
+  <p>
+    A self-contained, intentionally vulnerable training lab teaching the OWASP
+    Top 10 (2021) through working, exploitable examples — modeled after OWASP
+    WebGoat, Juice Shop, and DVWA. The vulnerabilities are the deliverable:
+    every example is a real, working exploit, not a simulation, so you can
+    build a genuine feel for how these bugs are found and abused.
+  </p>
+</section>
+
+<section class="mb-4">
+  <h2>Infrastructure</h2>
+  <p>
+    Flask (Python) serves server-rendered Jinja2 templates styled with
+    Bootstrap 5 (vendored locally, no CDN). Data is stored in PostgreSQL via
+    SQLAlchemy. The whole stack is packaged with Docker and docker-compose,
+    running as a non-root container.
+  </p>
+</section>
+
+<section class="mb-4">
+  <h2>Safety Model</h2>
+  <p>
+    The app binds only to <code>127.0.0.1</code> on the host — PostgreSQL
+    publishes no host port at all. The container runs as a non-root user, and
+    every account and data row is synthetic. If the app itself breaks, visit
+    <code>/force-reset</code> directly to reset the database and clear your
+    session without depending on any other part of the app working.
+  </p>
+</section>
+
+<section>
+  <h2>Why Hiding the Teaching Text Doesn't Disable the Bug</h2>
+  <p>
+    Settings lets you hide each example's Explanation and Exploitation text so
+    you can attempt blind exploitation, the way a real attacker would
+    encounter these bugs with no walkthrough at all. Hiding the teaching text
+    never disables the underlying vulnerability — only the walkthrough.
+  </p>
+</section>
+{% endblock %}

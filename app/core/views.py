@@ -76,3 +76,8 @@ def force_reset():
 @core_bp.route("/tools")
 def tools_page():
     return render_template("core/tools.html")
+
+
+@core_bp.route("/about")
+def about_page():
+    return render_template("core/about.html")

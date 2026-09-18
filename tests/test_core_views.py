@@ -142,3 +142,12 @@ def test_tools_page_loads(client):
     assert "sqlmap" in body
     assert "curl" in body
     assert 'href="https://curl.se/download.html"' in body
+
+
+def test_about_page_loads(client):
+    response = client.get("/about")
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert "WebGoat" in body
+    assert "PostgreSQL" in body
+    assert "127.0.0.1" in body
