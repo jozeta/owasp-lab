@@ -33,6 +33,10 @@ def create_app(config_object=None):
 
     app.register_blueprint(a02_bp)
 
+    from app.categories.a03_injection import a03_bp
+
+    app.register_blueprint(a03_bp)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}
