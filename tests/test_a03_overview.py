@@ -6,6 +6,16 @@ def test_a03_overview_renders(client):
     assert b"language-python" in response.data
 
 
+def test_a03_overview_mermaid_diagram_has_no_embedded_html_tags(client):
+    response = client.get("/a03/")
+    html = response.data.decode()
+    start = html.index('<div class="mermaid">')
+    end = html.index("</div>", start)
+    diagram_source = html[start:end]
+    assert "<script" not in diagram_source.lower()
+    assert "Unauthorized data, command output, or script execution" in diagram_source
+
+
 def test_a03_registered_in_nav(app):
     from app.core.nav import CATEGORIES
 

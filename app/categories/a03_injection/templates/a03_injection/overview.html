@@ -37,7 +37,7 @@ sequenceDiagram
     participant Attacker
     participant App as Vulnerable App
     participant Interpreter as SQL / Shell / Browser
-    Attacker->>App: Input containing interpreter syntax (', ;, <script>)
+    Attacker->>App: Input containing interpreter syntax (quotes, semicolons, HTML tags)
     App->>Interpreter: Concatenates input directly into the command
     Note over Interpreter: No boundary between data and instructions
     Interpreter-->>App: Executes attacker's injected logic

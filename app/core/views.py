@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, session, url_for
 
 from app.core.models import Settings, User
 from app.core.seed import reset_database
@@ -51,3 +51,23 @@ def reset_lab():
     reset_database(current_app)
     flash("Lab reset to clean state.")
     return redirect(url_for("core.settings_page"))
+
+
+@core_bp.route("/force-reset")
+def force_reset():
+    """Safety-net reset reachable by URL alone.
+
+    Deliberately GET, self-contained (no template inheritance), and requires
+    no working nav/context processor -- if the app itself is broken and the
+    normal Settings page can't be reached, this route still resets the DB
+    and clears the session.
+    """
+    reset_database(current_app)
+    session.clear()
+    return Response(
+        "<!doctype html><title>Lab reset</title>"
+        "<p>The lab has been force-reset: the database was restored to its "
+        "clean seeded state and your session was cleared.</p>"
+        '<p><a href="/">Return to the lab</a></p>',
+        mimetype="text/html",
+    )
