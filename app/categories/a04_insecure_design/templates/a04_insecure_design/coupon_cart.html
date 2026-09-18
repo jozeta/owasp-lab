@@ -1,0 +1,43 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Unlimited Coupon Reuse" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A04{% endblock %}
+
+{% block explanation %}
+<p>
+  This cart accepts a one-time "WELCOME10" discount code — but the server never records
+  that the code has already been used. There's no rate limiting, no usage counter, no
+  "already applied" check of any kind. Every time you submit the same code, it stacks
+  another discount on top of the last one.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Enter the coupon code <code>WELCOME10</code> and submit it.</li>
+  <li>Submit the exact same code again. And again.</li>
+  <li>Each submission knocks another $5.00 off the price — keep going and the
+      $29.99 mouse becomes free.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">{{ product_name }}</h5>
+    <p class="card-text">Price: {{ product_price_display }}</p>
+    <p class="card-text">Coupon applied {{ uses }} time(s) — total discount {{ discount_display }}</p>
+    <p class="card-text"><strong>Total: {{ total_display }}</strong></p>
+  </div>
+</div>
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+<form method="post" class="d-flex gap-2 mb-2">
+  <input type="text" class="form-control" name="code" placeholder="Coupon code">
+  <button type="submit" class="btn btn-primary">Apply</button>
+</form>
+<form method="post" action="{{ url_for('a04_insecure_design.coupon_cart_reset') }}">
+  <button type="submit" class="btn btn-outline-secondary btn-sm">Start over</button>
+</form>
+{% endblock %}
