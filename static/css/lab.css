@@ -14,3 +14,11 @@ pre code {
   background-color: var(--bs-tertiary-bg) !important;
   border-color: var(--bs-border-color) !important;
 }
+
+[data-bs-theme="dark"] #sidebar .nav-link {
+  color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] #sidebar .nav-link.active {
+  color: var(--bs-link-color);
+}
