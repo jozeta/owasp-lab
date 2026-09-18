@@ -1,0 +1,38 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "OS Command Injection in Host Lookup Tool" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This tool resolves a hostname by shelling out to the system's <code>getent hosts</code>
+  command, with the hostname concatenated directly into the shell string and
+  <code>shell=True</code> handing the whole thing to <code>/bin/sh</code>. Because the
+  input is unescaped, shell metacharacters — <code>;</code>, <code>&amp;&amp;</code>,
+  <code>$(...)</code> — let you run entirely different commands.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Try a normal lookup first, e.g. <code>localhost</code>.</li>
+  <li>Now try: <code>localhost; whoami</code></li>
+  <li>The output includes the result of <code>whoami</code> appended after the lookup —
+      you've executed an arbitrary command on the server, running as whatever user the
+      app container uses.</li>
+  <li>Command substitution also works: <code>$(id)</code> runs <code>id</code> and
+      substitutes its output directly into the "hostname" being looked up.</li>
+</ol>
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="input-group mb-3">
+    <input type="text" class="form-control" name="host" value="{{ host }}" placeholder="e.g. localhost">
+    <button type="submit" class="btn btn-primary">Look up</button>
+  </div>
+</form>
+{% if output is not none %}
+<pre>{{ output }}</pre>
+{% endif %}
+{% endblock %}

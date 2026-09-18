@@ -1,3 +1,5 @@
+import subprocess
+
 from flask import render_template, request, session
 from sqlalchemy import text
 
@@ -65,3 +67,24 @@ def check_username():
         count = db.session.execute(text(query)).scalar()
         exists = bool(count)
     return render_template("a03_injection/check_username.html", username=username, exists=exists)
+
+
+@a03_bp.route("/host-lookup", methods=["GET", "POST"])
+def host_lookup():
+    output = None
+    host = ""
+    if request.method == "POST":
+        host = request.form.get("host", "")
+        try:
+            # VULNERABLE: shell=True with unsanitized, concatenated user input
+            result = subprocess.run(
+                f"getent hosts {host}",
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            output = result.stdout or result.stderr or "(no output)"
+        except subprocess.TimeoutExpired:
+            output = "(lookup timed out)"
+    return render_template("a03_injection/host_lookup.html", host=host, output=output)
