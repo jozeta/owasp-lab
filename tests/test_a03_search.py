@@ -40,3 +40,10 @@ def test_search_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"UNION-Based SQL Injection Data Exfiltration" in response.data
     assert b'href="/a03/search"' in response.data
+
+
+def test_search_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a03/search")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b":pattern" in response.data

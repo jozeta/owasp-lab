@@ -13,6 +13,16 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Try logging in with a username containing a single quote, e.g. <code>o'brien</code>, and
+  any password. A properly parameterized query treats the quote as a literal character and
+  just fails the login normally. This one throws a database syntax error instead (or
+  behaves unexpectedly) — a single quote is enough to prove your input reaches raw SQL, no
+  bypass required yet.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>In the username field, enter: <code>' OR '1'='1' -- </code></li>
@@ -23,6 +33,27 @@
   <li>To log in specifically as <code>admin</code> without knowing the password, try
       <code>admin' -- </code> as the username instead.</li>
 </ol>
+<p>
+  Authentication bypass via SQL injection is one of the most consequential injection
+  outcomes because it skips credential verification entirely — real-world incidents using
+  this exact <code>' OR '1'='1'</code> class of payload have led to full administrative
+  access on production systems with no valid credentials at all, and the payload is so
+  well-known it's one of the first things automated scanners and bots try against any
+  login form they find.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}query = (
+    f"SELECT * FROM injection_accounts "
+    f"WHERE username = '{username}' AND password = '{password}'"
+)
+row = db.session.execute(text(query)).mappings().first()
+{% endblock %}
+
+{% block secure_code %}query = text(
+    "SELECT * FROM injection_accounts WHERE username = :username AND password = :password"
+)
+row = db.session.execute(query, {"username": username, "password": password}).mappings().first()
 {% endblock %}
 
 {% block live_example %}

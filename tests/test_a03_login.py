@@ -68,3 +68,10 @@ def test_login_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Authentication Bypass via SQL Injection" in response.data
     assert b'href="/a03/login"' in response.data
+
+
+def test_login_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a03/login")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b":username AND password = :password" in response.data

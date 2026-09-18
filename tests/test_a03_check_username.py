@@ -53,3 +53,10 @@ def test_check_username_link_appears_in_overview_once_registered(client):
     assert response.status_code == 200
     assert b"Blind Time-Based SQL Injection" in response.data
     assert b'href="/a03/check-username"' in response.data
+
+
+def test_check_username_shows_vulnerable_vs_secure_code(client):
+    response = client.get("/a03/check-username")
+    assert response.status_code == 200
+    assert b"Vulnerable vs. Secure" in response.data
+    assert b":username" in response.data

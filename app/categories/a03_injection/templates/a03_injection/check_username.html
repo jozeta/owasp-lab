@@ -15,6 +15,16 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Enter a single quote on its own, <code>'</code>, and submit. A parameterized query would
+  just search for a username containing a literal quote and find nothing unusual; this one
+  throws a database error (or misbehaves) because the quote breaks out of the string
+  literal in the raw SQL. That single character — no payload, no timing, no data read — is
+  enough to confirm the input reaches the query unescaped.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Enter a username that definitely doesn't exist, e.g. <code>nobody</code>, and note
@@ -32,6 +42,23 @@
   when running against the real Postgres-backed app under <code>docker compose up</code>,
   not in the lab's fast automated tests (which run against SQLite for speed).
 </p>
+<p>
+  Blind and time-based SQL injection is the technique behind fully automated database
+  takeovers in the wild — tools exist specifically because extracting a database one bit
+  at a time by hand doesn't scale to a real schema. A single confirmed timing injection
+  point like this one is often enough to justify pointing <code>sqlmap</code> at the
+  endpoint and letting it enumerate the entire database, table by table, column by column,
+  unattended — turning one manual timing test into a complete data exfiltration with no
+  further human input required.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}query = f"SELECT COUNT(*) FROM injection_accounts WHERE username = '{username}'"
+count = db.session.execute(text(query)).scalar()
+{% endblock %}
+
+{% block secure_code %}query = text("SELECT COUNT(*) FROM injection_accounts WHERE username = :username")
+count = db.session.execute(query, {"username": username}).scalar()
 {% endblock %}
 
 {% block live_example %}

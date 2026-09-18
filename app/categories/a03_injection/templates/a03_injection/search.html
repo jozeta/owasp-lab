@@ -13,6 +13,15 @@
 </p>
 {% endblock %}
 
+{% block detect %}
+<p>
+  Search for a term containing a single quote, e.g. <code>o'brien</code>. A properly
+  parameterized <code>LIKE</code> query just returns zero matches for that literal string;
+  this one throws a syntax error because your quote breaks out of the string literal —
+  confirming the search term reaches raw SQL before you ever attempt a UNION.
+</p>
+{% endblock %}
+
 {% block exploitation %}
 <ol>
   <li>Search for something normal first, e.g. <code>alice</code>, to see the expected
@@ -22,6 +31,23 @@
   <li>The results table now shows rows from the <code>a03_secrets</code> table — internal
       data this search box was never supposed to expose.</li>
 </ol>
+<p>
+  UNION-based injection is the classic technique for turning one leaky search box into
+  full database exfiltration — once an attacker determines the column count and types (by
+  trial and error, e.g. incrementing the number of <code>NULL</code>s until the UNION
+  succeeds), they can pull data from <em>any</em> table the database user can read, not
+  just the one the search was designed for. Real-world breaches using this exact technique
+  have exposed entire customer databases — usernames, password hashes, payment tokens —
+  through search boxes that looked completely unrelated to sensitive data.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}query = f"SELECT id, username FROM injection_accounts WHERE username LIKE '%{q}%'"
+results = db.session.execute(text(query)).all()
+{% endblock %}
+
+{% block secure_code %}query = text("SELECT id, username FROM injection_accounts WHERE username LIKE :pattern")
+results = db.session.execute(query, {"pattern": f"%{q}%"}).all()
 {% endblock %}
 
 {% block live_example %}
