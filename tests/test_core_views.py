@@ -121,3 +121,15 @@ def test_home_page_category_links_include_tooltip_attributes(client):
     body = response.data.decode()
     assert 'data-bs-toggle="tooltip"' in body
     assert "Access control that is not enforced on the server" in body
+
+
+def test_home_page_includes_theme_toggle_button(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert 'id="theme-toggle"' in response.data.decode()
+
+
+def test_html_tag_does_not_hardcode_light_theme(client):
+    response = client.get("/")
+    body = response.data.decode()
+    assert 'data-bs-theme="light"' not in body

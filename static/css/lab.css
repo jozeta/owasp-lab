@@ -9,3 +9,8 @@
 pre code {
   font-size: 0.85rem;
 }
+
+[data-bs-theme="dark"] #sidebar {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+}
