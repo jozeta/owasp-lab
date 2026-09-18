@@ -29,6 +29,10 @@ def create_app(config_object=None):
 
     app.register_blueprint(a01_bp)
 
+    from app.categories.a02_crypto_failures import a02_bp
+
+    app.register_blueprint(a02_bp)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}
