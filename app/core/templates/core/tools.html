@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+{% block title %}Tools{% endblock %}
+
+{% block content %}
+<h1>Tools</h1>
+<p>
+  You won't need every tool below for every exercise — most examples are fully
+  exploitable from the browser alone. Where an exercise benefits from one of
+  these, its Exploitation section calls it out by name.
+</p>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>What it's for</th>
+      <th>Download</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Browser DevTools</td>
+      <td>Inspect requests/responses, cookies, and page source — the starting point for almost every exercise.</td>
+      <td>Built into Chrome, Firefox, Edge, and Safari — no download needed.</td>
+    </tr>
+    <tr>
+      <td>curl</td>
+      <td>Send crafted HTTP requests from the command line — essential for exploits that need custom headers, methods, or raw payloads.</td>
+      <td><a href="https://curl.se/download.html">curl.se/download.html</a></td>
+    </tr>
+    <tr>
+      <td>An intercepting proxy (Burp Suite Community or OWASP ZAP)</td>
+      <td>Inspect and modify requests/responses in flight; replay and fuzz payloads.</td>
+      <td>
+        <a href="https://portswigger.net/burp/communitydownload">Burp Suite Community</a>
+        /
+        <a href="https://www.zaproxy.org/download/">OWASP ZAP</a>
+      </td>
+    </tr>
+    <tr>
+      <td>sqlmap</td>
+      <td>Automates detecting and exploiting SQL injection — useful once you understand a vulnerability manually and want to see full automated exploitation.</td>
+      <td><a href="https://github.com/sqlmapproject/sqlmap">github.com/sqlmapproject/sqlmap</a></td>
+    </tr>
+    <tr>
+      <td>netcat / ncat</td>
+      <td>Low-level TCP interaction — useful for command-injection exercises that involve reverse or bind shells.</td>
+      <td><a href="https://nmap.org/ncat/">nmap.org/ncat</a></td>
+    </tr>
+    <tr>
+      <td>Python 3</td>
+      <td>Write short scripts to compute payloads (e.g. hashing a reset token offline) or automate an exploit.</td>
+      <td><a href="https://www.python.org/downloads/">python.org/downloads</a></td>
+    </tr>
+    <tr>
+      <td>A REST client (Postman or Insomnia)</td>
+      <td>Build and save HTTP requests with a GUI, as an alternative to curl.</td>
+      <td>
+        <a href="https://www.postman.com/downloads/">Postman</a>
+        /
+        <a href="https://insomnia.rest/download">Insomnia</a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+{% endblock %}

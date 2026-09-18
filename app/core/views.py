@@ -71,3 +71,8 @@ def force_reset():
         '<p><a href="/">Return to the lab</a></p>',
         mimetype="text/html",
     )
+
+
+@core_bp.route("/tools")
+def tools_page():
+    return render_template("core/tools.html")

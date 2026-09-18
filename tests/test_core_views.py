@@ -133,3 +133,12 @@ def test_html_tag_does_not_hardcode_light_theme(client):
     response = client.get("/")
     body = response.data.decode()
     assert 'data-bs-theme="light"' not in body
+
+
+def test_tools_page_loads(client):
+    response = client.get("/tools")
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert "sqlmap" in body
+    assert "curl" in body
+    assert 'href="https://curl.se/download.html"' in body
