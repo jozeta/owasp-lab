@@ -29,7 +29,7 @@
 <pre><code class="language-xml">&lt;!DOCTYPE status [&lt;!ENTITY probe SYSTEM "http://127.0.0.1:5000/healthz"&gt;]&gt;
 &lt;status&gt;&lt;message&gt;&amp;probe;&lt;/message&gt;&lt;/status&gt;</code></pre>
 <p>
-  If the response includes <code>{"status": "ok"}</code> — the exact body
+  If the response includes <code>{"status":"ok"}</code> — the exact body
   <code>/healthz</code> returns — you've confirmed the server itself issued
   an outbound HTTP request on your behalf, before trying to reach anything
   more sensitive.
@@ -39,7 +39,7 @@
 {% block exploitation %}
 <ol>
   <li>Submit the XML from the Detect step above.</li>
-  <li>The response shows <code>{"status": "ok"}</code> — content that only
+  <li>The response shows <code>{"status":"ok"}</code> — content that only
       exists on this server's own internal network, fetched entirely
       server-side. Your browser never made that request; the vulnerable
       parser did.</li>
@@ -60,7 +60,7 @@
 </p>
 {% endblock %}
 
-{% block vulnerable_code %}parser = etree.XMLParser(resolve_entities=True, no_network=False)
+{% block vulnerable_code %}parser = etree.XMLParser(resolve_entities=True)
 parser.resolvers.add(_HttpFetchingResolver())  # fetches any http(s) URI
 tree = etree.fromstring(xml_input.encode(), parser=parser)
 {% endblock %}

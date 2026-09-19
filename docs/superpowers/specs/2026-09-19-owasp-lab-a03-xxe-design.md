@@ -101,7 +101,7 @@ And two new route pairs:
   `file://<XXE_SECRET_PATH>`, referenced inside `<name>`, displays the
   secret file's contents instead.
 - `GET/POST /a03/xxe-ssrf` (Hard) — same vulnerable parsing pattern, same
-  `<contact><name>` shape, but the exploitation payload's entity targets
+  `<status><message>` shape, but the exploitation payload's entity targets
   `http://127.0.0.1:5000/healthz` instead of a file, and the response
   displays the fetched content (`{"status": "ok"}`), proving the server
   itself issued an HTTP request the attacker directed.
@@ -135,6 +135,12 @@ first-occurrence ordering.
 available for `python:3.12-slim` on the standard PyPI index, verified in
 the implementation plan's final Docker task the same way every prior
 dependency addition in this project was verified.
+
+> **Amendment (post-implementation):** `Dockerfile`'s gunicorn worker
+> count was bumped from 2 to 4 during implementation — the SSRF example's
+> self-referential HTTP request was found to deadlock under normal
+> browser concurrency with only 2 workers. See the implementation plan's
+> SDD ledger for the full root-cause and verification.
 
 ## Testing
 

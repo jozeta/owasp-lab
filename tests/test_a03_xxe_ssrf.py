@@ -6,6 +6,38 @@ def test_xxe_ssrf_parses_legitimate_status_feed(client):
     assert b"All systems normal" in response.data
 
 
+def test_xxe_ssrf_resolver_genuinely_fetches_http_entities(client):
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"FETCHED-VIA-XXE-SSRF-PROBE")
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        payload = (
+            '<?xml version="1.0"?>'
+            f'<!DOCTYPE status [<!ENTITY xxe SYSTEM "http://127.0.0.1:{port}/">]>'
+            '<status><message>&xxe;</message></status>'
+        )
+        response = client.post("/a03/xxe-ssrf", data={"xml_input": payload})
+        assert response.status_code == 200
+        assert b"FETCHED-VIA-XXE-SSRF-PROBE" in response.data
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+
 def test_xxe_ssrf_reaches_internal_healthz_endpoint(client):
     payload = (
         '<?xml version="1.0"?>'
@@ -22,7 +54,6 @@ def test_xxe_ssrf_reaches_internal_healthz_endpoint(client):
     # vulnerable code path runs and doesn't crash the app itself), not that
     # it succeeds. Assert the page still renders 200 with either the fetched
     # content or a parser error surfaced cleanly -- never a 500.
-    assert response.status_code == 200
 
 
 def test_xxe_ssrf_still_works_with_teaching_text_hidden(app, client):

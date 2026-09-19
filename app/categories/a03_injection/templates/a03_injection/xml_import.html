@@ -16,16 +16,21 @@
 
 {% block detect %}
 <p>
-  Submit a <code>&lt;!DOCTYPE&gt;</code> declaring a harmless internal
-  entity that just repeats a string:
+  Submit a <code>&lt;!DOCTYPE&gt;</code> declaring an external entity that
+  reads a small, harmless file every Linux system has —
+  <code>/etc/hostname</code>:
 </p>
-<pre><code class="language-xml">&lt;!DOCTYPE contact [&lt;!ENTITY test "probe-ok"&gt;]&gt;
+<pre><code class="language-xml">&lt;!DOCTYPE contact [&lt;!ENTITY test SYSTEM "file:///etc/hostname"&gt;]&gt;
 &lt;contact&gt;&lt;name&gt;&amp;test;&lt;/name&gt;&lt;/contact&gt;</code></pre>
 <p>
-  If the response shows <code>probe-ok</code> instead of an error, you've
-  confirmed the parser expands entities at all — external file access is the
-  next, more dangerous step, not something you need to try yet to prove the
-  bug exists.
+  This is a discriminating test: a vulnerable parser (<code>resolve_entities=True</code>)
+  expands the entity and shows the container's hostname; a correctly hardened
+  parser (<code>resolve_entities=False</code>) raises an error instead,
+  because it never resolves <em>external</em> entities at all — only a
+  vulnerable parser will show real file content here. (An internal entity
+  like <code>&lt;!ENTITY test "probe-ok"&gt;</code> would NOT discriminate:
+  both parsers substitute internal-subset entities regardless of
+  <code>resolve_entities</code>, so it can't prove the bug exists.)
 </p>
 {% endblock %}
 
@@ -34,7 +39,7 @@
   <li>Submit the following XML:
       <pre><code class="language-xml">&lt;?xml version="1.0"?&gt;
 &lt;!DOCTYPE contact [
-  &lt;!ENTITY xxe SYSTEM "file:///app/app/categories/a03_injection/xxe_secret.txt"&gt;
+  &lt;!ENTITY xxe SYSTEM "file://{{ secret_path }}"&gt;
 ]&gt;
 &lt;contact&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;/contact&gt;</code></pre>
   </li>

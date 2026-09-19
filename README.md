@@ -18,7 +18,8 @@ Currently implemented: **A01 Broken Access Control** (IDOR, missing function-lev
 authorization, mass assignment / role escalation), **A02 Cryptographic Failures**
 (leaked credential dump, weak ECB encryption, predictable password-reset token),
 **A03 Injection** (SQL injection auth bypass, UNION-based exfiltration, reflected XSS,
-blind time-based SQLi, OS command injection, stored XSS), and **A04 Insecure Design**
+blind time-based SQLi, OS command injection, stored XSS, XXE file disclosure, XXE SSRF),
+and **A04 Insecure Design**
 (unlimited coupon reuse, negative-quantity price manipulation, multi-step checkout
 bypass). Remaining categories (A05–A10) are tracked separately and follow the same
 pattern.
@@ -68,7 +69,7 @@ cookies for this site.
 | --- | --- | --- |
 | A01 Broken Access Control | Implemented | IDOR (Easy), Hidden Admin Panel (Medium), Mass Assignment Role Escalation (Hard) |
 | A02 Cryptographic Failures | Implemented | Leaked Credential Dump (Easy), Weak Encryption / ECB Mode (Medium), Predictable Password Reset Token (Hard) |
-| A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), Stored XSS (Hard) |
+| A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard) |
 | A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Negative Quantity Price Manipulation (Medium), Multi-Step Checkout Bypass (Hard) |
 | A05–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
 

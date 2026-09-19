@@ -15,4 +15,6 @@ USER appuser
 
 EXPOSE 5000
 
+# 4 workers, not 2: /a03/xxe-ssrf makes a self-referential HTTP request and
+# needs a free worker while its own is blocked handling the request.
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--preload", "--config", "gunicorn.conf.py", "wsgi:app"]

@@ -131,11 +131,20 @@ def xml_import():
             parser = etree.XMLParser(resolve_entities=True)
             tree = etree.fromstring(xml_input.encode(), parser=parser)
             name_el = tree.find("name")
-            result = name_el.text if name_el is not None else "(no <name> element found)"
+            if name_el is None:
+                result = "(no <name> element found)"
+            elif name_el.text:
+                result = name_el.text
+            else:
+                result = "(empty)"
         except Exception as e:
             error = str(e)
     return render_template(
-        "a03_injection/xml_import.html", xml_input=xml_input, result=result, error=error
+        "a03_injection/xml_import.html",
+        xml_input=xml_input,
+        result=result,
+        error=error,
+        secret_path=XXE_SECRET_PATH,
     )
 
 
@@ -153,11 +162,16 @@ def xxe_ssrf():
             # built-in HTTP transport is disabled by default in this environment --
             # this mirrors a real-world pattern: apps add custom entity resolvers for
             # legitimate reasons and forget to scope them to safe schemes.
-            parser = etree.XMLParser(resolve_entities=True, no_network=False)
+            parser = etree.XMLParser(resolve_entities=True)
             parser.resolvers.add(_HttpFetchingResolver())
             tree = etree.fromstring(xml_input.encode(), parser=parser)
             message_el = tree.find("message")
-            result = message_el.text if message_el is not None else "(no <message> element found)"
+            if message_el is None:
+                result = "(no <message> element found)"
+            elif message_el.text:
+                result = message_el.text
+            else:
+                result = "(empty)"
         except Exception as e:
             error = str(e)
     return render_template(
