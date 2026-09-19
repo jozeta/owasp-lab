@@ -1,5 +1,6 @@
 import os
 import subprocess
+import urllib.request
 
 from flask import redirect, render_template, request, session, url_for
 from lxml import etree
@@ -10,6 +11,18 @@ from app.categories.a03_injection.models import Comment, InjectionAccount
 from app.extensions import db
 
 XXE_SECRET_PATH = os.path.join(os.path.dirname(__file__), "xxe_secret.txt")
+
+
+class _HttpFetchingResolver(etree.Resolver):
+    """Fetches http(s) SYSTEM URIs directly, since PyPI's lxml wheels ship
+    a libxml2 build with HTTP transport disabled by default. Falls through
+    to libxml2's default resolution (e.g. file://) for anything else."""
+
+    def resolve(self, url, pubid, context):
+        if url.startswith("http://") or url.startswith("https://"):
+            data = urllib.request.urlopen(url, timeout=5).read()
+            return self.resolve_string(data, context)
+        return None
 
 
 @a03_bp.route("/")
@@ -136,7 +149,12 @@ def xxe_ssrf():
         try:
             # VULNERABLE: same resolve_entities=True flaw as xml_import(), reused
             # in a different feature -- here the entity target is a URL, not a file.
-            parser = etree.XMLParser(resolve_entities=True)
+            # A custom resolver is registered to fetch http(s) URIs, since libxml2's
+            # built-in HTTP transport is disabled by default in this environment --
+            # this mirrors a real-world pattern: apps add custom entity resolvers for
+            # legitimate reasons and forget to scope them to safe schemes.
+            parser = etree.XMLParser(resolve_entities=True, no_network=False)
+            parser.resolvers.add(_HttpFetchingResolver())
             tree = etree.fromstring(xml_input.encode(), parser=parser)
             message_el = tree.find("message")
             result = message_el.text if message_el is not None else "(no <message> element found)"

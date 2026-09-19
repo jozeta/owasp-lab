@@ -13,6 +13,11 @@
   attacker can point it at an internal network address instead of a file
   path, turning the server itself into an unwitting HTTP client under the
   attacker's control — this is Server-Side Request Forgery (SSRF) via XXE.
+  Modern <code>lxml</code>/libxml2 builds disable built-in HTTP fetching
+  for external entities by default (a hardening measure) — but this app
+  registers a custom entity resolver to support other legitimate use cases,
+  and that resolver doesn't restrict which URI schemes it will fetch,
+  reintroducing the exact same SSRF primitive.
 </p>
 {% endblock %}
 
@@ -55,7 +60,8 @@
 </p>
 {% endblock %}
 
-{% block vulnerable_code %}parser = etree.XMLParser(resolve_entities=True)
+{% block vulnerable_code %}parser = etree.XMLParser(resolve_entities=True, no_network=False)
+parser.resolvers.add(_HttpFetchingResolver())  # fetches any http(s) URI
 tree = etree.fromstring(xml_input.encode(), parser=parser)
 {% endblock %}
 
