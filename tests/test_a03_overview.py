@@ -26,6 +26,7 @@ def test_a03_registered_in_nav(app):
         "Medium",
         "Medium",
         "Hard",
+        "Hard",
         "Medium",
         "Hard",
         "Hard",
@@ -56,6 +57,7 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "union-exfiltration",
         "roster-sort",
         "blind-sqli",
+        "roster-lookup",
     ]
     assert [e.id for e in grouped[1][1]] == ["reflected-xss", "stored-xss"]
     assert [e.id for e in grouped[2][1]] == ["command-injection"]

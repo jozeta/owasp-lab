@@ -46,6 +46,13 @@ CATEGORIES.append(
                 endpoint="a03_injection.check_username",
             ),
             ExampleNav(
+                id="roster-lookup",
+                title="Employee Lookup (Numeric Blind Injection)",
+                group="SQL Injection",
+                difficulty="Hard",
+                endpoint="a03_injection.roster_lookup",
+            ),
+            ExampleNav(
                 id="reflected-xss",
                 title="Reflected XSS in Greeting Page",
                 group="Cross-Site Scripting (XSS)",

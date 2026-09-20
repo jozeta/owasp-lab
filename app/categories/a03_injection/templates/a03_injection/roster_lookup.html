@@ -1,0 +1,143 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Employee Lookup (Numeric Blind Injection)" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "look up an employee by ID" feature builds its query directly from
+  your input with no parameterization:
+  <code>SELECT COUNT(*) FROM a03_employees WHERE id = {{ '{id}' }}</code>.
+  Every other SQL injection example in this lab injects into a
+  <em>string</em> literal (something wrapped in quotes you have to break
+  out of); this one is different — <code>id</code> is a bare numeric
+  token with no quotes around it at all, so there's nothing to escape
+  out of. Whatever you submit becomes part of the SQL expression
+  directly. The page tells you only whether a matching record exists —
+  never any of its actual data — making this a <strong>blind</strong>
+  injection point: useful data only comes out one true/false bit at a
+  time.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit <code>1 OR 1=1</code> as the ID, then separately submit
+  <code>1 AND 1=2</code>. The first should confirm a match; the second
+  should confirm no match — even though neither is a real employee ID.
+  That contrast is only possible if your input reaches the query as raw
+  SQL rather than a validated integer.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Once you've confirmed the injection with the Detect probes above, you
+  can turn the same true/false signal into a way to read data you're
+  never shown directly — see the Tasks below, which walk through this
+  step by step, from a single manual probe to full automated extraction.
+</p>
+{% endblock %}
+
+{% block tasks %}
+<ol class="list-unstyled">
+  <li class="mb-4">
+    <strong>Task 1: Confirm the injection with a single boolean probe.</strong>
+    <p>Submit an ID value that should always match, and one that never
+    should, and confirm the page's response genuinely differs.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task1-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task1-solution">
+      <div class="card card-body">
+        <p>Submit <code>1 OR 1=1</code> — the query becomes
+        <code>WHERE id = 1 OR 1=1</code>, always true, matching every row.
+        Submit <code>1 AND 1=2</code> — always false, matching nothing.
+        The page's response genuinely differs between the two, proving
+        you control the query's logic, not just the ID being searched
+        for.</p>
+      </div>
+    </div>
+  </li>
+  <li class="mb-4">
+    <strong>Task 2: Extract one specific value by hand — Morgan Reyes'
+    (employee ID 9) exact salary — using only the boolean signal.</strong>
+    <p>You can't see any data directly, but you can ask yes/no questions
+    about it and binary-search your way to the exact number.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task2-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task2-solution">
+      <div class="card card-body">
+        <p>Submit IDs shaped like
+        <code>9 AND (SELECT salary FROM a03_employees WHERE id=9) &gt; 500000</code>
+        — if it matches, the salary is above 500,000; if not, it's below.
+        Halve the range each time (try 250000, then 125000 or 375000, and
+        so on) and within about 20 requests you'll pin down the exact
+        value: <strong>285000</strong>.</p>
+      </div>
+    </div>
+  </li>
+  <li class="mb-4">
+    <strong>Task 3: Extract the entire employee roster — every row, every
+    column. This one genuinely requires automated tooling.</strong>
+    <p>Task 2 took about 20 requests for ONE number. The full roster is 9
+    rows across 4 more columns (name, email, department, salary), and the
+    text columns need per-character extraction, not just one binary
+    search. Doing this by hand would take an impractically large number
+    of requests — which is exactly why tools like <code>sqlmap</code>
+    exist: point it at the injection point and let it enumerate the
+    entire table unattended.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task3-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task3-solution">
+      <div class="card card-body">
+        <p>From a shell with <code>sqlmap</code> installed:</p>
+        <pre><code class="language-python">sqlmap -u "http://127.0.0.1:5001/a03/roster-lookup?id=1" \
+  --batch --technique=B --level=1 --risk=1 \
+  -D owasp_lab -T a03_employees --dump</code></pre>
+        <p>If automatic column enumeration doesn't succeed, provide the
+        column names explicitly:</p>
+        <pre><code class="language-python">sqlmap -u "http://127.0.0.1:5001/a03/roster-lookup?id=1" \
+  --batch --technique=B --level=1 --risk=1 \
+  -D owasp_lab -T a03_employees -C id,name,email,department,salary --dump</code></pre>
+        <p><code>--technique=B</code> tells sqlmap to use boolean-based
+        blind extraction specifically (matching this endpoint's
+        found/not-found signal), rather than trying every technique it
+        knows. Within a couple of minutes, sqlmap recovers every row of
+        the table on its own — the same data Task 2 took ~20 requests to
+        extract just one number of.</p>
+      </div>
+    </div>
+  </li>
+</ol>
+{% endblock %}
+
+{% block vulnerable_code %}query = f"SELECT COUNT(*) FROM a03_employees WHERE id = {emp_id}"
+count = db.session.execute(text(query)).scalar()
+found = bool(count)
+{% endblock %}
+
+{% block secure_code %}query = text("SELECT COUNT(*) FROM a03_employees WHERE id = :emp_id")
+count = db.session.execute(query, {"emp_id": emp_id}).scalar()
+found = bool(count)
+{% endblock %}
+
+{% block live_example %}
+<form method="get" class="mb-3">
+  <div class="input-group">
+    <input type="text" class="form-control" name="id" value="{{ emp_id }}" placeholder="Employee ID">
+    <button type="submit" class="btn btn-primary">Look up</button>
+  </div>
+</form>
+{% if found is not none %}
+<p>
+  {% if found %}Employee record found.
+  {% else %}No employee with that ID matches.{% endif %}
+</p>
+{% endif %}
+{% endblock %}

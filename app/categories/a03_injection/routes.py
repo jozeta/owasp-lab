@@ -293,3 +293,18 @@ def roster():
     query = f"SELECT id, name, email, department FROM a03_employees ORDER BY {sort}"
     results = db.session.execute(text(query)).all()
     return render_template("a03_injection/roster.html", sort=sort, results=results)
+
+
+@a03_bp.route("/roster-lookup")
+def roster_lookup():
+    emp_id = request.args.get("id", "")
+    found = None
+    if emp_id:
+        # VULNERABLE: raw string-concatenated SQL in a NUMERIC context, no
+        # parameterization -- unlike every other SQLi example in this lab,
+        # there's no string literal to break out of here at all; the input
+        # is substituted directly as a bare numeric/expression token.
+        query = f"SELECT COUNT(*) FROM a03_employees WHERE id = {emp_id}"
+        count = db.session.execute(text(query)).scalar()
+        found = bool(count)
+    return render_template("a03_injection/roster_lookup.html", emp_id=emp_id, found=found)
