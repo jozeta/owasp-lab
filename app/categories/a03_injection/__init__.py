@@ -74,6 +74,13 @@ CATEGORIES.append(
                 endpoint="a03_injection.filter_challenge",
             ),
             ExampleNav(
+                id="filtered-host-lookup",
+                title="Hostname Lookup Filter Bypass",
+                group="OS Command Injection",
+                difficulty="Medium",
+                endpoint="a03_injection.filtered_host_lookup",
+            ),
+            ExampleNav(
                 id="command-injection",
                 title="OS Command Injection in Host Lookup Tool",
                 group="OS Command Injection",

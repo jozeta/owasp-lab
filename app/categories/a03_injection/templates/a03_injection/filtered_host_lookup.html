@@ -1,0 +1,85 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Hostname Lookup Filter Bypass" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This version of the hostname lookup tool adds a filter before shelling
+  out: it rejects the input outright if it contains a semicolon
+  (<code>;</code>), ampersand (<code>&amp;</code>), or pipe
+  (<code>|</code>) — the three most obvious shell command separators.
+  Once past that check, the input is still concatenated directly into a
+  <code>shell=True</code> call with no other protection.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Try <code>localhost;echo test</code> first — it's rejected outright, so
+  the filter is clearly doing something. Then try the same idea with a
+  literal newline in place of the semicolon (the input below is a text
+  area, so you can type one directly) — a very different result.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Submit <code>localhost;echo test</code> — blocked, confirming the
+      filter checks for at least a semicolon.</li>
+  <li>Submit a hostname followed by a literal newline and a second
+      command, e.g. <code>localhost</code> then a newline then
+      <code>whoami</code> in the same field.</li>
+  <li>The filter's blacklist never checks for a newline character — and
+      <code>/bin/sh</code> treats a newline exactly like a semicolon,
+      terminating one command and starting the next. The second
+      command's output appears in the response.</li>
+</ol>
+<p>
+  Blacklists that enumerate "the obvious" metacharacters are a common,
+  genuinely dangerous real-world pattern: every shell metacharacter left
+  off the list — newlines, backticks, <code>$(...)</code>, even a bare
+  space combined with certain built-ins — is a complete bypass, not a
+  partial one. A blacklist has to be perfect to work at all; an allowlist
+  (or, better, never invoking a shell with untrusted input in the first
+  place) doesn't have this problem.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}if any(bad in host for bad in (";", "&", "|")):
+    blocked = True
+else:
+    result = subprocess.run(
+        f"getent hosts {host}",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+{% endblock %}
+
+{% block secure_code %}# Don't blacklist shell metacharacters -- never invoke a shell with
+# untrusted input in the first place:
+result = subprocess.run(
+    ["getent", "hosts", host],
+    shell=False,
+    capture_output=True,
+    text=True,
+    timeout=10,
+)
+{% endblock %}
+
+{% block live_example %}
+<form method="post" class="mb-3">
+  <div class="mb-2">
+    <textarea class="form-control" name="host" rows="2" placeholder="e.g. localhost">{{ host }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Look up</button>
+</form>
+{% if blocked %}
+<p class="text-danger">Blocked: hostname contains a disallowed character.</p>
+{% endif %}
+{% if output is not none %}
+<pre>{{ output }}</pre>
+{% endif %}
+{% endblock %}

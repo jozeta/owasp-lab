@@ -351,3 +351,33 @@ def filter_challenge():
         payload=payload,
         filtered=filtered,
     )
+
+
+@a03_bp.route("/filtered-host-lookup", methods=["GET", "POST"])
+def filtered_host_lookup():
+    host = ""
+    output = None
+    blocked = False
+    if request.method == "POST":
+        host = request.form.get("host", "")
+        if any(bad in host for bad in (";", "&", "|")):
+            blocked = True
+            host = ""
+        else:
+            # VULNERABLE: blacklist checks only ";", "&", "|" -- a literal
+            # newline is just as good a command separator to /bin/sh and
+            # isn't checked for at all
+            result = subprocess.run(
+                f"getent hosts {host}",
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            output = result.stdout or result.stderr or "(no output)"
+    return render_template(
+        "a03_injection/filtered_host_lookup.html",
+        host=host,
+        output=output,
+        blocked=blocked,
+    )
