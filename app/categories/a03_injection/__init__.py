@@ -32,6 +32,13 @@ CATEGORIES.append(
                 endpoint="a03_injection.search",
             ),
             ExampleNav(
+                id="roster-sort",
+                title="Employee Roster Sort (ORDER BY Injection)",
+                group="SQL Injection",
+                difficulty="Medium",
+                endpoint="a03_injection.roster",
+            ),
+            ExampleNav(
                 id="blind-sqli",
                 title="Blind Time-Based SQL Injection",
                 group="SQL Injection",

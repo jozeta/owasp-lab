@@ -24,6 +24,7 @@ def test_a03_registered_in_nav(app):
     assert [e.difficulty for e in a03.examples] == [
         "Easy",
         "Medium",
+        "Medium",
         "Hard",
         "Medium",
         "Hard",
@@ -50,7 +51,12 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "Server-Side Template Injection (SSTI)",
         "LDAP Injection",
     ]
-    assert [e.id for e in grouped[0][1]] == ["sqli-login", "union-exfiltration", "blind-sqli"]
+    assert [e.id for e in grouped[0][1]] == [
+        "sqli-login",
+        "union-exfiltration",
+        "roster-sort",
+        "blind-sqli",
+    ]
     assert [e.id for e in grouped[1][1]] == ["reflected-xss", "stored-xss"]
     assert [e.id for e in grouped[2][1]] == ["command-injection"]
     assert [e.id for e in grouped[3][1]] == ["xml-import", "xxe-ssrf"]

@@ -33,6 +33,16 @@
     {% block exploitation %}{% endblock %}
   </div>
 </section>
+
+{% set tasks_content = self.tasks() %}
+{% if tasks_content|trim %}
+<section class="card mb-4">
+  <div class="card-header">Tasks</div>
+  <div class="card-body">
+    {% block tasks %}{% endblock %}
+  </div>
+</section>
+{% endif %}
 {% endif %}
 
 {% set vulnerable_content = self.vulnerable_code() %}

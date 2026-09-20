@@ -8,7 +8,7 @@ from lxml import etree
 from sqlalchemy import text
 
 from app.categories.a03_injection import a03_bp, ldap_client
-from app.categories.a03_injection.models import Comment, InjectionAccount
+from app.categories.a03_injection.models import Comment, Employee, InjectionAccount
 from app.extensions import db
 
 XXE_SECRET_PATH = os.path.join(os.path.dirname(__file__), "xxe_secret.txt")
@@ -281,3 +281,15 @@ def directory_search():
     return render_template(
         "a03_injection/directory_search.html", target=target, query=query, result=result
     )
+
+
+@a03_bp.route("/roster")
+def roster():
+    sort = request.args.get("sort", "id")
+    # VULNERABLE: raw string-concatenated SQL in the ORDER BY clause, no
+    # parameterization -- ORDER BY targets are identifiers/expressions, not
+    # literal values, so bound parameters (which only substitute literal
+    # values) can't protect this clause the way they protect a WHERE clause.
+    query = f"SELECT id, name, email, department FROM a03_employees ORDER BY {sort}"
+    results = db.session.execute(text(query)).all()
+    return render_template("a03_injection/roster.html", sort=sort, results=results)

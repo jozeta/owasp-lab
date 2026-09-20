@@ -24,3 +24,13 @@ class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.String(80), nullable=False)
     body = db.Column(db.Text, nullable=False)
+
+
+class Employee(db.Model):
+    __tablename__ = "a03_employees"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    department = db.Column(db.String(80), nullable=False)
+    salary = db.Column(db.Integer, nullable=False)

@@ -1,0 +1,93 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Employee Roster Sort (ORDER BY Injection)" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "sort the employee roster" feature lets you pick which column to
+  sort by, and builds the query's <code>ORDER BY</code> clause directly
+  from your input with no validation:
+  <code>SELECT id, name, email, department FROM a03_employees ORDER BY
+  {{ '{sort}' }}</code>. Every other SQL injection example in this lab
+  injects into a <code>WHERE</code> clause; this one is different — an
+  <code>ORDER BY</code> target is a column reference or expression, not a
+  literal value, so the usual fix (bound parameters, which only
+  substitute literal values into a query) doesn't apply here at all. The
+  real-world fix for this specific clause type is different too — see
+  Vulnerable vs. Secure below.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit an out-of-range column position as the sort target, e.g.
+  <code>sort=99</code>. The roster only selects 4 columns, so
+  <code>ORDER BY 99</code> is invalid — a properly parameterized query
+  couldn't be tricked into treating your input as a raw ordinal position
+  at all, but this one throws a real database error, confirming your
+  input reaches the <code>ORDER BY</code> clause unescaped.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Try <code>sort=4</code> — the roster still loads normally (4 is a
+      valid column position; the table selects exactly 4 columns).</li>
+  <li>Try <code>sort=5</code> — the request fails with a database error.
+      That single comparison confirms the exact column count (4) without
+      ever seeing a row of data — the same "binary search the column
+      count" technique attackers use before pivoting an ORDER BY
+      injection into a full UNION-based extraction.</li>
+  <li>Once you don't even want to trigger visible errors, you can extract
+      a boolean signal purely through row order. Try:
+      <code>sort=(CASE WHEN (1=1) THEN id ELSE id * -1 END)</code> — the
+      roster sorts normally (ascending by ID). Now try:
+      <code>sort=(CASE WHEN (1=2) THEN id ELSE id * -1 END)</code> — the
+      entire order reverses. Swap <code>1=1</code>/<code>1=2</code> for
+      any real condition (e.g. a subquery testing a specific employee's
+      salary) and the row order itself becomes a true/false oracle,
+      leaking one bit per request with zero errors and zero extra data
+      shown.</li>
+</ol>
+<p>
+  ORDER BY injection rarely gets its own headline the way UNION or
+  authentication-bypass injection do, but it shows up constantly in
+  real applications with sortable tables, reports, and admin grids — and
+  it's a favorite reconnaissance step precisely because it's silent: no
+  error, no extra column, just a reordering an attacker controls. Column
+  counts and type information learned this way are exactly what's needed
+  to craft a working UNION-based payload against the very same query.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}query = f"SELECT id, name, email, department FROM a03_employees ORDER BY {sort}"
+results = db.session.execute(text(query)).all()
+{% endblock %}
+
+{% block secure_code %}# Bound parameters can't protect an ORDER BY target (it's not a literal
+# value) -- allowlist the permitted column names instead.
+ALLOWED_SORT_COLUMNS = {"id", "name", "email", "department"}
+safe_sort = sort if sort in ALLOWED_SORT_COLUMNS else "id"
+query = f"SELECT id, name, email, department FROM a03_employees ORDER BY {safe_sort}"
+results = db.session.execute(text(query)).all()
+{% endblock %}
+
+{% block live_example %}
+<form method="get" class="mb-3">
+  <div class="input-group">
+    <input type="text" class="form-control" name="sort" value="{{ sort }}" placeholder="id">
+    <button type="submit" class="btn btn-primary">Sort</button>
+  </div>
+</form>
+<table class="table table-striped">
+  <thead>
+    <tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th></tr>
+  </thead>
+  <tbody>
+    {% for row in results %}
+    <tr><td>{{ row.id }}</td><td>{{ row.name }}</td><td>{{ row.email }}</td><td>{{ row.department }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
