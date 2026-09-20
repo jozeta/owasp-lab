@@ -30,6 +30,7 @@ def test_a03_registered_in_nav(app):
         "Medium",
         "Hard",
         "Hard",
+        "Hard",
         "Easy",
         "Hard",
         "Easy",
@@ -59,7 +60,7 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "blind-sqli",
         "roster-lookup",
     ]
-    assert [e.id for e in grouped[1][1]] == ["reflected-xss", "stored-xss"]
+    assert [e.id for e in grouped[1][1]] == ["reflected-xss", "stored-xss", "filter-challenge"]
     assert [e.id for e in grouped[2][1]] == ["command-injection"]
     assert [e.id for e in grouped[3][1]] == ["xml-import", "xxe-ssrf"]
     assert [e.id for e in grouped[4][1]] == ["ssti-email-preview", "ssti-blacklist-bypass"]

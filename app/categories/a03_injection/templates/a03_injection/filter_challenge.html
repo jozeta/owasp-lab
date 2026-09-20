@@ -1,0 +1,175 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Filter Bypass Challenge" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This page runs three independent, deliberately naive filters against
+  your input, selected with the <code>level</code> parameter below. Each
+  filter is meant to neutralize script injection on its own — there's no
+  framework-level escaping backing any of them up, since the filtered
+  result is rendered with <code>|safe</code>, which disables Jinja's
+  automatic escaping entirely. All three filters are real code that
+  genuinely block the naive payload they were written against — the
+  question for each level is what case they didn't think of.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Try each level with an ordinary word like <code>hello</code> — it
+  passes through unchanged everywhere. Then try
+  <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> at each level: Level 1
+  replaces it with a block message, Level 2 strips the tags out entirely
+  (leaving inert leftover text), and Level 3 turns the angle brackets into
+  harmless entities. Every filter visibly does something — confirming a
+  bypass means finding the one input shape each filter's author didn't
+  anticipate.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Each level's filter has a real gap once you look at it closely — a
+  choice of tag it doesn't check for, a stripping pass that doesn't
+  re-scan its own output, or a character class it doesn't escape in the
+  context it's actually used in. Work through the three graduated Tasks
+  below, from a simple tag swap to a fully filter-defeating nested tag to
+  an attribute-context break-out that needs no angle brackets at all.
+</p>
+{% endblock %}
+
+{% block tasks %}
+<ol class="list-unstyled">
+  <li class="mb-4">
+    <strong>Task 1 (Easy): Bypass the Level 1 filter, which blocks only
+    the literal substring <code>&lt;script</code>.</strong>
+    <p>Set the level selector to <strong>Level 1</strong> and find a
+    payload that runs JavaScript without ever containing that
+    substring.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task1-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task1-solution">
+      <div class="card card-body">
+        <p>Submit
+        <code>&lt;img src=x onerror=console.log('LEVEL-1-BYPASS')&gt;</code>.
+        The filter only ever checks for the substring
+        <code>&lt;script</code> — an <code>&lt;img&gt;</code> tag with a
+        broken <code>src</code> and an <code>onerror</code> handler never
+        contains it, so it sails through untouched and fires the moment
+        the browser fails to load the image.</p>
+      </div>
+    </div>
+  </li>
+  <li class="mb-4">
+    <strong>Task 2 (Medium): Bypass the Level 2 filter, which strips
+    <code>&lt;script&gt;</code> and <code>&lt;/script&gt;</code> as two
+    separate, one-shot passes.</strong>
+    <p>Set the level selector to <strong>Level 2</strong>. The filter
+    removes both substrings, but it never re-scans its own output after
+    removing them.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task2-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task2-solution">
+      <div class="card card-body">
+        <p>Submit
+        <code>&lt;scr&lt;script&gt;ipt&gt;console.log('LEVEL-2-BYPASS')&lt;/scr&lt;/script&gt;ipt&gt;</code>.
+        The filter's first pass removes the inner
+        <code>&lt;script&gt;</code>, and its second pass removes the inner
+        <code>&lt;/script&gt;</code> — but doing so leaves the surrounding
+        fragments <code>&lt;scr</code> + <code>ipt&gt;</code> and
+        <code>&lt;/scr</code> + <code>ipt&gt;</code> sitting right next to
+        each other, which recombine into a real
+        <code>&lt;script&gt;console.log('LEVEL-2-BYPASS')&lt;/script&gt;</code>
+        tag that the filter never gets a chance to see.</p>
+      </div>
+    </div>
+  </li>
+  <li class="mb-4">
+    <strong>Task 3 (Hard): Bypass the Level 3 filter, which escapes only
+    <code>&lt;</code> and <code>&gt;</code> — safe against a tag
+    injection, but this value is reflected inside an HTML
+    attribute.</strong>
+    <p>Set the level selector to <strong>Level 3</strong>. You don't need
+    a single angle bracket to break out of an attribute value — you need
+    a quote.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task3-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task3-solution">
+      <div class="card card-body">
+        <p>Submit
+        <code>" autofocus onfocus="console.log('LEVEL-3-BYPASS')</code>.
+        The filter's <code>replace()</code> calls only ever touch
+        <code>&lt;</code> and <code>&gt;</code>, so a lone double-quote
+        sails through untouched. Since this value is reflected inside
+        <code>value="..."</code>, that quote closes the attribute early,
+        and everything after it — <code>autofocus
+        onfocus="console.log(...)"</code> — becomes two brand-new
+        attributes on the same tag. <code>autofocus</code> makes the
+        browser focus the field the instant the page loads, which fires
+        <code>onfocus</code> immediately, with no click or angle bracket
+        required.</p>
+      </div>
+    </div>
+  </li>
+</ol>
+{% endblock %}
+
+{% block vulnerable_code %}def filter_level_1(payload):
+    if "&lt;script" in payload.lower():
+        return "[blocked: script tag detected]"
+    return payload
+
+def filter_level_2(payload):
+    payload = re.sub(r"&lt;script&gt;", "", payload, flags=re.IGNORECASE)
+    payload = re.sub(r"&lt;/script&gt;", "", payload, flags=re.IGNORECASE)
+    return payload
+
+def filter_level_3(payload):
+    return payload.replace("&lt;", "&amp;lt;").replace("&gt;", "&amp;gt;")
+# all three rendered with {% raw %}{{ filtered|safe }}{% endraw %} -- bypasses
+# Jinja's own escaping entirely, so the filter function is the ONLY defense
+{% endblock %}
+
+{% block secure_code %}# Don't hand-roll a blacklist/allowlist filter -- let Jinja's automatic
+# escaping handle every context correctly (tag AND attribute):
+return render_template("filter_challenge.html", payload=payload)
+# template: value="{% raw %}{{ payload }}{% endraw %}"  (no |safe -- Jinja
+# escapes &lt;, &gt;, &amp;, ', " for you, in whatever context it's used)
+{% endblock %}
+
+{% block live_example %}
+<form method="get" class="mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-auto">
+      <label class="form-label" for="filter-level">Level</label>
+      <select class="form-select" id="filter-level" name="level">
+        <option value="1" {% if level == "1" %}selected{% endif %}>Level 1</option>
+        <option value="2" {% if level == "2" %}selected{% endif %}>Level 2</option>
+        <option value="3" {% if level == "3" %}selected{% endif %}>Level 3</option>
+      </select>
+    </div>
+    <div class="col">
+      <label class="form-label" for="filter-payload">Payload</label>
+      <input type="text" class="form-control" id="filter-payload" name="payload" value="{{ payload }}">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </div>
+  </div>
+</form>
+{% if level == "3" %}
+<p class="mb-1">Reflected inside an HTML attribute:</p>
+<input type="text" class="form-control" value="{{ filtered|safe }}" placeholder="Your name" readonly>
+{% else %}
+<p class="mb-1">Reflected inside the page body:</p>
+<div id="output" class="border rounded p-2">{{ filtered|safe }}</div>
+{% endif %}
+{% endblock %}

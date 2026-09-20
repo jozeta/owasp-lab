@@ -67,6 +67,13 @@ CATEGORIES.append(
                 endpoint="a03_injection.comments",
             ),
             ExampleNav(
+                id="filter-challenge",
+                title="Filter Bypass Challenge",
+                group="Cross-Site Scripting (XSS)",
+                difficulty="Hard",
+                endpoint="a03_injection.filter_challenge",
+            ),
+            ExampleNav(
                 id="command-injection",
                 title="OS Command Injection in Host Lookup Tool",
                 group="OS Command Injection",

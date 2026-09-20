@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import urllib.request
 
@@ -308,3 +309,45 @@ def roster_lookup():
         count = db.session.execute(text(query)).scalar()
         found = bool(count)
     return render_template("a03_injection/roster_lookup.html", emp_id=emp_id, found=found)
+
+
+def filter_level_1(payload: str) -> str:
+    # VULNERABLE: blocks only the literal substring "<script", nothing else
+    if "<script" in payload.lower():
+        return "[blocked: script tag detected]"
+    return payload
+
+
+def filter_level_2(payload: str) -> str:
+    # VULNERABLE: strips "<script>" and "</script>" as two SEPARATE passes --
+    # doesn't re-scan its own output, so nested/interleaved tags reconstruct
+    # a real <script> tag from the leftover fragments
+    payload = re.sub(r"<script>", "", payload, flags=re.IGNORECASE)
+    payload = re.sub(r"</script>", "", payload, flags=re.IGNORECASE)
+    return payload
+
+
+def filter_level_3(payload: str) -> str:
+    # VULNERABLE: escapes only angle brackets -- safe in a tag context, but
+    # this value is reflected inside an HTML attribute, where an unescaped
+    # quote is what actually needs escaping
+    return payload.replace("<", "&lt;").replace(">", "&gt;")
+
+
+@a03_bp.route("/filter-challenge")
+def filter_challenge():
+    level = request.args.get("level", "1")
+    payload = request.args.get("payload", "")
+    if level == "2":
+        filtered = filter_level_2(payload)
+    elif level == "3":
+        filtered = filter_level_3(payload)
+    else:
+        level = "1"
+        filtered = filter_level_1(payload)
+    return render_template(
+        "a03_injection/filter_challenge.html",
+        level=level,
+        payload=payload,
+        filtered=filtered,
+    )
