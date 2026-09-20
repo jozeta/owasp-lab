@@ -73,6 +73,13 @@ CATEGORIES.append(
                 difficulty="Hard",
                 endpoint="a03_injection.xxe_ssrf",
             ),
+            ExampleNav(
+                id="ssti-email-preview",
+                title="SSTI RCE via Custom Email Notification Preview",
+                group="Server-Side Template Injection (SSTI)",
+                difficulty="Easy",
+                endpoint="a03_injection.email_preview",
+            ),
         ],
         seed_fn=seed_injection_data,
     )

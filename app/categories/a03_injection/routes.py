@@ -2,7 +2,7 @@ import os
 import subprocess
 import urllib.request
 
-from flask import redirect, render_template, request, session, url_for
+from flask import redirect, render_template, render_template_string, request, session, url_for
 from lxml import etree
 from sqlalchemy import text
 
@@ -176,4 +176,27 @@ def xxe_ssrf():
             error = str(e)
     return render_template(
         "a03_injection/xxe_ssrf.html", xml_input=xml_input, result=result, error=error
+    )
+
+
+@a03_bp.route("/email-preview", methods=["GET", "POST"])
+def email_preview():
+    greeting_template = ""
+    result = None
+    error = None
+    if request.method == "POST":
+        greeting_template = request.form.get("greeting_template", "")
+        try:
+            # VULNERABLE: render_template_string renders user input as live
+            # Jinja template SOURCE, not as inert data -- this app's Jinja
+            # environment is not sandboxed, so any Jinja expression syntax
+            # submitted here gets evaluated on the server.
+            result = render_template_string(greeting_template)
+        except Exception as e:
+            error = str(e)
+    return render_template(
+        "a03_injection/email_preview.html",
+        greeting_template=greeting_template,
+        result=result,
+        error=error,
     )

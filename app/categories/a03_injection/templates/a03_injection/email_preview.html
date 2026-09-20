@@ -1,0 +1,83 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "SSTI RCE via Custom Email Notification Preview" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "preview your notification email" feature takes the greeting text
+  you type and renders it with <code>render_template_string()</code> —
+  Flask's helper for rendering a template from a plain string instead of a
+  file. The problem: <code>render_template_string()</code> treats its
+  argument as actual Jinja template <em>source code</em>, not as inert
+  text. Since this app's Jinja environment isn't sandboxed (the default),
+  any Jinja expression syntax you submit — including expressions that
+  reach Python's own introspection machinery — gets evaluated on the
+  server.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit a basic Jinja math expression as your greeting text:
+</p>
+<pre><code class="language-python">{% raw %}{{ 7*7 }}{% endraw %}</code></pre>
+<p>
+  If the preview shows the computed result instead of the literal text
+  <code>{% raw %}{{ 7*7 }}{% endraw %}</code>, your input is being
+  evaluated as a template, not displayed as data — that confirms the bug
+  before you ever attempt code execution.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Submit the following as your greeting text:
+      <pre><code class="language-python">{% raw %}{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}{% endraw %}</code></pre>
+  </li>
+  <li>The preview shows the real output of the <code>id</code> command,
+      run on the server itself — the chain walks from the template's own
+      <code>self</code> object through Python's normal object internals
+      (<code>__init__</code>, <code>__globals__</code>) to reach the
+      interpreter's built-in <code>__import__</code>, then imports
+      <code>os</code> and runs an arbitrary shell command.</li>
+</ol>
+<p>
+  Server-Side Template Injection is one of the most severe classes of web
+  vulnerability precisely because it usually leads directly to full remote
+  code execution on the server — not "just" data theft or a client-side
+  script, but the attacker running arbitrary commands with the same
+  privileges as the application itself. It's shown up in the wild
+  repeatedly in exactly this kind of feature: user-customizable email
+  templates, PDF/report generators, and "preview my message" tools that
+  pass user text into a template engine instead of treating it as plain
+  data — turning a cosmetic personalization feature into full server
+  compromise.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}result = render_template_string(greeting_template)
+{% endblock %}
+
+{% block secure_code %}# Pass user input as a template VARIABLE, never as template SOURCE
+result = render_template_string(
+    "Hi {% raw %}{{ name }}{% endraw %}, thanks for signing up!", name=greeting_template
+)
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Your greeting text</label>
+    <textarea class="form-control" name="greeting_template" rows="3"
+              placeholder="Hi there, thanks for signing up!">{{ greeting_template }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Preview email</button>
+</form>
+{% if result %}
+<p class="mt-3">Preview: <strong>{{ result }}</strong></p>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

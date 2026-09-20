@@ -30,6 +30,7 @@ def test_a03_registered_in_nav(app):
         "Hard",
         "Easy",
         "Hard",
+        "Easy",
     ]
 
 
@@ -43,11 +44,13 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "Cross-Site Scripting (XSS)",
         "OS Command Injection",
         "XML External Entity Injection (XXE)",
+        "Server-Side Template Injection (SSTI)",
     ]
     assert [e.id for e in grouped[0][1]] == ["sqli-login", "union-exfiltration", "blind-sqli"]
     assert [e.id for e in grouped[1][1]] == ["reflected-xss", "stored-xss"]
     assert [e.id for e in grouped[2][1]] == ["command-injection"]
     assert [e.id for e in grouped[3][1]] == ["xml-import", "xxe-ssrf"]
+    assert [e.id for e in grouped[4][1]] == ["ssti-email-preview"]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
