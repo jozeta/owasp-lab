@@ -13,14 +13,35 @@ services:
       timeout: 5s
       retries: 10
 
+  ldap:
+    image: osixia/openldap:1.5.0
+    environment:
+      LDAP_ORGANISATION: "OWASP Lab"
+      LDAP_DOMAIN: "owasp-lab.local"
+      LDAP_ADMIN_PASSWORD: "admin123"
+      LDAP_TLS: "false"
+    healthcheck:
+      test: ["CMD", "ldapwhoami", "-x", "-D", "cn=admin,dc=owasp-lab,dc=local", "-w", "admin123", "-H", "ldap://localhost:389"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "127.0.0.1:3890:389"
+
   app:
     build: .
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql+psycopg://lab:lab@postgres:5432/owasp_lab
+      LDAP_URL: ldap://ldap:389
+      LDAP_BASE_DN: dc=owasp-lab,dc=local
+      LDAP_ADMIN_DN: cn=admin,dc=owasp-lab,dc=local
+      LDAP_ADMIN_PASSWORD: admin123
     depends_on:
       postgres:
+        condition: service_healthy
+      ldap:
         condition: service_healthy
     ports:
       - "127.0.0.1:5001:5000"

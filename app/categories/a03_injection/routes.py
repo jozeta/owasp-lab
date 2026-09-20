@@ -3,10 +3,11 @@ import subprocess
 import urllib.request
 
 from flask import redirect, render_template, render_template_string, request, session, url_for
+from ldap3 import SUBTREE
 from lxml import etree
 from sqlalchemy import text
 
-from app.categories.a03_injection import a03_bp
+from app.categories.a03_injection import a03_bp, ldap_client
 from app.categories.a03_injection.models import Comment, InjectionAccount
 from app.extensions import db
 
@@ -230,4 +231,29 @@ def bio_preview():
         bio_template=bio_template,
         result=result,
         error=error,
+    )
+
+
+@a03_bp.route("/directory-login", methods=["GET", "POST"])
+def directory_login():
+    username = ""
+    result = None
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        conn = ldap_client.get_ldap_connection()
+        try:
+            # VULNERABLE: raw f-string interpolation into an LDAP filter, no escaping
+            filt = f"(&(uid={username})(userPassword={password}))"
+            conn.search(ldap_client.LDAP_BASE_DN, filt, SUBTREE, attributes=["cn"])
+            if conn.entries:
+                cn = str(conn.entries[0].cn)
+                result = f"Welcome, {cn}!"
+            else:
+                error = "Invalid username or password."
+        finally:
+            conn.unbind()
+    return render_template(
+        "a03_injection/directory_login.html", username=username, result=result, error=error
     )

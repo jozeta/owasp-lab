@@ -1,0 +1,92 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "LDAP Auth Bypass via Company Directory Login" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "company directory login" feature authenticates against an LDAP
+  directory (the same kind of system that backs corporate single sign-on
+  in many real organizations) by building a search filter directly from
+  your submitted username and password with plain string interpolation:
+  <code>(&(uid=USERNAME)(userPassword=PASSWORD))</code>. If the search
+  returns any matching entry, the login is treated as successful. Because
+  neither field is escaped, LDAP filter metacharacters you submit —
+  parentheses, the wildcard <code>*</code>, and others — become part of
+  the filter's actual logic instead of being treated as literal text to
+  match against.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Log in with a username you know exists (<code>alice</code>) and a
+  single asterisk as the password:
+</p>
+<pre><code class="language-python">username: alice
+password: *</code></pre>
+<p>
+  In LDAP filter syntax, <code>*</code> alone means "any non-empty
+  value" — a presence match, not a literal asterisk character. If this
+  logs you in as Alice without her real password, you've confirmed the
+  filter is being built from unescaped input.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in with:
+      <pre><code class="language-python">username: root_admin
+password: *</code></pre>
+  </li>
+  <li>You're logged in as the Root Administrator account — a privileged
+      account whose real password you never supplied or even guessed.
+      The filter the server actually evaluates is
+      <code>(&(uid=root_admin)(userPassword=*))</code>: "match any entry
+      with uid root_admin that has <em>some</em> password set" — which
+      root_admin, like every real account, does.</li>
+</ol>
+<p>
+  LDAP injection auth bypass is a well-documented real-world class of
+  vulnerability, historically affecting any application that
+  authenticates against Active Directory or another LDAP-backed
+  directory by building filters through string concatenation — this
+  exact pattern (a wildcard password bypassing a naive
+  <code>(&(uid=X)(userPassword=Y))</code> check) has shown up repeatedly
+  in enterprise login forms, VPN portals, and internal admin tools that
+  delegate authentication to a corporate directory without escaping user
+  input first.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}filt = f"(&(uid={username})(userPassword={password}))"
+conn.search(base_dn, filt, SUBTREE, attributes=["cn"])
+{% endblock %}
+
+{% block secure_code %}from ldap3.utils.conv import escape_filter_chars
+
+safe_username = escape_filter_chars(username)
+safe_password = escape_filter_chars(password)
+filt = f"(&(uid={safe_username})(userPassword={safe_password}))"
+conn.search(base_dn, filt, SUBTREE, attributes=["cn"])
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input type="text" class="form-control" name="username" value="{{ username }}">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input type="text" class="form-control" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if result %}
+<p class="mt-3">{{ result }}</p>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

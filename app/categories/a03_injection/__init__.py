@@ -87,6 +87,13 @@ CATEGORIES.append(
                 difficulty="Hard",
                 endpoint="a03_injection.bio_preview",
             ),
+            ExampleNav(
+                id="ldap-directory-login",
+                title="LDAP Auth Bypass via Company Directory Login",
+                group="LDAP Injection",
+                difficulty="Easy",
+                endpoint="a03_injection.directory_login",
+            ),
         ],
         seed_fn=seed_injection_data,
     )
