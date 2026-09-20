@@ -1,0 +1,97 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "SSTI Blacklist Bypass via Profile Bio Preview" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "preview your profile bio" feature has the exact same underlying
+  flaw as the email preview example — it renders your submitted bio text
+  with <code>render_template_string()</code>, treating it as live Jinja
+  template source. As a "security" measure, the server first checks your
+  submitted text against a blacklist of forbidden words
+  (<code>os</code>, <code>import</code>, <code>exec</code>,
+  <code>eval</code>, <code>popen</code>, <code>subprocess</code>,
+  <code>system</code>) and refuses to render if any appear. This blocks
+  the obvious payload — but it doesn't fix the actual bug, because the
+  real problem is rendering attacker-controlled text as template source
+  at all, not which specific words appear in it.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit the same basic probe as the email preview example:
+</p>
+<pre><code class="language-python">{% raw %}{{ 7*7 }}{% endraw %}</code></pre>
+<p>
+  This contains none of the blocked words, so it sails through the
+  blacklist. If the preview evaluates the expression instead of showing
+  it literally, the underlying SSTI bug is confirmed — the blacklist only
+  filters specific keywords, not the ability to evaluate templates at
+  all.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  The straightforward RCE payload from the email preview example is
+  blocked here:
+</p>
+<pre><code class="language-python">{% raw %}{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}{% endraw %}</code></pre>
+<p>
+  It contains the literal words <code>os</code>, <code>import</code>, and
+  <code>popen</code>, so the blacklist rejects it before rendering. But
+  Jinja2 has a <code>~</code> operator that concatenates strings
+  <em>inside the template expression itself</em> — so you can build the
+  blocked words at render time instead of writing them literally:
+</p>
+<ol>
+  <li>Submit this instead:
+      <pre><code class="language-python">{% raw %}{{ self.__init__.__globals__.__builtins__['__imp'~'ort__']('o'~'s').__dict__['pop'~'en']('id').read() }}{% endraw %}</code></pre>
+  </li>
+  <li>None of <code>import</code>, <code>os</code>, or <code>popen</code>
+      appear as literal substrings in what you submitted —
+      <code>'__imp'~'ort__'</code> only becomes the string
+      <code>__import__</code> once Jinja evaluates it — so the
+      blacklist's substring check passes, and the exact same command
+      execution happens as in the email preview example. The preview
+      shows the real output of the <code>id</code> command.</li>
+</ol>
+<p>
+  This is the real lesson: blacklisting specific keywords is not a fix
+  for SSTI, because the attacker doesn't need to write those keywords as
+  literal text — only to cause the interpreter to evaluate them.
+  Real-world "security" filters built this way (block a list of scary
+  words) have been bypassed the same way in production Flask
+  applications; the only real fix is to never render attacker-controlled
+  text as template source in the first place.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}BLOCKED_WORDS = ["os", "import", "exec", "eval", "popen", "subprocess", "system"]
+if not any(word in bio_template.lower() for word in BLOCKED_WORDS):
+    result = render_template_string(bio_template)  # still vulnerable -- blacklist doesn't help
+{% endblock %}
+
+{% block secure_code %}# Pass user input as a template VARIABLE, never as template SOURCE --
+# no blacklist needed, because there's no template source left to filter
+result = render_template_string("Bio: {% raw %}{{ name }}{% endraw %}", name=bio_template)
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Your profile bio</label>
+    <textarea class="form-control" name="bio_template" rows="3"
+              placeholder="Just a regular person who likes hiking.">{{ bio_template }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Preview bio</button>
+</form>
+{% if result %}
+<p class="mt-3">Preview: <strong>{{ result }}</strong></p>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

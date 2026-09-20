@@ -200,3 +200,34 @@ def email_preview():
         result=result,
         error=error,
     )
+
+
+SSTI_BLOCKED_KEYWORDS = ["os", "import", "exec", "eval", "popen", "subprocess", "system"]
+
+
+@a03_bp.route("/bio-preview", methods=["GET", "POST"])
+def bio_preview():
+    bio_template = ""
+    result = None
+    error = None
+    if request.method == "POST":
+        bio_template = request.form.get("bio_template", "")
+        lowered = bio_template.lower()
+        blocked_word = next((w for w in SSTI_BLOCKED_KEYWORDS if w in lowered), None)
+        if blocked_word:
+            error = f'Blocked: template text contains forbidden word "{blocked_word}"'
+        else:
+            try:
+                # VULNERABLE: same render_template_string flaw as email_preview(),
+                # "protected" only by a naive substring blacklist above -- that
+                # doesn't fix the underlying bug (rendering attacker-controlled
+                # text as template source at all), so it's bypassable.
+                result = render_template_string(bio_template)
+            except Exception as e:
+                error = str(e)
+    return render_template(
+        "a03_injection/bio_preview.html",
+        bio_template=bio_template,
+        result=result,
+        error=error,
+    )

@@ -80,6 +80,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a03_injection.email_preview",
             ),
+            ExampleNav(
+                id="ssti-blacklist-bypass",
+                title="SSTI Blacklist Bypass via Profile Bio Preview",
+                group="Server-Side Template Injection (SSTI)",
+                difficulty="Hard",
+                endpoint="a03_injection.bio_preview",
+            ),
         ],
         seed_fn=seed_injection_data,
     )
