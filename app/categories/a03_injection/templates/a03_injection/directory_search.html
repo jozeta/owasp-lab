@@ -1,0 +1,92 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Blind LDAP Injection via Employee Directory Search" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "employee directory search" feature has the exact same underlying
+  flaw as the company directory login example — it builds an LDAP filter
+  directly from your input with no escaping:
+  <code>(&(uid=TARGET)(description=QUERY*))</code>. Unlike the login
+  example, though, this feature never shows you the matched value —
+  only whether a match exists at all, reported below as a single
+  found / not-found result. That single bit of information,
+  repeated many times with different
+  inputs, is enough to extract data you were never shown: this is
+  <strong>blind</strong> LDAP injection.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Search for the <code>root_admin</code> account with a single-letter
+  query:
+</p>
+<pre><code class="language-python">target: root_admin
+query: r</code></pre>
+<p>
+  If this reports a match, the server is treating your query as a
+  filter fragment (a prefix match against the account's
+  <code>description</code> field) rather than literal search text — the
+  next step turns that single true/false bit into a way to read data you
+  can't see directly.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Search with <code>target=root_admin</code> and
+      <code>query=r</code> — the search reports a match (the hidden
+      <code>description</code> value starts with "r").</li>
+  <li>Try <code>query=re</code> — still a match. Try
+      <code>query=rf</code> — no match. Keep extending the query by one
+      character at a time, trying every letter/digit until one matches,
+      then moving to the next position.</li>
+  <li>Repeating this character by character recovers the entire hidden
+      <code>description</code> value — a secret recovery code — without
+      ever being shown it directly, purely from the found/not-found
+      responses.</li>
+</ol>
+<p>
+  Blind boolean-based injection is what an attacker reaches for whenever
+  an application is vulnerable but doesn't echo back the injected data
+  directly — the same technique this lab's Blind Time-Based SQL
+  Injection example demonstrates for SQL. It's slower than a direct
+  data leak (each character can take dozens of guesses), but it's fully
+  automatable: a real attack script tries every character position in a
+  loop exactly like this, typically recovering secrets in seconds. This
+  matters because "the app never displays the sensitive field" is often
+  mistaken for a mitigation — it isn't, if the underlying query is still
+  injectable.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}filt = f"(&(uid={target})(description={query}*))"
+conn.search(base_dn, filt, SUBTREE, attributes=["uid"])
+{% endblock %}
+
+{% block secure_code %}from ldap3.utils.conv import escape_filter_chars
+
+safe_target = escape_filter_chars(target)
+safe_query = escape_filter_chars(query)
+filt = f"(&(uid={safe_target})(description={safe_query}*))"
+conn.search(base_dn, filt, SUBTREE, attributes=["uid"])
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Target username</label>
+    <input type="text" class="form-control" name="target" value="{{ target }}">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Search query</label>
+    <input type="text" class="form-control" name="query" value="{{ query }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Search</button>
+</form>
+{% if result %}
+<p class="mt-3">{{ result }}</p>
+{% endif %}
+{% endblock %}

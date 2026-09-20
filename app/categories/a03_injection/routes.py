@@ -257,3 +257,27 @@ def directory_login():
     return render_template(
         "a03_injection/directory_login.html", username=username, result=result, error=error
     )
+
+
+@a03_bp.route("/directory-search", methods=["GET", "POST"])
+def directory_search():
+    target = ""
+    query = ""
+    result = None
+    if request.method == "POST":
+        target = request.form.get("target", "")
+        query = request.form.get("query", "")
+        conn = ldap_client.get_ldap_connection()
+        try:
+            # VULNERABLE: same raw f-string interpolation flaw as directory_login(),
+            # reused in a different feature -- here the response is BLIND (only
+            # found/not-found is shown), not the matched value itself, which is
+            # exactly what makes boolean-based blind injection extraction possible.
+            filt = f"(&(uid={target})(description={query}*))"
+            conn.search(ldap_client.LDAP_BASE_DN, filt, SUBTREE, attributes=["uid"])
+            result = "Match found" if conn.entries else "No match"
+        finally:
+            conn.unbind()
+    return render_template(
+        "a03_injection/directory_search.html", target=target, query=query, result=result
+    )

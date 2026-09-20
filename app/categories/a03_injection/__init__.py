@@ -94,6 +94,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a03_injection.directory_login",
             ),
+            ExampleNav(
+                id="ldap-directory-search",
+                title="Blind LDAP Injection via Employee Directory Search",
+                group="LDAP Injection",
+                difficulty="Hard",
+                endpoint="a03_injection.directory_search",
+            ),
         ],
         seed_fn=seed_injection_data,
     )
