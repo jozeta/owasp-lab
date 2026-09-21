@@ -9,7 +9,7 @@
       <span class="fw-bold">Overall</span>
       <span>{{ completed_total }} of {{ total }} completed — {{ overall_percent }}%</span>
     </div>
-    <div class="progress" role="progressbar" aria-valuenow="{{ completed_total }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+    <div class="progress" role="progressbar" aria-label="Overall progress" aria-valuenow="{{ completed_total }}" aria-valuemin="0" aria-valuemax="{{ total }}">
       <div class="progress-bar" style="width: {{ overall_percent }}%"></div>
     </div>
   </div>
@@ -22,7 +22,7 @@
       <span class="fw-bold">{{ cs.category.short_id }}: {{ cs.category.title }}</span>
       <span>{{ cs.completed }} of {{ cs.total }} completed</span>
     </div>
-    <div class="progress" role="progressbar" aria-valuenow="{{ cs.completed }}" aria-valuemin="0" aria-valuemax="{{ cs.total }}">
+    <div class="progress" role="progressbar" aria-label="{{ cs.category.short_id }} progress" aria-valuenow="{{ cs.completed }}" aria-valuemin="0" aria-valuemax="{{ cs.total }}">
       <div class="progress-bar" style="width: {{ cs.percent }}%"></div>
     </div>
   </div>

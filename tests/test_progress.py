@@ -1,7 +1,6 @@
 from app.core.models import ExampleProgress
 from app.core.nav import CATEGORIES
 from app.core.seed import seed_database
-from app.extensions import db
 
 
 def _safe_test_example():
@@ -129,8 +128,10 @@ def test_stats_page_loads(client):
 
 def test_stats_page_shows_zero_percent_when_nothing_completed(app, client):
     seed_database(app)
+    examples = [e for category in CATEGORIES for e in category.examples]
     response = client.get("/stats")
-    assert b"0%" in response.data
+    body = response.data.decode()
+    assert f"0 of {len(examples)} completed — 0%" in body
 
 
 def test_stats_page_shows_correct_overall_count(app, client):
@@ -143,7 +144,8 @@ def test_stats_page_shows_correct_overall_count(app, client):
 
     response = client.get("/stats")
     body = response.data.decode()
-    assert f"2 of {len(examples)} completed" in body
+    expected_percent = round(2 / len(examples) * 100)
+    assert f"2 of {len(examples)} completed — {expected_percent}%" in body
 
 
 def test_stats_page_shows_correct_per_category_count(app, client):

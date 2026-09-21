@@ -49,14 +49,18 @@ Both toggles are global and stored in the database — they affect every example
 immediately for every visitor. Hiding the teaching text never disables the underlying
 vulnerability; it only conceals the walkthrough, so you can attempt exploitation blind.
 
-Reset lab restores database state (seeded accounts, secrets, comments, orders, etc.)
-to its clean starting point. Per-browser example state — like a demo cart or coupon
-count stored only in your session — isn't part of that database and is cleared by
-that example's own "Start over" control (where provided) or by clearing your browser's
-cookies for this site.
+Reset lab restores database state (seeded accounts, secrets, comments, orders, your
+example-completion progress, etc.) to its clean starting point. Per-browser example
+state — like a demo cart or coupon count stored only in your session — isn't part of
+that database and is cleared by that example's own "Start over" control (where
+provided) or by clearing your browser's cookies for this site.
 
 ## More pages
 
+- **Stats** (`/stats`) — your progress across every example, overall and per
+  category. Progress is global and shared by every visitor to this instance —
+  marking an example "done" updates what everyone sees here, the same way the
+  Settings toggles above are shared, not per-browser.
 - **Tools** (`/tools`) — what tools are useful for which kinds of exercises, with
   download links.
 - **About** (`/about`) — what this app is, its infrastructure, and its safety model.

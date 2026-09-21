@@ -74,6 +74,10 @@ def force_reset():
     )
 
 
+# No CSRF token: matches every other POST route in this app (settings_page,
+# reset_lab, logout, switch_user) -- adding one only here would be
+# inconsistent. Impact is low (this only flips a training checkbox) and
+# the app is meant to run on 127.0.0.1 only.
 @core_bp.route("/progress/toggle", methods=["POST"])
 def toggle_progress():
     example_id = request.form.get("example_id", "")
@@ -103,13 +107,13 @@ def stats_page():
     category_stats = []
     for category in sorted(CATEGORIES, key=lambda c: c.short_id):
         completed = sum(1 for e in category.examples if e.id in completed_ids)
-        total = len(category.examples)
+        category_total = len(category.examples)
         category_stats.append(
             {
                 "category": category,
                 "completed": completed,
-                "total": total,
-                "percent": round(completed / total * 100) if total else 0,
+                "total": category_total,
+                "percent": round(completed / category_total * 100) if category_total else 0,
             }
         )
     completed_total = sum(cs["completed"] for cs in category_stats)
