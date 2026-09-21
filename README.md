@@ -22,7 +22,7 @@ blind time-based SQLi, OS command injection, stored XSS, XXE file disclosure, XX
 **A04 Insecure Design** (unlimited coupon reuse, negative-quantity price manipulation,
 multi-step checkout bypass), **A05 Security Misconfiguration** (exposed database backup,
 directory listing, verbose error disclosure, permissive CORS with credentials, exposed
-debug console, forgotten admin panel with default credentials), and **A06 Vulnerable
+debug console, forgotten admin panel with default credentials), **A06 Vulnerable
 and Outdated Components** (component version disclosure, outdated JS library detection,
 jQuery DOM XSS via a real CVE, jQuery XSS chained to session-token theft, Lodash
 prototype pollution via a real CVE, prototype pollution bypassing a client-side access
