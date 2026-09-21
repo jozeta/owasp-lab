@@ -54,14 +54,14 @@ sequenceDiagram
 </p>
 {% endblock %}
 
-{% block vulnerable_code %}# pinned once, years ago, never revisited
-jquery==1.12.4   # released 2016; CVE-2020-11022 fixed in 3.5.0 (2020) -- never upgraded
-lodash==4.17.11  # CVE-2019-10744 fixed in 4.17.12 -- one patch version away, never applied
+{% block vulnerable_code %}// package.json (or vendored file comment) -- pinned once, years ago, never revisited
+"jquery": "1.12.4",   // released 2016; CVE-2020-11022 fixed in 3.5.0 (2020) -- never upgraded
+"lodash": "4.17.11"   // CVE-2019-10744 fixed in 4.17.12 -- one patch version away, never applied
 {% endblock %}
 
-{% block secure_code %}# dependencies pinned to current, patched releases, with a recurring
-# audit (e.g. npm audit, pip-audit, Dependabot) catching new CVEs
-# against whatever's currently pinned
-jquery==3.7.1
-lodash==4.17.21
+{% block secure_code %}// dependencies pinned to current, patched releases, with a recurring
+// audit (e.g. npm audit, Dependabot) catching new CVEs against whatever's
+// currently pinned
+"jquery": "3.7.1",
+"lodash": "4.17.21"
 {% endblock %}

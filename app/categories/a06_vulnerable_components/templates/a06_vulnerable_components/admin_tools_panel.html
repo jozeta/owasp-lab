@@ -60,11 +60,12 @@ function checkAdminAccess() {
      merge keys), PLUS: never gate real functionality on a client-side
      check alone -- a client can always be tampered with. Any access
      decision that matters must be enforced server-side, on every
-     request: --&gt;
-@app.route("/admin/tools")
-@require_admin
-def admin_tools():
-    ...
+     request, e.g. a route like GET /admin/tools guarded by a
+     require_admin check that re-validates the session on the server
+     before any admin content is ever sent to the browser: --&gt;
+&lt;div id="admin-tools-panel"&gt;
+  &lt;!-- rendered only if the server-side admin check already passed --&gt;
+&lt;/div&gt;
 {% endblock %}
 
 {% block live_example %}

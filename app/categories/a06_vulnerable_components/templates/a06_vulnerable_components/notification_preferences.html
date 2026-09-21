@@ -58,7 +58,7 @@
 document.getElementById('apply-btn').addEventListener('click', function () {
   var raw = document.getElementById('prefs-json').value;
   var userPrefs = JSON.parse(raw);
-  // VULNERABLE: _.defaultsDeep() on Lodash < 4.17.12 recursively merges
+  // VULNERABLE: _.defaultsDeep() on Lodash &lt; 4.17.12 recursively merges
   // attacker-controlled keys -- including "constructor.prototype" -- onto
   // Object.prototype itself (CVE-2019-10744), not just the local object.
   var merged = _.defaultsDeep({}, DEFAULT_PREFS, userPrefs);

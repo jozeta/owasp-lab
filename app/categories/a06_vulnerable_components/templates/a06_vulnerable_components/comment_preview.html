@@ -55,7 +55,7 @@
 {% block vulnerable_code %}$('#preview-btn').on('click', function () {
   var raw = $('#comment-input').val();
   // VULNERABLE: relies on jQuery's own htmlPrefilter to make raw .html()
-  // "safe" -- jQuery < 3.5.0's htmlPrefilter regex can be defeated by a
+  // "safe" -- jQuery &lt; 3.5.0's htmlPrefilter regex can be defeated by a
   // self-closing tag, letting injected markup execute (CVE-2020-11022).
   $('#comment-preview').html(raw);
 });

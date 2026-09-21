@@ -25,3 +25,16 @@ def test_vendored_lodash_file_is_present_and_substantial():
     with open(path, encoding="utf-8") as f:
         header = f.read(300)
     assert "lodash" in header.lower()
+
+
+def test_vendored_lodash_file_is_the_real_vulnerable_release():
+    path = os.path.join(BASE_DIR, "static", "vendor", "lodash-vulnerable", "lodash-4.17.11.js")
+    with open(path, encoding="utf-8") as f:
+        contents = f.read()
+    assert "var VERSION = '4.17.11';" in contents
+
+
+def test_vendored_lodash_is_served_and_is_the_real_vulnerable_version(client):
+    response = client.get("/static/vendor/lodash-vulnerable/lodash-4.17.11.js")
+    assert response.status_code == 200
+    assert b"var VERSION = '4.17.11';" in response.data
