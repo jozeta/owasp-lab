@@ -75,7 +75,8 @@ provided) or by clearing your browser's cookies for this site.
 | A02 Cryptographic Failures | Implemented | Leaked Credential Dump (Easy), Weak Encryption / ECB Mode (Medium), Predictable Password Reset Token (Hard) |
 | A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard) |
 | A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Negative Quantity Price Manipulation (Medium), Multi-Step Checkout Bypass (Hard) |
-| A05–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
+| A05 Security Misconfiguration | Implemented | Exposed Database Backup File (Easy), Directory Listing Exposed (Easy), Verbose Error Message Disclosure (Medium), Permissive CORS with Credentials (Medium), Exposed Debug Console (Hard), Forgotten Admin Panel with Default Credentials (Hard) |
+| A06–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
 
 ## Safety model
 
