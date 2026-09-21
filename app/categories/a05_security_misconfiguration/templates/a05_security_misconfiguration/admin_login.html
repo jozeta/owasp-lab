@@ -1,0 +1,75 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Forgotten Admin Panel with Default Credentials" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  This internal admin tool, "DataVault Pro," was installed years ago and
+  never had its factory-default administrator credentials changed. The
+  login form works exactly as intended — it's just still guarding the
+  door with the password printed in the vendor's own public setup guide.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  There's no leaked page, no source-code comment, no hint on this page
+  telling you the password — that's the point. Real attackers maintain
+  (and routinely try) lists of known factory-default credentials for
+  common off-the-shelf software; this is a training simulation of exactly
+  that pattern. This fictional "DataVault Pro" tool's documented default
+  is <code>admin</code> / <code>DataVault@2019</code>.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Go to the login form below and submit
+      <code>admin</code> / <code>DataVault@2019</code>.</li>
+  <li>You're in — no further verification, no forced password change on
+      first login, nothing.</li>
+  <li>The panel behind it exposes a full customer data export, including
+      password-reset hint questions for every account.</li>
+</ol>
+<p>
+  Default credentials on internal tools, admin consoles, and third-party
+  software are a persistent, very real cause of breaches — operators
+  install a product, get it working, and simply never come back to change
+  the password the vendor shipped it with. Automated scanners maintain
+  and test exactly these default-credential lists against exposed admin
+  panels at internet scale.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "DataVault@2019"  # vendor factory default, never rotated
+
+if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+    session["admin_authenticated"] = True
+{% endblock %}
+
+{% block secure_code %}# Never ship (or leave) a hardcoded default credential. Require a
+# forced password change on first login, and store the real credential
+# hashed, not compared in plaintext:
+admin = AdminUser.query.filter_by(username=username).first()
+if admin and check_password_hash(admin.password_hash, password):
+    session["admin_authenticated"] = True
+{% endblock %}
+
+{% block live_example %}
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+<form method="post" class="mb-3">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input type="text" class="form-control" name="username">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input type="password" class="form-control" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% endblock %}

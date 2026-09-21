@@ -51,6 +51,13 @@ CATEGORIES.append(
                 difficulty="Hard",
                 endpoint="a05_security_misconfiguration.internal_diagnostics",
             ),
+            ExampleNav(
+                id="default-admin-creds",
+                title="Forgotten Admin Panel with Default Credentials",
+                group="Exposed Debug & Admin Interfaces",
+                difficulty="Hard",
+                endpoint="a05_security_misconfiguration.admin_login",
+            ),
         ],
     )
 )

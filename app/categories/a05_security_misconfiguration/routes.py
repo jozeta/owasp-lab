@@ -2,7 +2,7 @@ import os
 import secrets
 import traceback
 
-from flask import Response, abort, jsonify, make_response, render_template, request
+from flask import Response, abort, jsonify, make_response, redirect, render_template, request, session, url_for
 
 from app.categories.a05_security_misconfiguration import a05_bp
 
@@ -134,3 +134,37 @@ def loyalty_status_api():
 @a05_bp.route("/internal-diagnostics")
 def internal_diagnostics():
     return render_template("a05_security_misconfiguration/internal_diagnostics.html")
+
+
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "DataVault@2019"
+
+FAKE_CUSTOMER_RECORDS = [
+    {"name": "Renata Solis", "email": "renata.solis@example.test", "password_hint": "childhood pet's name"},
+    {"name": "Owen Baptiste", "email": "owen.baptiste@example.test", "password_hint": "first car model"},
+    {"name": "Yuki Nakashima", "email": "yuki.nakashima@example.test", "password_hint": "mother's maiden name"},
+]
+
+
+@a05_bp.route("/admin-login", methods=["GET", "POST"])
+def admin_login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        # VULNERABLE: hardcoded, factory-default credentials that were
+        # never rotated after this internal tool was deployed
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session["a05_admin_authenticated"] = True
+            return redirect(url_for("a05_security_misconfiguration.admin_panel"))
+        error = "Invalid username or password."
+    return render_template("a05_security_misconfiguration/admin_login.html", error=error)
+
+
+@a05_bp.route("/admin-panel")
+def admin_panel():
+    if not session.get("a05_admin_authenticated"):
+        return redirect(url_for("a05_security_misconfiguration.admin_login"))
+    return render_template(
+        "a05_security_misconfiguration/admin_panel.html", records=FAKE_CUSTOMER_RECORDS
+    )

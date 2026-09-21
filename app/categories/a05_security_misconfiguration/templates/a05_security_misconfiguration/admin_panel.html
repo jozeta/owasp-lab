@@ -1,0 +1,20 @@
+{% extends "core/base.html" %}
+{% block title %}DataVault Pro — Admin Panel{% endblock %}
+{% block content %}
+<h1>DataVault Pro — Internal Ops Dashboard</h1>
+<p class="text-muted">Customer data export</p>
+<table class="table">
+  <thead>
+    <tr><th>Name</th><th>Email</th><th>Password reset hint</th></tr>
+  </thead>
+  <tbody>
+    {% for record in records %}
+    <tr>
+      <td>{{ record.name|safe }}</td>
+      <td>{{ record.email|safe }}</td>
+      <td>{{ record.password_hint|safe }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
