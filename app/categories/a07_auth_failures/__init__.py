@@ -38,6 +38,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a07_auth_failures.share_session_link",
             ),
+            ExampleNav(
+                id="session-survives-logout",
+                title="Session Not Invalidated on Logout",
+                group="Session Identity & Lifecycle",
+                difficulty="Medium",
+                endpoint="a07_auth_failures.session_survives_logout",
+            ),
         ],
         seed_fn=seed_a07_accounts,
     )

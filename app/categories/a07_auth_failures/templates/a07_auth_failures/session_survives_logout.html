@@ -1,0 +1,68 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Session Not Invalidated on Logout" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  Clicking "Log out" clears the session cookie in your own browser — but
+  it never touches the corresponding session record on the server. If
+  anyone else ever obtained a separate copy of that same session id before
+  you logged out (a shared computer, a captured request, the URL-exposure
+  bug in this category), your "logout" does absolutely nothing to stop
+  them from continuing to use it.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Log in, note the raw session ID shown on the
+  <a href="{{ url_for('a07_auth_failures.account') }}">Account</a> page,
+  then log out. Your own browser correctly shows "Not logged in" — but
+  that alone doesn't prove the session was actually destroyed server-side,
+  only that your cookie was cleared.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in via <a href="{{ url_for('a07_auth_failures.brute_force_login') }}">Customer Login</a>.</li>
+  <li>Visit <a href="{{ url_for('a07_auth_failures.account') }}">Account</a> and copy the
+      "Your current session ID" value.</li>
+  <li>Click "Log out" on that page.</li>
+  <li>From a terminal, replay a request carrying the <em>old</em>, copied
+      session id directly — no login form involved at all:
+      <pre><code class="language-bash">curl -b "a07_session_id=&lt;the copied id&gt;" http://127.0.0.1:5001/a07/account</code></pre>
+  </li>
+</ol>
+<p>
+  It still returns "Logged in as dana." Logging out protected nothing
+  except the one browser tab that clicked the button — the session itself
+  was never actually invalidated.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/logout", methods=["POST"])
+def logout():
+    resp = redirect(url_for("session_survives_logout"))
+    resp.set_cookie(SID_COOKIE, "", expires=0)  # clears the CLIENT's cookie only
+    return resp
+# the AuthSession row itself is never deleted
+{% endblock %}
+
+{% block secure_code %}@app.route("/logout", methods=["POST"])
+def logout():
+    sid = request.cookies.get(SID_COOKIE)
+    session_row = db.session.get(AuthSession, sid)
+    if session_row:
+        db.session.delete(session_row)  # actually invalidate server-side
+        db.session.commit()
+    resp = redirect(url_for("session_survives_logout"))
+    resp.set_cookie(SID_COOKIE, "", expires=0)
+    return resp
+{% endblock %}
+
+{% block live_example %}
+<p>Try it (see the Exploitation steps above):</p>
+<a href="{{ url_for('a07_auth_failures.account') }}" class="btn btn-outline-secondary btn-sm">Go to Account</a>
+{% endblock %}

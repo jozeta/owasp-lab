@@ -76,7 +76,15 @@ def share_session_link():
 
 @a07_bp.route("/logout", methods=["POST"])
 def logout():
+    # VULNERABLE: only clears the CLIENT's cookie -- the server-side
+    # AuthSession row is never deleted, so a separately-held copy of the
+    # old id keeps working indefinitely.
+    resp = make_response(redirect(url_for("a07_auth_failures.session_survives_logout")))
+    resp.set_cookie(SID_COOKIE, "", expires=0)
+    return resp
+
+
+@a07_bp.route("/session-survives-logout")
+def session_survives_logout():
     session_row = get_or_create_session()
-    session_row.username = None
-    db.session.commit()
-    return _redirect("a07_auth_failures.account", session_row)
+    return _render("a07_auth_failures/session_survives_logout.html", session_row)
