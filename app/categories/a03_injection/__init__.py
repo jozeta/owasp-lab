@@ -88,6 +88,13 @@ CATEGORIES.append(
                 endpoint="a03_injection.host_lookup",
             ),
             ExampleNav(
+                id="blind-report-injection",
+                title="Blind Command Injection via Report Generator",
+                group="OS Command Injection",
+                difficulty="Hard",
+                endpoint="a03_injection.generate_report",
+            ),
+            ExampleNav(
                 id="xml-import",
                 title="XXE File Disclosure via Contact Import",
                 group="XML External Entity Injection (XXE)",

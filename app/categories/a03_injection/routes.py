@@ -13,6 +13,7 @@ from app.categories.a03_injection.models import Comment, Employee, InjectionAcco
 from app.extensions import db
 
 XXE_SECRET_PATH = os.path.join(os.path.dirname(__file__), "xxe_secret.txt")
+CMD_SECRET_PATH = os.path.join(os.path.dirname(__file__), "cmd_secret.txt")
 
 
 class _HttpFetchingResolver(etree.Resolver):
@@ -380,4 +381,30 @@ def filtered_host_lookup():
         host=host,
         output=output,
         blocked=blocked,
+    )
+
+
+@a03_bp.route("/generate-report", methods=["GET", "POST"])
+def generate_report():
+    report_name = ""
+    submitted = False
+    if request.method == "POST":
+        report_name = request.form.get("report_name", "")
+        # VULNERABLE: raw string-concatenated shell command, output
+        # discarded -- the response text below is identical no matter
+        # what happens, so the ONLY signal available is how long the
+        # request took to complete
+        subprocess.run(
+            f"touch /tmp/report_{report_name}.pdf",
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        submitted = True
+    return render_template(
+        "a03_injection/generate_report.html",
+        report_name=report_name,
+        submitted=submitted,
+        secret_path=CMD_SECRET_PATH,
     )

@@ -1,0 +1,141 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Blind Command Injection via Report Generator" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "generate my report" feature shells out to create a file named
+  after your input, with <code>shell=True</code> and no parameterization
+  — but unlike every other example in this project, it never shows you
+  any output at all. The response text is exactly the same whether the
+  command succeeded, failed, or did something else entirely. The only
+  thing that can possibly differ between two requests is how long they
+  take to complete.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit an ordinary report name first — the response is instant. Then
+  submit <code>x; sleep 5 #</code> as the report name. If the response
+  now takes about five seconds longer, your input is reaching a real
+  shell and you've confirmed command execution with zero visible output
+  — a purely <strong>blind</strong> injection point.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  A timing difference is a real signal, and like any blind oracle it can
+  be turned into a way to read data you're never shown. See the Tasks
+  below, which walk through this step by step, from a single timing
+  probe to extracting one real byte of a server-side secret file by
+  hand, to fully automated extraction.
+</p>
+{% endblock %}
+
+{% block tasks %}
+<ol class="list-unstyled">
+  <li class="mb-4">
+    <strong>Task 1: Confirm blind execution with a single timing
+    probe.</strong>
+    <p>Submit a report name that should return instantly, then one that
+    should take several seconds, and confirm the delay is real.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task1-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task1-solution">
+      <div class="card card-body">
+        <p>Submit <code>report</code> — instant. Submit
+        <code>x; sleep 5 #</code> — the response takes about five
+        seconds longer, even though the two responses look
+        byte-for-byte identical. The delay itself is the only signal
+        you need.</p>
+      </div>
+    </div>
+  </li>
+  <li class="mb-4">
+    <strong>Task 2: Extract one real byte by hand — the first character
+    of a secret file on the server — using only response timing.</strong>
+    <p>The server has a file at <code>{{ secret_path }}</code>. You
+    can't read it directly, but you can ask yes/no questions about its
+    first byte and binary-search your way to the exact value.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task2-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task2-solution">
+      <div class="card card-body">
+        <p>Submit report names shaped like
+        <code>x; [ $(printf %d \'$(head -c1 {{ secret_path }})) -gt 128 ] &amp;&amp; sleep 3 #</code>
+        — if the response is slow, the first character's ASCII value is
+        above 128; if it's instant, it isn't. Halve the range each time
+        (64, then 32 or 96, and so on) and within about 8 requests
+        you'll pin down the exact value: <strong>75</strong>, which is
+        the letter <strong>K</strong>.</p>
+      </div>
+    </div>
+  </li>
+  <li class="mb-4">
+    <strong>Task 3: Extract the entire secret file. This one genuinely
+    requires automated tooling.</strong>
+    <p>Task 2 took about 8 requests for ONE byte. A real secret is many
+    bytes long, and each one needs its own binary search. Doing this by
+    hand for a whole file would take an impractically large number of
+    requests — which is exactly why tools like <code>commix</code>
+    exist: point it at the injection point and let it enumerate the
+    file's contents unattended.</p>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#task3-solution">
+      Show solution
+    </button>
+    <div class="collapse mt-2" id="task3-solution">
+      <div class="card card-body">
+        <p>From a shell with <code>commix</code> available (cloned from
+        <code>github.com/commixproject/commix</code> and run from
+        source — it is not distributed on PyPI):</p>
+        <pre><code class="language-python">python3 commix.py -u "http://127.0.0.1:5001/a03/generate-report" \
+  --data="report_name=x" --batch --technique=T \
+  --file-read={{ secret_path }}</code></pre>
+        <p>Within a couple of minutes, commix recovers the entire file
+        contents on its own — the same data Task 2 took ~8 requests to
+        extract just one byte of.</p>
+      </div>
+    </div>
+  </li>
+</ol>
+{% endblock %}
+
+{% block vulnerable_code %}subprocess.run(
+    f"touch /tmp/report_{report_name}.pdf",
+    shell=True,
+    capture_output=True,
+    text=True,
+    timeout=15,
+)
+# response text below is identical no matter what happened -- timing
+# is the only signal an attacker has
+{% endblock %}
+
+{% block secure_code %}subprocess.run(
+    ["touch", f"/tmp/report_{report_name}.pdf"],
+    shell=False,
+    capture_output=True,
+    text=True,
+    timeout=15,
+)
+{% endblock %}
+
+{% block live_example %}
+<form method="post" class="mb-3">
+  <div class="input-group">
+    <input type="text" class="form-control" name="report_name" value="{{ report_name }}" placeholder="Report name">
+    <button type="submit" class="btn btn-primary">Generate</button>
+  </div>
+</form>
+{% if submitted %}
+<p>Your report is being generated. Check back later.</p>
+{% endif %}
+{% endblock %}
