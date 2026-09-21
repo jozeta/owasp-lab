@@ -1,0 +1,67 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Exposed Debug Console" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  A legacy internal diagnostics tool is mounted on this same server at
+  <code>/internal-tools/diagnostics</code>, separately from the main
+  application. It was never properly decommissioned, and it still runs
+  with Flask's debug mode enabled — meaning any unhandled error there
+  drops a visitor straight into Werkzeug's interactive debugger, a live
+  Python console running inside the server process.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Visit
+  <a href="/internal-tools/diagnostics">/internal-tools/diagnostics</a>
+  directly. Instead of a normal error page (or this app's own styling at
+  all), you'll land on Werkzeug's raw debugger — dramatically different
+  from anything else in this app, itself a strong signal that debug mode
+  was left on somewhere it shouldn't be.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Visit <code>/internal-tools/diagnostics</code> — it always raises an
+      error, dropping you into the interactive debugger.</li>
+  <li>Click on the bottom-most stack frame (inside the
+      <code>diagnostics()</code> function) to open its inline console.</li>
+  <li>Type a Python expression into the console and press Enter — for
+      example: <code>__import__('subprocess').check_output(['id']).decode()</code></li>
+  <li>The console runs it for real, inside the actual server process, and
+      shows you the output — this is genuine remote code execution, not a
+      simulation. A real attacker could read any file the server process
+      can read, exfiltrate the database credentials, or pivot further into
+      the network from here.</li>
+</ol>
+<p>
+  Leaving an interactive debugger reachable in a live deployment is one of
+  the single most severe misconfigurations possible — it isn't a path to
+  code execution, it <em>is</em> code execution, handed directly to
+  whoever finds the URL. This exact mistake (a debug-mode console left
+  reachable) has been the root cause of real production compromises.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}internal_tool_app.config["DEBUG"] = True
+internal_tool_app.config["PROPAGATE_EXCEPTIONS"] = True
+# mounted with the debugger enabled and pin_security=False --
+# no PIN challenge, no authentication, full interactive console
+{% endblock %}
+
+{% block secure_code %}internal_tool_app.config["DEBUG"] = False
+# never enable Flask's debug mode (or Werkzeug's interactive debugger)
+# on anything reachable outside a developer's own machine
+{% endblock %}
+
+{% block live_example %}
+<p>Try it directly:</p>
+<a href="/internal-tools/diagnostics" class="btn btn-danger" target="_blank" rel="noopener">
+  Open /internal-tools/diagnostics
+</a>
+{% endblock %}

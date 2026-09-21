@@ -129,3 +129,8 @@ def loyalty_status_api():
         resp.headers["Access-Control-Allow-Origin"] = origin
         resp.headers["Access-Control-Allow-Credentials"] = "true"
     return resp
+
+
+@a05_bp.route("/internal-diagnostics")
+def internal_diagnostics():
+    return render_template("a05_security_misconfiguration/internal_diagnostics.html")

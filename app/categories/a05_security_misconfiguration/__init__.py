@@ -44,6 +44,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a05_security_misconfiguration.cors_credentials",
             ),
+            ExampleNav(
+                id="debug-console-rce",
+                title="Exposed Debug Console",
+                group="Exposed Debug & Admin Interfaces",
+                difficulty="Hard",
+                endpoint="a05_security_misconfiguration.internal_diagnostics",
+            ),
         ],
     )
 )
