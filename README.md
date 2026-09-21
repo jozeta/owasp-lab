@@ -26,8 +26,11 @@ debug console, forgotten admin panel with default credentials), and **A06 Vulner
 and Outdated Components** (component version disclosure, outdated JS library detection,
 jQuery DOM XSS via a real CVE, jQuery XSS chained to session-token theft, Lodash
 prototype pollution via a real CVE, prototype pollution bypassing a client-side access
-check). Remaining categories (A07–A10) are tracked separately and follow the same
-pattern.
+check), and **A07 Identification and Authentication Failures** (no rate limiting
+enables brute force, credential stuffing across multiple accounts, session
+identifier exposed in a URL, session not invalidated on logout, full
+session fixation, bypassable multi-factor authentication). Remaining
+categories (A08–A10) are tracked separately and follow the same pattern.
 
 ## Quick start
 
@@ -82,7 +85,8 @@ provided) or by clearing your browser's cookies for this site.
 | A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Negative Quantity Price Manipulation (Medium), Multi-Step Checkout Bypass (Hard) |
 | A05 Security Misconfiguration | Implemented | Exposed Database Backup File (Easy), Directory Listing Exposed (Easy), Verbose Error Message Disclosure (Medium), Permissive CORS with Credentials (Medium), Exposed Debug Console (Hard), Forgotten Admin Panel with Default Credentials (Hard) |
 | A06 Vulnerable and Outdated Components | Implemented | Component Version Disclosure (Easy), Outdated Vulnerable JS Library Detection (Easy), jQuery DOM XSS via Vulnerable htmlPrefilter (Medium), Lodash Prototype Pollution via _.defaultsDeep() (Medium), jQuery DOM XSS Chained to Session Token Theft (Hard), Prototype Pollution Bypasses a Client-Side Access Check (Hard) |
-| A07–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
+| A07 Identification and Authentication Failures | Implemented | No Rate Limiting Enables Brute Force (Easy), Credential Stuffing Across Multiple Accounts (Medium), Session Identifier Exposed in URL (Easy), Session Not Invalidated on Logout (Medium), Session Fixation (Hard), Bypassable Multi-Factor Authentication (Hard) |
+| A08–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
 
 ## Safety model
 
