@@ -21,7 +21,7 @@ authorization, mass assignment / role escalation), **A02 Cryptographic Failures*
 blind time-based SQLi, OS command injection, stored XSS, XXE file disclosure, XXE SSRF),
 and **A04 Insecure Design**
 (unlimited coupon reuse, negative-quantity price manipulation, multi-step checkout
-bypass). Remaining categories (A05–A10) are tracked separately and follow the same
+bypass). Remaining categories (A06–A10) are tracked separately and follow the same
 pattern.
 
 ## Quick start
