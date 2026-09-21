@@ -30,6 +30,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a08_integrity_failures.plugin_marketplace",
             ),
+            ExampleNav(
+                id="unchecked-signature-cookie",
+                title="Unchecked Signature on Preferences Cookie",
+                group="Broken Signature Verification",
+                difficulty="Easy",
+                endpoint="a08_integrity_failures.preferences",
+            ),
         ],
     )
 )

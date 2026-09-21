@@ -1,4 +1,7 @@
 import base64
+import hashlib
+import hmac
+import json
 import pickle
 import urllib.error
 import urllib.request
@@ -114,3 +117,49 @@ def official_plugin_download():
 @a08_bp.route("/plugin-marketplace/malicious-plugin-demo.py")
 def malicious_plugin_demo_download():
     return Response(MALICIOUS_PLUGIN_SOURCE, mimetype="text/x-python")
+
+
+PREFS_COOKIE = "a08_prefs"
+PREFS_SECRET = "prefs-signing-key-2026"
+
+
+def _sign_prefs(data):
+    payload = json.dumps(data, sort_keys=True).encode()
+    return hmac.new(PREFS_SECRET.encode(), payload, hashlib.sha256).hexdigest()
+
+
+def _verify_prefs_signature(data, sig):
+    # This check exists in the codebase -- it's just never actually
+    # called anywhere. A realistic "we meant to verify this" bug.
+    expected = _sign_prefs(data)
+    return hmac.compare_digest(expected, sig)
+
+
+@a08_bp.route("/preferences", methods=["GET", "POST"])
+def preferences():
+    if request.method == "POST":
+        prefs = {
+            "theme": request.form.get("theme", "light"),
+            "premium_unlocked": False,
+        }
+        sig = _sign_prefs(prefs)
+        cookie_value = json.dumps({**prefs, "sig": sig})
+        resp = make_response(redirect(url_for("a08_integrity_failures.preferences")))
+        resp.set_cookie(PREFS_COOKIE, cookie_value)
+        return resp
+
+    raw = request.cookies.get(PREFS_COOKIE)
+    prefs = {"theme": "light", "premium_unlocked": False}
+    if raw:
+        try:
+            parsed = json.loads(raw)
+            # VULNERABLE: _verify_prefs_signature() is never called here --
+            # the "sig" field is parsed out and ignored, and every other
+            # field is trusted directly.
+            prefs = {
+                "theme": parsed.get("theme", "light"),
+                "premium_unlocked": parsed.get("premium_unlocked", False),
+            }
+        except Exception:
+            pass
+    return render_template("a08_integrity_failures/preferences.html", prefs=prefs)

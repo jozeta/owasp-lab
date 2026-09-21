@@ -1,0 +1,66 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Unchecked Signature on Preferences Cookie" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A08{% endblock %}
+
+{% block explanation %}
+<p>
+  This "remember my preferences" feature signs its cookie with a real
+  HMAC signature — the signing code is correct, and a verification
+  function exists in the codebase to check it. The bug is that the
+  <em>route that reads the cookie back</em> never actually calls that
+  verification function. It parses the JSON, pulls out the fields it
+  wants, and simply never looks at <code>sig</code> at all.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Set your preferences normally and look at the cookie value — it does
+  contain a real <code>sig</code> field. That alone doesn't prove
+  anything is checked; the only way to know is to submit a value with an
+  obviously wrong signature and see whether it's still honored.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>Set your <code>a08_prefs</code> cookie to this exact value:</p>
+<pre><code class="language-json">{"theme": "dark", "premium_unlocked": true, "sig": "not-a-real-signature"}</code></pre>
+<p>
+  Reload this page. <code>premium_unlocked</code> shows as
+  <strong>Yes</strong>, despite the signature being nothing but the
+  literal string "not-a-real-signature" — the check that would have
+  caught this was written, but the code path that reads the cookie
+  never calls it.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}parsed = json.loads(request.cookies.get("a08_prefs"))
+# VULNERABLE: _verify_prefs_signature() exists in this codebase but is
+# never called here -- "sig" is parsed and ignored
+prefs = {
+    "theme": parsed.get("theme", "light"),
+    "premium_unlocked": parsed.get("premium_unlocked", False),
+}
+{% endblock %}
+
+{% block secure_code %}parsed = json.loads(request.cookies.get("a08_prefs"))
+sig = parsed.pop("sig", None)
+if not sig or not _verify_prefs_signature(parsed, sig):
+    parsed = {"theme": "light", "premium_unlocked": False}  # fall back, don't trust it
+prefs = parsed
+{% endblock %}
+
+{% block live_example %}
+<p>Current preferences: theme = {{ prefs.theme }}, Premium: {{ "Yes" if prefs.premium_unlocked else "No" }}</p>
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Theme</label>
+    <select class="form-select" name="theme">
+      <option value="light">light</option>
+      <option value="dark">dark</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Save Preferences</button>
+</form>
+{% endblock %}
