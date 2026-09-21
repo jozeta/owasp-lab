@@ -44,6 +44,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a06_vulnerable_components.notification_preferences",
             ),
+            ExampleNav(
+                id="jquery-xss-session-theft",
+                title="jQuery DOM XSS Chained to Session Token Theft",
+                group="Vulnerable Library: jQuery HTML Sanitization Bypass",
+                difficulty="Hard",
+                endpoint="a06_vulnerable_components.account_preview",
+            ),
         ],
     )
 )

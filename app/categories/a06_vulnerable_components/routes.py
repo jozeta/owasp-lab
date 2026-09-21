@@ -42,3 +42,8 @@ def comment_preview():
 @a06_bp.route("/notification-preferences")
 def notification_preferences():
     return render_template("a06_vulnerable_components/notification_preferences.html")
+
+
+@a06_bp.route("/account-preview")
+def account_preview():
+    return render_template("a06_vulnerable_components/account_preview.html")
