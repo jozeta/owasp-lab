@@ -1,0 +1,69 @@
+{% extends "core/overview_base.html" %}
+{% set category_short_id = "A07" %}
+{% set category_title = "Identification and Authentication Failures" %}
+{% block title %}A07: Identification and Authentication Failures{% endblock %}
+
+{% block what_it_is %}
+<p>
+  Identification and Authentication Failures cover everything that can go
+  wrong in confirming who a user is and keeping that identity attached to
+  the right requests afterward — logins with no protection against
+  automated guessing, session identifiers that leak or never expire, and
+  second-factor checks that can simply be skipped.
+</p>
+{% endblock %}
+
+{% block why_it_matters %}
+<p>
+  Authentication is the foundation every other access decision rests on —
+  if an attacker can become "you" without your password, every other
+  control in the app (access checks, audit logs, authorization) is
+  reasoning about the wrong identity from that point forward.
+</p>
+{% endblock %}
+
+{% block how_exploited %}
+<p>
+  Attackers script unlimited login attempts when nothing stops them,
+  reuse breached username/password pairs across unrelated sites at scale,
+  and — once a session identifier itself becomes the weak point — never
+  need a password at all: a leaked, reused, or unexpired session id is a
+  complete substitute for one.
+</p>
+{% endblock %}
+
+{% block attack_flow_diagram %}
+sequenceDiagram
+    participant Attacker
+    participant App as Vulnerable App
+    participant Victim
+    Attacker->>App: Unlimited login attempts, or a planted session id
+    Note over App: No rate limiting, no lockout, no session-id rotation on login, no server-side logout
+    Victim->>App: Logs in normally (possibly using the attacker's planted id)
+    App-->>Attacker: A working session, no password ever required
+{% endblock %}
+
+{% block real_world_impact %}
+<p>
+  Real incidents in this category include large-scale credential-stuffing
+  campaigns against sites with no login throttling, and session-fixation
+  attacks that hand an attacker a fully authenticated session without ever
+  learning the victim's password.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}account = Account.query.filter_by(username=username).first()
+if account and check_password_hash(account.password_hash, password):
+    log_in(account)
+# no attempt counter, no lockout, no delay -- runs exactly the same on
+# attempt 1 and attempt 10,000
+{% endblock %}
+
+{% block secure_code %}# track failed attempts per username/IP, lock out or delay after a
+# threshold, and always mint a brand-new session id on successful login
+if too_many_recent_failures(username):
+    abort(429)
+account = Account.query.filter_by(username=username).first()
+if account and check_password_hash(account.password_hash, password):
+    log_in(account)  # log_in() rotates the session id internally
+{% endblock %}

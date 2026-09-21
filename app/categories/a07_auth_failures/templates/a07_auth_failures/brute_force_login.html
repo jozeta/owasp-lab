@@ -1,0 +1,72 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "No Rate Limiting Enables Brute Force" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This "Customer Login" page checks a submitted username and password
+  against a real, securely-hashed account — there's no SQL injection or
+  logic flaw here, the check itself is correct. The vulnerability is what's
+  <em>missing</em>: no limit on how many times you can guess, no delay
+  between attempts, no lockout, no CAPTCHA. A script can try passwords
+  exactly as fast as the server can respond.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit a handful of wrong passwords in a row for the same username and
+  watch the response: every single attempt gets exactly the same instant
+  "Invalid username or password" — no slowdown, no warning, no sign the
+  server is tracking failures at all.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  The seeded account <code>dana</code> uses a common, weak password. Try
+  a short wordlist of common passwords against it:
+</p>
+<pre><code class="language-text">password
+123456
+welcome1
+qwerty
+letmein</code></pre>
+<p>
+  <code>welcome1</code> succeeds. In a real attack this would be scripted
+  — hundreds or thousands of guesses per minute, limited only by network
+  speed, because nothing on the server ever says "slow down" or "locked
+  out."
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}account = A07Account.query.filter_by(username=username).first()
+if account and check_password_hash(account.password_hash, password):
+    session_row.username = account.username
+# no attempt counter, no lockout, no delay
+{% endblock %}
+
+{% block secure_code %}if too_many_recent_failures(username, request.remote_addr):
+    abort(429)  # or a growing delay / CAPTCHA after N failures
+account = A07Account.query.filter_by(username=username).first()
+if account and check_password_hash(account.password_hash, password):
+    session_row.username = account.username
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username" value="dana">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

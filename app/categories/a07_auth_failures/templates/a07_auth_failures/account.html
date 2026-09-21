@@ -1,0 +1,15 @@
+{% extends "core/base.html" %}
+{% block title %}Account — A07{% endblock %}
+
+{% block content %}
+<h1>Account</h1>
+{% if session_row.username %}
+<p>Logged in as: <strong>{{ session_row.username }}</strong></p>
+{% else %}
+<p>Not logged in.</p>
+{% endif %}
+<p>Your current session ID: <code>{{ session_row.id }}</code></p>
+<form method="post" action="{{ url_for('a07_auth_failures.logout') }}">
+  <button type="submit" class="btn btn-outline-secondary btn-sm">Log out</button>
+</form>
+{% endblock %}
