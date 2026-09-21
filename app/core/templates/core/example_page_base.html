@@ -4,7 +4,19 @@
 {% set badge_classes = {"Easy": "text-bg-success", "Medium": "text-bg-warning", "Hard": "text-bg-danger"} %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1>{{ example_title }}</h1>
-  <span class="badge {{ badge_classes[example_difficulty] }}">{{ example_difficulty }}</span>
+  <div class="d-flex align-items-center gap-2">
+    {% if current_example %}
+    <form method="post" action="{{ url_for('core.toggle_progress') }}" class="d-inline">
+      <input type="hidden" name="example_id" value="{{ current_example.id }}">
+      {% if current_example.id in completed_example_ids %}
+      <button type="submit" class="btn btn-success btn-sm">✓ Completed</button>
+      {% else %}
+      <button type="submit" class="btn btn-outline-secondary btn-sm">Mark as done</button>
+      {% endif %}
+    </form>
+    {% endif %}
+    <span class="badge {{ badge_classes[example_difficulty] }}">{{ example_difficulty }}</span>
+  </div>
 </div>
 
 {% if settings.show_explanations %}

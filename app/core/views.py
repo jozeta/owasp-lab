@@ -1,6 +1,7 @@
-from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, session, url_for
 
-from app.core.models import Settings, User
+from app.core.models import ExampleProgress, Settings, User
+from app.core.nav import CATEGORIES
 from app.core.seed import reset_database
 from app.extensions import db
 
@@ -71,6 +72,29 @@ def force_reset():
         '<p><a href="/">Return to the lab</a></p>',
         mimetype="text/html",
     )
+
+
+@core_bp.route("/progress/toggle", methods=["POST"])
+def toggle_progress():
+    example_id = request.form.get("example_id", "")
+    example = next(
+        (
+            e
+            for c in CATEGORIES
+            for e in c.examples
+            if e.id == example_id and e.endpoint in current_app.view_functions
+        ),
+        None,
+    )
+    if example is None:
+        abort(404)
+    existing = ExampleProgress.query.filter_by(example_id=example_id).first()
+    if existing:
+        db.session.delete(existing)
+    else:
+        db.session.add(ExampleProgress(example_id=example_id))
+    db.session.commit()
+    return redirect(url_for(example.endpoint))
 
 
 @core_bp.route("/tools")

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from app.extensions import db
 
 
@@ -29,3 +31,11 @@ class User(db.Model):
     bio = db.Column(db.Text, nullable=False, default="")
     private_notes = db.Column(db.Text, nullable=False, default="")
     role = db.Column(db.String(20), nullable=False, default="user")
+
+
+class ExampleProgress(db.Model):
+    __tablename__ = "example_progress"
+
+    id = db.Column(db.Integer, primary_key=True)
+    example_id = db.Column(db.String(80), unique=True, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
