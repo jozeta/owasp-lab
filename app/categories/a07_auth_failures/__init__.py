@@ -24,6 +24,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a07_auth_failures.brute_force_login",
             ),
+            ExampleNav(
+                id="credential-stuffing",
+                title="Credential Stuffing Across Multiple Accounts",
+                group="Brute Force & Credential Stuffing",
+                difficulty="Medium",
+                endpoint="a07_auth_failures.credential_stuffing",
+            ),
         ],
         seed_fn=seed_a07_accounts,
     )

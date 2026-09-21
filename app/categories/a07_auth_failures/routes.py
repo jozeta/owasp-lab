@@ -48,6 +48,25 @@ def brute_force_login():
     return _render("a07_auth_failures/brute_force_login.html", session_row, error=error)
 
 
+@a07_bp.route("/loyalty-portal-login", methods=["GET", "POST"])
+def credential_stuffing():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        account_row = A07Account.query.filter_by(username=username).first()
+        # VULNERABLE: the exact same unprotected check as customer-login,
+        # reused against a different set of seeded accounts -- proving
+        # the missing protection isn't specific to one login form.
+        if account_row and check_password_hash(account_row.password_hash, password):
+            session_row.username = account_row.username
+            db.session.commit()
+            return _redirect("a07_auth_failures.account", session_row)
+        error = "Invalid username or password."
+    return _render("a07_auth_failures/credential_stuffing.html", session_row, error=error)
+
+
 @a07_bp.route("/logout", methods=["POST"])
 def logout():
     session_row = get_or_create_session()
