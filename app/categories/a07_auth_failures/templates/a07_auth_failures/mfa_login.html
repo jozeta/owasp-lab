@@ -1,0 +1,74 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Bypassable Multi-Factor Authentication" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This login has a real second factor — after your password, you're sent
+  to a verification-code page before reaching the dashboard. The bug isn't
+  in the password check or the code check themselves; both work correctly.
+  It's that the <em>destination</em> page never actually confirms the
+  second factor was completed — it only checks that step one succeeded.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Log in with a correct password and you'll be sent to a code-entry page
+  as expected — so far, so normal. The bug only becomes visible if you
+  try skipping that page entirely.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Submit the correct username/password below (<code>dana</code> /
+      <code>welcome1</code>).</li>
+  <li>You land on the verification-code page — <strong>do not enter a
+      code</strong>.</li>
+  <li>Instead, navigate directly to
+      <a href="{{ url_for('a07_auth_failures.mfa_dashboard') }}">the dashboard URL</a>.</li>
+</ol>
+<p>
+  It loads anyway. The second factor was never actually enforced — the
+  dashboard route only checks that a username is attached to your
+  session, exactly the same check a single-factor login would use. The
+  code-entry page is a real UI step with no corresponding server-side gate
+  behind it.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/mfa-dashboard")
+def mfa_dashboard():
+    session_row = get_or_create_session()
+    if not session_row.username:
+        return redirect(url_for("mfa_login"))
+    # missing: `if not session_row.mfa_verified: return redirect(...)`
+    return render_template("mfa_dashboard.html")
+{% endblock %}
+
+{% block secure_code %}@app.route("/mfa-dashboard")
+def mfa_dashboard():
+    session_row = get_or_create_session()
+    if not session_row.username or not session_row.mfa_verified:
+        return redirect(url_for("mfa_login"))
+    return render_template("mfa_dashboard.html")
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username" value="dana">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

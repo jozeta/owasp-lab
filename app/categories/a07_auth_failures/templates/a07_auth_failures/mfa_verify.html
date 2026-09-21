@@ -1,0 +1,20 @@
+{% extends "core/base.html" %}
+{% block title %}Enter Verification Code — A07{% endblock %}
+
+{% block content %}
+<h1>Enter Verification Code</h1>
+<p>
+  Your code is <strong>{{ demo_code }}</strong> — shown here since this
+  lab doesn't send real SMS/email.
+</p>
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">6-digit code</label>
+    <input class="form-control" type="text" name="code">
+  </div>
+  <button type="submit" class="btn btn-primary">Verify</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

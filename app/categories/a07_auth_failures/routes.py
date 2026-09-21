@@ -94,3 +94,48 @@ def session_survives_logout():
 def session_fixation_demo():
     session_row = get_or_create_session()
     return _render("a07_auth_failures/session_fixation.html", session_row)
+
+
+MFA_DEMO_CODE = "482913"
+
+
+@a07_bp.route("/mfa-login", methods=["GET", "POST"])
+def mfa_login():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        account_row = A07Account.query.filter_by(username=username).first()
+        if account_row and check_password_hash(account_row.password_hash, password):
+            session_row.username = account_row.username
+            session_row.mfa_verified = False
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_verify", session_row)
+        error = "Invalid username or password."
+    return _render("a07_auth_failures/mfa_login.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-verify", methods=["GET", "POST"])
+def mfa_verify():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        code = request.form.get("code", "")
+        if code == MFA_DEMO_CODE:
+            session_row.mfa_verified = True
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_dashboard", session_row)
+        error = "Incorrect code."
+    return _render("a07_auth_failures/mfa_verify.html", session_row, error=error, demo_code=MFA_DEMO_CODE)
+
+
+@a07_bp.route("/mfa-dashboard")
+def mfa_dashboard():
+    session_row = get_or_create_session()
+    if not session_row.username:
+        return _redirect("a07_auth_failures.mfa_login", session_row)
+    # VULNERABLE: only checks that a username is set on the session --
+    # never checks session_row.mfa_verified, so step 2 (the code) can be
+    # skipped entirely and this destination reached right after step 1.
+    return _render("a07_auth_failures/mfa_dashboard.html", session_row)

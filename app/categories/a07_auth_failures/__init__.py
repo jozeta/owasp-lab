@@ -52,6 +52,13 @@ CATEGORIES.append(
                 difficulty="Hard",
                 endpoint="a07_auth_failures.session_fixation_demo",
             ),
+            ExampleNav(
+                id="mfa-bypass",
+                title="Bypassable Multi-Factor Authentication",
+                group="Multi-Factor Authentication Bypass",
+                difficulty="Hard",
+                endpoint="a07_auth_failures.mfa_login",
+            ),
         ],
         seed_fn=seed_a07_accounts,
     )
