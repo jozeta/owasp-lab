@@ -1,0 +1,80 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Unsigned Plugin Content Trust" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A08{% endblock %}
+
+{% block explanation %}
+<p>
+  This "Plugin Marketplace" lets you install a plugin by supplying a URL
+  — the server fetches whatever content lives there and installs it
+  immediately. There's no checksum, no signature, no allowlist of trusted
+  mirrors: any URL that returns Python source gets treated as an
+  official, verified plugin.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Install the official plugin below, then install a second one from a
+  different URL serving deliberately different content — the marketplace
+  accepts both identically, with no indication one might not be the
+  content you expected.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Download the
+      <a href="{{ url_for('a08_integrity_failures.official_plugin_download') }}">official plugin source</a>
+      and note its content.</li>
+  <li>Save the
+      <a href="{{ url_for('a08_integrity_failures.malicious_plugin_demo_download') }}">substituted plugin demo</a>
+      to a local file, then host it yourself:
+      <pre><code class="language-bash">python3 -m http.server 8000</code></pre>
+  </li>
+  <li>Install first from
+      <code>{{ url_for('a08_integrity_failures.official_plugin_download', _external=True) }}</code>
+      (the real source), then from your own
+      <code>http://127.0.0.1:8000/malicious-plugin-demo.py</code>
+      (the substituted one) using the form below.</li>
+</ol>
+<p>
+  Both install without a single warning. This is exactly the SolarWinds
+  supply-chain pattern at demonstration scale: a trusted-looking update
+  channel with no integrity verification is indistinguishable from a
+  compromised one, from the application's point of view.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}with urllib.request.urlopen(plugin_url, timeout=5) as resp:
+    source = resp.read().decode("utf-8", errors="replace")
+exec(source, {"__builtins__": __builtins__})
+# no checksum/signature check against any known-good source at all
+{% endblock %}
+
+{% block secure_code %}import hashlib
+
+with urllib.request.urlopen(plugin_url, timeout=5) as resp:
+    source = resp.read()
+digest = hashlib.sha256(source).hexdigest()
+if digest not in TRUSTED_PLUGIN_HASHES:
+    abort(400, "Plugin content does not match any trusted signature")
+exec(source.decode(), {"__builtins__": __builtins__})
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Plugin URL</label>
+    <input class="form-control" type="text" name="plugin_url" value="{{ plugin_url }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Install Plugin</button>
+</form>
+{% if installed_content %}
+<p class="mt-3">Installed plugin content:</p>
+<pre><code class="language-python">{{ installed_content }}</code></pre>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

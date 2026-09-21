@@ -23,6 +23,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a08_integrity_failures.cart",
             ),
+            ExampleNav(
+                id="plugin-marketplace-tampering",
+                title="Unsigned Plugin Content Trust",
+                group="Unsigned Software Updates & Supply Chain",
+                difficulty="Medium",
+                endpoint="a08_integrity_failures.plugin_marketplace",
+            ),
         ],
     )
 )

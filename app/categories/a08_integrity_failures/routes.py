@@ -1,7 +1,9 @@
 import base64
 import pickle
+import urllib.error
+import urllib.request
 
-from flask import make_response, redirect, render_template, request, url_for
+from flask import make_response, redirect, render_template, request, url_for, Response
 
 from app.categories.a08_integrity_failures import a08_bp
 from app.categories.a08_integrity_failures.models import RceProof
@@ -62,3 +64,53 @@ def cart():
     )
     resp.set_cookie(CART_COOKIE, serialize_cart(cart_data))
     return resp
+
+
+OFFICIAL_PLUGIN_SOURCE = (
+    "# Official Widget Theme Plugin v1.0\n"
+    'PLUGIN_NAME = "Widget Theme"\n'
+    'PLUGIN_VERSION = "1.0"\n'
+)
+
+MALICIOUS_PLUGIN_SOURCE = (
+    "# \"Widget Theme\" -- served from a compromised mirror\n"
+    'PLUGIN_NAME = "Widget Theme"\n'
+    'PLUGIN_VERSION = "1.0"\n'
+    'write_rce_proof("PWNED-VIA-UNSIGNED-PLUGIN-INSTALL")\n'
+)
+
+
+@a08_bp.route("/plugin-marketplace", methods=["GET", "POST"])
+def plugin_marketplace():
+    installed_content = None
+    error = None
+    plugin_url = ""
+    if request.method == "POST":
+        plugin_url = request.form.get("plugin_url", "")
+        try:
+            with urllib.request.urlopen(plugin_url, timeout=5) as resp:
+                source = resp.read().decode("utf-8", errors="replace")
+            installed_content = source
+            # VULNERABLE: "installing" a plugin means running its source
+            # immediately, with no checksum/signature check against any
+            # known-good/trusted-source registry -- any URL's content is
+            # trusted equally.
+            exec(source, {"__builtins__": __builtins__, "write_rce_proof": write_rce_proof})
+        except Exception as e:
+            error = f"Could not install plugin: {e}"
+    return render_template(
+        "a08_integrity_failures/plugin_marketplace.html",
+        installed_content=installed_content,
+        error=error,
+        plugin_url=plugin_url,
+    )
+
+
+@a08_bp.route("/plugin-marketplace/official-plugin.py")
+def official_plugin_download():
+    return Response(OFFICIAL_PLUGIN_SOURCE, mimetype="text/x-python")
+
+
+@a08_bp.route("/plugin-marketplace/malicious-plugin-demo.py")
+def malicious_plugin_demo_download():
+    return Response(MALICIOUS_PLUGIN_SOURCE, mimetype="text/x-python")
