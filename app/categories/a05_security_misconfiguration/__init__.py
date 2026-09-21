@@ -37,6 +37,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a05_security_misconfiguration.inventory_check",
             ),
+            ExampleNav(
+                id="cors-credentials",
+                title="Permissive CORS with Credentials",
+                group="Insecure Response Configuration",
+                difficulty="Medium",
+                endpoint="a05_security_misconfiguration.cors_credentials",
+            ),
         ],
     )
 )

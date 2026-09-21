@@ -1,7 +1,8 @@
 import os
+import secrets
 import traceback
 
-from flask import Response, abort, render_template, request
+from flask import Response, abort, jsonify, make_response, render_template, request
 
 from app.categories.a05_security_misconfiguration import a05_bp
 
@@ -95,3 +96,36 @@ def inventory_check():
     return render_template(
         "a05_security_misconfiguration/inventory_check.html", sku=sku, error_detail=error_detail
     )
+
+
+LOYALTY_TOKEN_COOKIE = "a05_loyalty_token"
+
+
+@a05_bp.route("/cors-credentials")
+def cors_credentials():
+    resp = make_response(render_template("a05_security_misconfiguration/cors_credentials.html"))
+    if LOYALTY_TOKEN_COOKIE not in request.cookies:
+        # This demo cookie uses SameSite=None so it's sent on genuinely
+        # cross-site requests too -- a real-world requirement for many
+        # legitimately-embedded widgets/APIs, and exactly what makes the
+        # CORS misconfiguration below actually exploitable rather than
+        # already blocked by the browser's own same-site cookie policy.
+        resp.set_cookie(LOYALTY_TOKEN_COOKIE, secrets.token_hex(8), samesite="None", secure=True)
+    return resp
+
+
+@a05_bp.route("/api/loyalty-status")
+def loyalty_status_api():
+    token = request.cookies.get(
+        LOYALTY_TOKEN_COOKIE, "(no token set -- visit /a05/cors-credentials first)"
+    )
+    resp = jsonify({"loyalty_token": token, "tier": "Gold"})
+    origin = request.headers.get("Origin")
+    if origin:
+        # VULNERABLE: reflects ANY Origin header verbatim instead of
+        # checking it against an allowlist, combined with credentials
+        # support -- lets any third-party site read this response using
+        # the victim's own cookie.
+        resp.headers["Access-Control-Allow-Origin"] = origin
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+    return resp
