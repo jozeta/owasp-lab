@@ -59,7 +59,7 @@ def backup_file():
 {% block secure_code %}# Never write backups into a web-served directory at all. If a backup
 # must be reachable over HTTP for legitimate reasons, require
 # authentication and store it outside any predictable/guessable path:
-@app.route("/admin/backups/<backup_id>")
+@app.route("/admin/backups/&lt;backup_id&gt;")
 @require_admin
 def backup_file(backup_id):
     record = Backup.query.get_or_404(backup_id)
