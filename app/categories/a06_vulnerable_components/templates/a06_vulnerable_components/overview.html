@@ -1,0 +1,67 @@
+{% extends "core/overview_base.html" %}
+{% set category_short_id = "A06" %}
+{% set category_title = "Vulnerable and Outdated Components" %}
+{% block title %}A06: Vulnerable and Outdated Components{% endblock %}
+
+{% block what_it_is %}
+<p>
+  Vulnerable and Outdated Components covers using a library, framework, or
+  other software module with a known public vulnerability, or one that's
+  unsupported and no longer receives security patches. The vulnerability
+  isn't in the application's own code at all — it's in something the
+  application trusted and never upgraded.
+</p>
+{% endblock %}
+
+{% block why_it_matters %}
+<p>
+  Modern applications are built on dozens or hundreds of third-party
+  dependencies. A single outdated one — often several layers deep, easy to
+  forget about — can undo every security decision the application's own
+  code got right, and the fix (upgrading) is usually a version bump, not a
+  redesign.
+</p>
+{% endblock %}
+
+{% block how_exploited %}
+<p>
+  Attackers don't need to find a new bug — the bug is already public,
+  documented in a CVE record with a working proof of concept. They just
+  need to fingerprint which exact component versions a target is running
+  (often trivial: a version string in a response, a file comment, a
+  response header) and match them against a vulnerability database.
+</p>
+{% endblock %}
+
+{% block attack_flow_diagram %}
+sequenceDiagram
+    participant Attacker
+    participant App as Vulnerable App
+    Attacker->>App: Fingerprint exact component versions in use
+    Note over App: A dependency was never upgraded past a version with a public, documented CVE
+    Attacker->>App: Apply the CVE's published exploit technique against that component
+    App-->>Attacker: The library's own flaw does the rest -- no new bug needed
+{% endblock %}
+
+{% block real_world_impact %}
+<p>
+  Real incidents in this category include the 2017 Equifax breach (an
+  unpatched Apache Struts component with a public CVE), widespread
+  compromises following the Log4Shell disclosure in unpatched Log4j
+  deployments, and countless smaller breaches via outdated jQuery, Lodash,
+  and similar client-side libraries silently vendored years earlier and
+  never revisited.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}# pinned once, years ago, never revisited
+jquery==1.12.4   # released 2016; CVE-2020-11022 fixed in 3.5.0 (2020) -- never upgraded
+lodash==4.17.11  # CVE-2019-10744 fixed in 4.17.12 -- one patch version away, never applied
+{% endblock %}
+
+{% block secure_code %}# dependencies pinned to current, patched releases, with a recurring
+# audit (e.g. npm audit, pip-audit, Dependabot) catching new CVEs
+# against whatever's currently pinned
+jquery==3.7.1
+lodash==4.17.21
+{% endblock %}

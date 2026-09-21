@@ -45,6 +45,10 @@ def create_app(config_object=None):
 
     app.register_blueprint(a05_bp)
 
+    from app.categories.a06_vulnerable_components import a06_bp
+
+    app.register_blueprint(a06_bp)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

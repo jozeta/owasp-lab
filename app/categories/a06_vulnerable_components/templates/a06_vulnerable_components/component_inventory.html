@@ -1,0 +1,77 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Component Version Disclosure" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A06{% endblock %}
+
+{% block explanation %}
+<p>
+  This "Component Inventory" page was built for an internal ops dashboard,
+  meant to help the infrastructure team quickly see what's deployed. It was
+  never moved behind authentication, so it's reachable by anyone — handing
+  out the exact version of every major dependency this app runs, with zero
+  effort required to discover it.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  No login, no special request — just visit
+  <code>/a06/component-inventory</code> and read the table. Compare that
+  to how much work fingerprinting usually takes: guessing framework
+  versions from subtle response differences, timing attacks, error-message
+  fingerprints. Here, the app just tells you.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Visit <a href="/a06/component-inventory">/a06/component-inventory</a>.</li>
+  <li>Note the exact version listed for each component — in particular
+      "jQuery (Legacy Widgets bundle)" and "Lodash (Legacy Widgets
+      bundle)".</li>
+  <li>Look each one up against a public vulnerability database (e.g. the
+      <a href="https://github.com/advisories" target="_blank" rel="noopener">GitHub Advisory
+      Database</a> or the <a href="https://nvd.nist.gov/" target="_blank" rel="noopener">NVD</a>).
+      Both of the "Legacy Widgets bundle" versions here have public, named
+      CVEs with documented exploitation techniques — see the other
+      examples in this category for exactly how they're exploited.</li>
+</ol>
+<p>
+  This is the reconnaissance step nearly every real component-based attack
+  starts with: an attacker doesn't need to find a new bug when the target
+  helpfully tells them which already-public bugs to use.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/component-inventory")
+def component_inventory():
+    component_versions = {
+        "Flask": version("flask"),
+        "jQuery (Legacy Widgets bundle)": "1.12.4",
+        "Lodash (Legacy Widgets bundle)": "4.17.11",
+        "Python": platform.python_version(),
+    }
+    return render_template("component_inventory.html", component_versions=component_versions)
+# no authentication check -- this was meant for an internal ops dashboard
+# and never moved behind one
+{% endblock %}
+
+{% block secure_code %}# Don't expose exact dependency versions to unauthenticated visitors at
+# all. If a version-inventory page is genuinely needed for ops, require
+# authentication and keep it off the public network entirely:
+@app.route("/admin/component-inventory")
+@require_admin
+def component_inventory():
+    ...
+{% endblock %}
+
+{% block live_example %}
+<p>Your current component inventory:</p>
+<table class="table table-sm w-auto">
+  <tbody>
+    {% for name, ver in component_versions.items() %}
+    <tr><th scope="row">{{ name }}</th><td>{{ ver }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
