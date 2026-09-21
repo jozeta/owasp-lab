@@ -26,14 +26,12 @@
 
 {% block exploitation %}
 <ol>
-  <li>Download the
+  <li>Note the
       <a href="{{ url_for('a08_integrity_failures.malicious_plugin_demo_download') }}">substituted plugin demo</a>
-      and host it locally:
-      <pre><code class="language-bash">python3 -m http.server 8000</code></pre>
-  </li>
+      source -- it's the one calling <code>write_rce_proof(...)</code>.</li>
   <li>Install it from
       <a href="{{ url_for('a08_integrity_failures.plugin_marketplace') }}">/a08/plugin-marketplace</a>
-      using <code>http://127.0.0.1:8000/malicious-plugin-demo.py</code>.</li>
+      using <code>http://127.0.0.1:5000/a08/plugin-marketplace/malicious-plugin-demo.py</code>.</li>
 </ol>
 <p>
   The installed content contains a line calling

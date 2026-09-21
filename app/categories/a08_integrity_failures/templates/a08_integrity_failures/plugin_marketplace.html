@@ -27,16 +27,16 @@
   <li>Download the
       <a href="{{ url_for('a08_integrity_failures.official_plugin_download') }}">official plugin source</a>
       and note its content.</li>
-  <li>Save the
+  <li>Download the
       <a href="{{ url_for('a08_integrity_failures.malicious_plugin_demo_download') }}">substituted plugin demo</a>
-      to a local file, then host it yourself:
-      <pre><code class="language-bash">python3 -m http.server 8000</code></pre>
-  </li>
+      and note it's identically named but subtly different content.</li>
   <li>Install first from
-      <code>{{ url_for('a08_integrity_failures.official_plugin_download', _external=True) }}</code>
-      (the real source), then from your own
-      <code>http://127.0.0.1:8000/malicious-plugin-demo.py</code>
-      (the substituted one) using the form below.</li>
+      <code>http://127.0.0.1:5000/a08/plugin-marketplace/official-plugin.py</code>
+      (the real source), then from
+      <code>http://127.0.0.1:5000/a08/plugin-marketplace/malicious-plugin-demo.py</code>
+      (the substituted one) using the form below. Both URLs are served by
+      this same app -- the marketplace has no way to tell them apart, and
+      neither should you without a checksum.</li>
 </ol>
 <p>
   Both install without a single warning. This is exactly the SolarWinds
@@ -48,7 +48,7 @@
 
 {% block vulnerable_code %}with urllib.request.urlopen(plugin_url, timeout=5) as resp:
     source = resp.read().decode("utf-8", errors="replace")
-exec(source, {"__builtins__": __builtins__})
+exec(source, {"__builtins__": __builtins__, "write_rce_proof": write_rce_proof})
 # no checksum/signature check against any known-good source at all
 {% endblock %}
 

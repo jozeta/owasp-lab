@@ -4,13 +4,13 @@ import json
 def test_preferences_page_renders_with_defaults(client):
     response = client.get("/a08/preferences")
     assert response.status_code == 200
-    assert b"light" in response.data
+    assert b"theme = light" in response.data
 
 
 def test_preferences_set_legitimately_round_trip(client):
     client.post("/a08/preferences", data={"theme": "dark"})
     response = client.get("/a08/preferences")
-    assert b"dark" in response.data
+    assert b"theme = dark" in response.data
     assert b"Premium: No" in response.data
 
 
