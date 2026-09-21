@@ -12,9 +12,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (window.hljs) {
     hljs.highlightAll();
-    if (window.hljs.initLineNumbersOnLoad) {
-      hljs.initLineNumbersOnLoad();
-    }
   }
   if (window.mermaid) {
     mermaid.initialize({ startOnLoad: true, theme: window.__labTheme === "dark" ? "dark" : "default" });
@@ -25,7 +22,34 @@ document.addEventListener("DOMContentLoaded", function () {
       new bootstrap.Tooltip(el);
     });
   }
+
+  updateSidebarToggleIcon();
 });
+
+function updateSidebarToggleIcon() {
+  var icon = document.querySelector("#sidebar-toggle span");
+  if (!icon) {
+    return;
+  }
+  var collapsed = document.documentElement.getAttribute("data-sidebar-collapsed") === "1";
+  icon.innerHTML = collapsed ? "&#9658;" : "&#9668;";
+}
+
+function toggleSidebar() {
+  var collapsed = document.documentElement.getAttribute("data-sidebar-collapsed") === "1";
+  var next = !collapsed;
+  if (next) {
+    document.documentElement.setAttribute("data-sidebar-collapsed", "1");
+  } else {
+    document.documentElement.removeAttribute("data-sidebar-collapsed");
+  }
+  try {
+    localStorage.setItem("labSidebarCollapsed", next ? "1" : "0");
+  } catch (e) {
+    /* localStorage unavailable -- collapsed state won't persist across reloads */
+  }
+  updateSidebarToggleIcon();
+}
 
 function dismissLabBanner() {
   var banner = document.getElementById("lab-warning-banner");

@@ -36,7 +36,7 @@
 
 {% block exploitation %}
 <ol>
-  <li>Submit the following XML:
+  <li>Submit the following XML as a file:
       <pre><code class="language-xml">&lt;?xml version="1.0"?&gt;
 &lt;!DOCTYPE contact [
   &lt;!ENTITY xxe SYSTEM "file://{{ secret_path }}"&gt;
@@ -47,6 +47,13 @@
       filesystem that this "contact name" field was never meant to
       expose.</li>
 </ol>
+<p>
+  <a href="{{ url_for('a03_injection.xml_import_demo_payload') }}" class="btn btn-outline-secondary btn-sm">
+    Download demo payload (xxe-file-disclosure-demo.xml)
+  </a>
+  — a ready-to-upload copy of the XML above, with the secret path already
+  filled in for this environment.
+</p>
 <p>
   XXE file disclosure has been used in the wild to read application source
   code, configuration files containing database credentials, and SSH
@@ -66,11 +73,10 @@ tree = etree.fromstring(xml_input.encode(), parser=parser)
 {% endblock %}
 
 {% block live_example %}
-<form method="post">
+<form method="post" enctype="multipart/form-data">
   <div class="mb-2">
-    <label class="form-label">Contact XML</label>
-    <textarea class="form-control" name="xml_input" rows="4"
-              placeholder="&lt;contact&gt;&lt;name&gt;Alice&lt;/name&gt;&lt;/contact&gt;">{{ xml_input }}</textarea>
+    <label class="form-label">Contact XML file</label>
+    <input class="form-control" type="file" name="xml_file" accept=".xml,text/xml,application/xml">
   </div>
   <button type="submit" class="btn btn-primary">Import contact</button>
 </form>

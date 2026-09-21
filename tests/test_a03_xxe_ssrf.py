@@ -1,7 +1,16 @@
-def test_xxe_ssrf_parses_legitimate_status_feed(client):
-    response = client.post(
-        "/a03/xxe-ssrf", data={"xml_input": "<status><message>All systems normal</message></status>"}
+import io
+
+
+def _upload(client, xml_text, filename="payload.xml"):
+    return client.post(
+        "/a03/xxe-ssrf",
+        data={"xml_file": (io.BytesIO(xml_text.encode()), filename)},
+        content_type="multipart/form-data",
     )
+
+
+def test_xxe_ssrf_parses_legitimate_status_feed(client):
+    response = _upload(client, "<status><message>All systems normal</message></status>")
     assert response.status_code == 200
     assert b"All systems normal" in response.data
 
@@ -30,7 +39,7 @@ def test_xxe_ssrf_resolver_genuinely_fetches_http_entities(client):
             f'<!DOCTYPE status [<!ENTITY xxe SYSTEM "http://127.0.0.1:{port}/">]>'
             '<status><message>&xxe;</message></status>'
         )
-        response = client.post("/a03/xxe-ssrf", data={"xml_input": payload})
+        response = _upload(client, payload)
         assert response.status_code == 200
         assert b"FETCHED-VIA-XXE-SSRF-PROBE" in response.data
     finally:
@@ -46,7 +55,7 @@ def test_xxe_ssrf_reaches_internal_healthz_endpoint(client):
         ']>'
         '<status><message>&xxe;</message></status>'
     )
-    response = client.post("/a03/xxe-ssrf", data={"xml_input": payload})
+    response = _upload(client, payload)
     assert response.status_code == 200
     # The test client doesn't run a real server on 127.0.0.1:5000, so the
     # parser's outbound request will fail in this test environment -- this
@@ -66,9 +75,7 @@ def test_xxe_ssrf_still_works_with_teaching_text_hidden(app, client):
         settings.show_exploit_instructions = False
         db.session.commit()
 
-    response = client.post(
-        "/a03/xxe-ssrf", data={"xml_input": "<status><message>All systems normal</message></status>"}
-    )
+    response = _upload(client, "<status><message>All systems normal</message></status>")
     assert response.status_code == 200
     assert b"All systems normal" in response.data
     assert b"Vulnerable vs. Secure" in response.data
@@ -81,3 +88,13 @@ def test_xxe_ssrf_link_appears_in_overview_once_registered(client):
     assert b"XXE" in response.data
     assert b"SSRF" in response.data
     assert b'href="/a03/xxe-ssrf"' in response.data
+
+
+def test_xxe_ssrf_demo_payload_download_reaches_healthz_endpoint(client):
+    download = client.get("/a03/xxe-ssrf/demo-payload.xml")
+    assert download.status_code == 200
+    assert "attachment" in download.headers.get("Content-Disposition", "")
+    assert b"127.0.0.1:5000/healthz" in download.data
+
+    response = _upload(client, download.data.decode(), filename="xxe-ssrf-demo.xml")
+    assert response.status_code == 200

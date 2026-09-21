@@ -38,12 +38,18 @@
 
 {% block exploitation %}
 <ol>
-  <li>Submit the XML from the Detect step above.</li>
+  <li>Submit the XML from the Detect step above as a file.</li>
   <li>The response shows <code>{"status":"ok"}</code> — content that only
       exists on this server's own internal network, fetched entirely
       server-side. Your browser never made that request; the vulnerable
       parser did.</li>
 </ol>
+<p>
+  <a href="{{ url_for('a03_injection.xxe_ssrf_demo_payload') }}" class="btn btn-outline-secondary btn-sm">
+    Download demo payload (xxe-ssrf-demo.xml)
+  </a>
+  — a ready-to-upload copy of the XML above.
+</p>
 <p>
   In this lab, <code>/healthz</code> happens to also be reachable directly
   by an external visitor, which makes the effect easy to verify but slightly
@@ -70,11 +76,10 @@ tree = etree.fromstring(xml_input.encode(), parser=parser)
 {% endblock %}
 
 {% block live_example %}
-<form method="post">
+<form method="post" enctype="multipart/form-data">
   <div class="mb-2">
-    <label class="form-label">Status feed XML</label>
-    <textarea class="form-control" name="xml_input" rows="4"
-              placeholder="&lt;status&gt;&lt;message&gt;All systems normal&lt;/message&gt;&lt;/status&gt;">{{ xml_input }}</textarea>
+    <label class="form-label">Status feed XML file</label>
+    <input class="form-control" type="file" name="xml_file" accept=".xml,text/xml,application/xml">
   </div>
   <button type="submit" class="btn btn-primary">Import status feed</button>
 </form>

