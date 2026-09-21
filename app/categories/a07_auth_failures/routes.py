@@ -88,3 +88,9 @@ def logout():
 def session_survives_logout():
     session_row = get_or_create_session()
     return _render("a07_auth_failures/session_survives_logout.html", session_row)
+
+
+@a07_bp.route("/session-fixation-demo")
+def session_fixation_demo():
+    session_row = get_or_create_session()
+    return _render("a07_auth_failures/session_fixation.html", session_row)

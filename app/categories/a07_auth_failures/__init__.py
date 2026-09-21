@@ -45,6 +45,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a07_auth_failures.session_survives_logout",
             ),
+            ExampleNav(
+                id="session-fixation",
+                title="Session Fixation",
+                group="Session Identity & Lifecycle",
+                difficulty="Hard",
+                endpoint="a07_auth_failures.session_fixation_demo",
+            ),
         ],
         seed_fn=seed_a07_accounts,
     )

@@ -1,0 +1,75 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Session Fixation" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This is the most severe consequence of the two bugs already shown
+  elsewhere in this category — accepting a session id from a URL, and
+  never rotating it on login — chained into a full attack. An attacker
+  doesn't need to steal a password, or even observe network traffic. They
+  only need to get you to open a link <em>before</em> you log in.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Watch what happens to the session id across a login: visit
+  <a href="{{ url_for('a07_auth_failures.account') }}">Account</a>, note
+  the session ID shown, then log in and check the ID again. A secure app
+  would show a completely different ID after authenticating — here, it's
+  identical.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Play both roles yourself to see the full chain:
+</p>
+<ol>
+  <li><strong>As the attacker:</strong> open this link (it plants a fixed,
+      attacker-chosen session id) — <a
+      href="{{ url_for('a07_auth_failures.account', sid='attacker-planted-9f8e7d') }}">/a07/account?sid=attacker-planted-9f8e7d</a>.
+      This is exactly the kind of link an attacker would email, message,
+      or embed anywhere a victim might click it.</li>
+  <li><strong>As the victim:</strong> having just opened that link (so
+      your browser's cookie is now that exact planted value), log in
+      normally via <a href="{{ url_for('a07_auth_failures.brute_force_login') }}">Customer Login</a>.</li>
+  <li><strong>As the attacker again:</strong> from a terminal — no browser,
+      no cookies, nothing but the id the attacker chose in step 1 — replay:
+      <pre><code class="language-bash">curl -b "a07_session_id=attacker-planted-9f8e7d" http://127.0.0.1:5001/a07/account</code></pre>
+  </li>
+</ol>
+<p>
+  It returns "Logged in as dana." The attacker is now fully authenticated
+  as the victim, having never seen a password, a cookie theft, or any
+  network interception at all — only a single link click by the victim,
+  before they ever logged in.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}sid = request.args.get("sid") or request.cookies.get(SID_COOKIE)
+if sid is None:
+    sid = secrets.token_hex(16)
+session_row = AuthSession.query.get(sid) or AuthSession(id=sid)  # ADOPTS any id
+# ...later, on successful login...
+session_row.username = account.username  # same id, never rotated
+{% endblock %}
+
+{% block secure_code %}# never accept a session id from a URL at all
+sid = request.cookies.get(SID_COOKIE)
+# ...on successful login, always mint a brand new id, discarding
+# whatever pre-auth id (fixed or not) was previously in use...
+if old_session_row:
+    db.session.delete(old_session_row)
+new_sid = secrets.token_hex(16)
+new_session = AuthSession(id=new_sid, username=account.username)
+db.session.add(new_session)
+resp.set_cookie(SID_COOKIE, new_sid)
+{% endblock %}
+
+{% block live_example %}
+<p>Follow the three Exploitation steps above using this browser tab and a terminal.</p>
+<a href="{{ url_for('a07_auth_failures.account') }}" class="btn btn-outline-secondary btn-sm">Go to Account</a>
+{% endblock %}
