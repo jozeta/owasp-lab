@@ -23,6 +23,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a06_vulnerable_components.component_inventory",
             ),
+            ExampleNav(
+                id="outdated-jquery-detection",
+                title="Outdated Vulnerable JS Library Detection",
+                group="Component Reconnaissance",
+                difficulty="Easy",
+                endpoint="a06_vulnerable_components.legacy_widgets",
+            ),
         ],
     )
 )

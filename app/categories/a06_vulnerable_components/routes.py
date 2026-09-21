@@ -27,3 +27,8 @@ def component_inventory():
         "a06_vulnerable_components/component_inventory.html",
         component_versions=component_versions,
     )
+
+
+@a06_bp.route("/legacy-widgets")
+def legacy_widgets():
+    return render_template("a06_vulnerable_components/legacy_widgets.html")

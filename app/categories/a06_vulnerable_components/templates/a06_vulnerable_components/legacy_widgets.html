@@ -1,0 +1,63 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Outdated Vulnerable JS Library Detection" %}
+{% set example_difficulty = "Easy" %}
+{% set code_language = "html" %}
+{% block title %}{{ example_title }} — A06{% endblock %}
+
+{% block explanation %}
+<p>
+  This site's "Legacy Widgets" bundle — a small set of interactive
+  comment-preview and notification-preferences features used elsewhere in
+  this category — was built years ago on jQuery and Lodash, and neither
+  library has ever been upgraded since. The vendored file is served
+  exactly as downloaded from jQuery's own official distribution point,
+  with nothing modified.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Open your browser's developer tools (or just view page source) on this
+  page or either of the "Vulnerable Library: jQuery" examples in this
+  category, and look at the loaded script's <code>src</code> attribute:
+  <code>/static/vendor/jquery-vulnerable/jquery-1.12.4.js</code>. Fetch
+  that file directly and read its header comment.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Fetch
+      <a href="/static/vendor/jquery-vulnerable/jquery-1.12.4.js" target="_blank" rel="noopener">/static/vendor/jquery-vulnerable/jquery-1.12.4.js</a>
+      directly.</li>
+  <li>Read the first few lines — jQuery's own header comment states the
+      exact version: <code>jQuery JavaScript Library v1.12.4</code>.</li>
+  <li>Cross-reference that version against a public vulnerability database.
+      jQuery versions <code>&gt;= 1.2</code> and <code>&lt; 3.5.0</code>
+      are affected by
+      <a href="https://github.com/advisories/GHSA-gxr4-xjj5-5px2" target="_blank" rel="noopener">GHSA-gxr4-xjj5-5px2</a>
+      (CVE-2020-11022 / CVE-2020-11023) — a DOM-based XSS in jQuery's own
+      HTML-sanitization logic. 1.12.4 is squarely inside that range, more
+      than four years and one major security release behind the fix. See
+      the "jQuery DOM XSS" example in this category for the real, working
+      exploit.</li>
+</ol>
+{% endblock %}
+
+{% block vulnerable_code %}&lt;script src="/static/vendor/jquery-vulnerable/jquery-1.12.4.js"&gt;&lt;/script&gt;
+&lt;!-- vendored once, years ago, never revisited --&gt;
+{% endblock %}
+
+{% block secure_code %}&lt;script src="/static/vendor/jquery/jquery-3.7.1.min.js"&gt;&lt;/script&gt;
+&lt;!-- pinned to a current release with no known CVEs, re-checked on a
+     recurring schedule --&gt;
+{% endblock %}
+
+{% block live_example %}
+<p>
+  Fetch the vendored file directly and confirm its version for yourself:
+</p>
+<a href="/static/vendor/jquery-vulnerable/jquery-1.12.4.js" class="btn btn-primary" target="_blank" rel="noopener">
+  View jquery-1.12.4.js
+</a>
+{% endblock %}
