@@ -51,6 +51,13 @@ CATEGORIES.append(
                 difficulty="Hard",
                 endpoint="a06_vulnerable_components.account_preview",
             ),
+            ExampleNav(
+                id="prototype-pollution-bypass",
+                title="Prototype Pollution Bypasses a Client-Side Access Check",
+                group="Vulnerable Library: Lodash Prototype Pollution",
+                difficulty="Hard",
+                endpoint="a06_vulnerable_components.admin_tools_panel",
+            ),
         ],
     )
 )

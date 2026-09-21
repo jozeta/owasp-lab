@@ -47,3 +47,8 @@ def notification_preferences():
 @a06_bp.route("/account-preview")
 def account_preview():
     return render_template("a06_vulnerable_components/account_preview.html")
+
+
+@a06_bp.route("/admin-tools-panel")
+def admin_tools_panel():
+    return render_template("a06_vulnerable_components/admin_tools_panel.html")

@@ -1,0 +1,112 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Prototype Pollution Bypasses a Client-Side Access Check" %}
+{% set example_difficulty = "Hard" %}
+{% set code_language = "html" %}
+{% block title %}{{ example_title }} — A06{% endblock %}
+
+{% block explanation %}
+<p>
+  This page reuses the same "Notification Preferences" feature from the
+  "Lodash Prototype Pollution" example — same vendored, vulnerable Lodash
+  4.17.11, same <code>_.defaultsDeep()</code> call. The only difference
+  here is what reads the polluted property: this page has a hidden "Admin
+  Tools" section, gated by a real (if naive) client-side access check.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Same detection as the "Lodash Prototype Pollution" example — the bug is
+  identical. What changes here is the consequence: instead of just proving
+  a decorative "fresh object" flag flips, the same pollution flips a check
+  that's actually gating a real (if fake, for this demo) piece of
+  functionality.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>Paste this exact payload into the preferences box and click Apply:</p>
+<pre><code class="language-json">{"constructor": {"prototype": {"isAdmin": true}}}</code></pre>
+<p>
+  Watch the hidden "Admin Tools" section below appear. Its visibility is
+  controlled entirely by a client-side check —
+  <code>if (({}).isAdmin) { showPanel(); }</code> — against a freshly
+  created, empty object. Once <code>Object.prototype.isAdmin</code> is
+  polluted, <em>every</em> such check across the entire page starts
+  passing, including ones that were never meant to be attacker-reachable
+  at all. This is the real-world severity of prototype pollution: it
+  doesn't just corrupt data, it can silently flip any access check
+  written the same naive way.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}&lt;div id="admin-tools-panel" style="display:none"&gt;
+  &lt;h3&gt;Admin Tools&lt;/h3&gt;
+  &lt;p&gt;Fake internal ops controls: user export, force-logout-all, audit log.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+function checkAdminAccess() {
+  var sessionFlags = {}; // fresh object -- inherits from (possibly
+                          // polluted) Object.prototype
+  if (sessionFlags.isAdmin) {
+    document.getElementById('admin-tools-panel').style.display = 'block';
+  }
+}
+&lt;/script&gt;
+{% endblock %}
+
+{% block secure_code %}&lt;!-- Same fix as the Medium-tier example (upgrade Lodash, allowlist
+     merge keys), PLUS: never gate real functionality on a client-side
+     check alone -- a client can always be tampered with. Any access
+     decision that matters must be enforced server-side, on every
+     request: --&gt;
+@app.route("/admin/tools")
+@require_admin
+def admin_tools():
+    ...
+{% endblock %}
+
+{% block live_example %}
+<div class="mb-2">
+  <textarea id="prefs-json" class="form-control" rows="3">{"theme": "dark"}</textarea>
+</div>
+<button type="button" id="apply-btn" class="btn btn-primary mb-2">Apply</button>
+<p id="prefs-error" class="text-danger"></p>
+<p>Applied theme: <span id="applied-theme">(none yet)</span></p>
+
+<div id="admin-tools-panel" class="border rounded p-2 bg-body-secondary" style="display:none">
+  <h3>Admin Tools</h3>
+  <p>Fake internal ops controls: user export, force-logout-all, audit log.</p>
+</div>
+
+<script src="{{ url_for('static', filename='vendor/lodash-vulnerable/lodash-4.17.11.js') }}"></script>
+<script>
+  var DEFAULT_PREFS = { theme: "light", notifications: "digest" };
+
+  function checkAdminAccess() {
+    var sessionFlags = {}; // fresh object -- inherits from (possibly
+                            // polluted) Object.prototype
+    if (sessionFlags.isAdmin) {
+      document.getElementById('admin-tools-panel').style.display = 'block';
+    }
+  }
+
+  document.getElementById('apply-btn').addEventListener('click', function () {
+    var errorEl = document.getElementById('prefs-error');
+    errorEl.textContent = '';
+    try {
+      var raw = document.getElementById('prefs-json').value;
+      var userPrefs = JSON.parse(raw);
+      // VULNERABLE: same flawed _.defaultsDeep() as the Medium-tier
+      // example -- but this page's checkAdminAccess() reads a property
+      // off a fresh object, and that property can now be polluted too.
+      var merged = _.defaultsDeep({}, DEFAULT_PREFS, userPrefs);
+      document.getElementById('applied-theme').textContent = merged.theme;
+      checkAdminAccess();
+    } catch (e) {
+      errorEl.textContent = 'Invalid JSON: ' + e.message;
+    }
+  });
+</script>
+{% endblock %}
