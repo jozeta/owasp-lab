@@ -30,6 +30,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a06_vulnerable_components.legacy_widgets",
             ),
+            ExampleNav(
+                id="jquery-dom-xss",
+                title="jQuery DOM XSS via Vulnerable htmlPrefilter",
+                group="Vulnerable Library: jQuery HTML Sanitization Bypass",
+                difficulty="Medium",
+                endpoint="a06_vulnerable_components.comment_preview",
+            ),
         ],
     )
 )

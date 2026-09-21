@@ -32,3 +32,8 @@ def component_inventory():
 @a06_bp.route("/legacy-widgets")
 def legacy_widgets():
     return render_template("a06_vulnerable_components/legacy_widgets.html")
+
+
+@a06_bp.route("/comment-preview")
+def comment_preview():
+    return render_template("a06_vulnerable_components/comment_preview.html")

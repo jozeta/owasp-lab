@@ -1,0 +1,91 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "jQuery DOM XSS via Vulnerable htmlPrefilter" %}
+{% set example_difficulty = "Medium" %}
+{% set code_language = "javascript" %}
+{% block title %}{{ example_title }} — A06{% endblock %}
+
+{% block explanation %}
+<p>
+  This "Comment Preview" widget lets you see how your comment will look
+  before posting. The application's own code looks reasonable — it's not
+  concatenating raw HTML strings itself, unlike a typical server-side XSS
+  bug. Instead, it hands your raw input straight to jQuery's
+  <code>.html()</code> method and trusts jQuery's own
+  <code>htmlPrefilter</code> to make that safe. On this page, jQuery is
+  the vendored, vulnerable 1.12.4 release (see "Outdated Vulnerable JS
+  Library Detection" in this category) — and <code>htmlPrefilter</code>'s
+  sanitization was itself flawed until version 3.5.0
+  (CVE-2020-11022 / CVE-2020-11023).
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Type ordinary text into the box and click Preview — it renders exactly
+  as expected, and a quick glance at this page's own code shows no obvious
+  server-side escaping bug. The vulnerability only becomes visible once
+  you try markup that exploits jQuery's own flawed tag-prefiltering logic.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Paste this exact payload into the comment box and click Preview:
+</p>
+<pre><code class="language-html">&lt;style&gt;&lt;style /&gt;&lt;img src=1 onerror=alert(document.domain)&gt;</code></pre>
+<p>
+  A real <code>alert()</code> box fires — genuine script execution, not a
+  simulation. Here's what happens: jQuery's <code>htmlPrefilter</code>
+  regex "fixes" the self-closing <code>&lt;style /&gt;</code> tag by
+  rewriting it to <code>&lt;style&gt;&lt;/style&gt;</code>. That rewrite
+  closes the style-text parsing context one tag early, so the browser's
+  own HTML parser treats the following <code>&lt;img onerror=...&gt;</code>
+  as live markup instead of inert text inside a <code>&lt;style&gt;</code>
+  block — and the <code>onerror</code> handler fires the moment the
+  (deliberately broken) image fails to load.
+</p>
+<p>
+  This exact mechanism was verified live against the real vendored
+  jQuery 1.12.4 file, and confirmed <strong>not</strong> to fire against
+  the patched jQuery 3.5.0 — the fix specifically changed how
+  <code>htmlPrefilter</code> handles self-closing tags.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}$('#preview-btn').on('click', function () {
+  var raw = $('#comment-input').val();
+  // VULNERABLE: relies on jQuery's own htmlPrefilter to make raw .html()
+  // "safe" -- jQuery < 3.5.0's htmlPrefilter regex can be defeated by a
+  // self-closing tag, letting injected markup execute (CVE-2020-11022).
+  $('#comment-preview').html(raw);
+});
+{% endblock %}
+
+{% block secure_code %}// Upgrade jQuery past 3.5.0 (the actual fix), AND never trust a library
+// to sanitize untrusted HTML on its own -- use a dedicated sanitizer
+// (e.g. DOMPurify) or avoid .html() with untrusted input entirely:
+$('#preview-btn').on('click', function () {
+  var raw = $('#comment-input').val();
+  $('#comment-preview').text(raw); // .text() never parses markup at all
+});
+{% endblock %}
+
+{% block live_example %}
+<p>Try it:</p>
+<div class="mb-2">
+  <textarea id="comment-input" class="form-control" rows="3" placeholder="Type your comment..."></textarea>
+</div>
+<button type="button" id="preview-btn" class="btn btn-primary mb-2">Preview</button>
+<div id="comment-preview" class="border rounded p-2 bg-body-secondary"></div>
+
+<script src="{{ url_for('static', filename='vendor/jquery-vulnerable/jquery-1.12.4.js') }}"></script>
+<script>
+  $('#preview-btn').on('click', function () {
+    var raw = $('#comment-input').val();
+    // VULNERABLE: relies on jQuery's own htmlPrefilter to make raw .html()
+    // "safe" -- jQuery < 3.5.0's htmlPrefilter regex can be defeated by a
+    // self-closing tag, letting injected markup execute (CVE-2020-11022).
+    $('#comment-preview').html(raw);
+  });
+</script>
+{% endblock %}
