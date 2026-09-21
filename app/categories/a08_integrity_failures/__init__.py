@@ -37,6 +37,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a08_integrity_failures.preferences",
             ),
+            ExampleNav(
+                id="jwt-alg-none-bypass",
+                title="JWT alg:none Signature Bypass",
+                group="Broken Signature Verification",
+                difficulty="Medium",
+                endpoint="a08_integrity_failures.admin_api",
+            ),
         ],
     )
 )

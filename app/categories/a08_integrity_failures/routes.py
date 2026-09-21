@@ -163,3 +163,72 @@ def preferences():
         except Exception:
             pass
     return render_template("a08_integrity_failures/preferences.html", prefs=prefs)
+
+
+JWT_SECRET = "a08-jwt-signing-key-2026"
+
+
+def _b64url_encode(data):
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+
+def _b64url_decode(s):
+    padding = "=" * (-len(s) % 4)
+    return base64.urlsafe_b64decode(s + padding)
+
+
+def issue_token(payload, alg="HS256"):
+    header = {"alg": alg, "typ": "JWT"}
+    header_seg = _b64url_encode(json.dumps(header).encode())
+    payload_seg = _b64url_encode(json.dumps(payload).encode())
+    signing_input = f"{header_seg}.{payload_seg}".encode()
+    if alg == "HS256":
+        sig = hmac.new(JWT_SECRET.encode(), signing_input, hashlib.sha256).digest()
+        sig_seg = _b64url_encode(sig)
+    else:
+        sig_seg = ""
+    return f"{header_seg}.{payload_seg}.{sig_seg}"
+
+
+def verify_token(token):
+    # VULNERABLE: reads the algorithm from the token's OWN header instead
+    # of pinning to a fixed expected algorithm -- the classic alg
+    # confusion / alg:none bug class.
+    header_seg, payload_seg, sig_seg = token.split(".")
+    header = json.loads(_b64url_decode(header_seg))
+    payload = json.loads(_b64url_decode(payload_seg))
+    signing_input = f"{header_seg}.{payload_seg}".encode()
+    alg = header.get("alg")
+    if alg == "HS256":
+        expected_sig = hmac.new(JWT_SECRET.encode(), signing_input, hashlib.sha256).digest()
+        actual_sig = _b64url_decode(sig_seg) if sig_seg else b""
+        if not hmac.compare_digest(expected_sig, actual_sig):
+            raise ValueError("bad signature")
+    elif alg == "none":
+        pass
+    else:
+        raise ValueError("unsupported alg")
+    return payload
+
+
+@a08_bp.route("/api-token")
+def api_token():
+    token = issue_token({"user": "guest", "role": "guest"})
+    return render_template("a08_integrity_failures/api_token.html", token=token)
+
+
+@a08_bp.route("/admin-api", methods=["GET", "POST"])
+def admin_api():
+    result = None
+    error = None
+    if request.method == "POST":
+        token = request.form.get("token", "")
+        try:
+            payload = verify_token(token)
+            if payload.get("role") == "admin":
+                result = f"ADMIN ACCESS GRANTED -- welcome, {payload.get('user')}"
+            else:
+                error = f"Access denied -- role '{payload.get('role')}' is not admin."
+        except Exception as e:
+            error = f"Invalid token: {e}"
+    return render_template("a08_integrity_failures/admin_api.html", result=result, error=error)

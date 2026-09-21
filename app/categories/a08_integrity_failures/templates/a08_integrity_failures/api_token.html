@@ -1,0 +1,9 @@
+{% extends "core/base.html" %}
+{% block title %}Get API Token — A08{% endblock %}
+
+{% block content %}
+<h1>Get API Token</h1>
+<p>Your token (guest role):</p>
+<pre><code class="language-text">{{ token }}</code></pre>
+<a href="{{ url_for('a08_integrity_failures.admin_api') }}" class="btn btn-outline-secondary btn-sm">Go to Admin API</a>
+{% endblock %}
