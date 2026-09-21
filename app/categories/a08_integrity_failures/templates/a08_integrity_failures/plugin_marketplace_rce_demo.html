@@ -1,0 +1,73 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Unsigned Plugin Installation Leads to RCE" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A08{% endblock %}
+
+{% block explanation %}
+<p>
+  The "Unsigned Plugin Content Trust" example proved content
+  substitution — a different, unverified source got installed just as
+  readily as the official one. Here's the consequence spelled out: this
+  marketplace doesn't just <em>display</em> whatever it fetches, it
+  <code>exec()</code>s it as part of installation. Fetching content from
+  an untrusted source doesn't just risk showing the wrong text — it means
+  running that source's code with full application privileges.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Same detection as the Medium-tier example — the vulnerability is
+  identical. What changes here is the consequence: instead of just
+  proving the marketplace accepted different content, this proves that
+  content ran.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Download the
+      <a href="{{ url_for('a08_integrity_failures.malicious_plugin_demo_download') }}">substituted plugin demo</a>
+      and host it locally:
+      <pre><code class="language-bash">python3 -m http.server 8000</code></pre>
+  </li>
+  <li>Install it from
+      <a href="{{ url_for('a08_integrity_failures.plugin_marketplace') }}">/a08/plugin-marketplace</a>
+      using <code>http://127.0.0.1:8000/malicious-plugin-demo.py</code>.</li>
+</ol>
+<p>
+  The installed content contains a line calling
+  <code>write_rce_proof("PWNED-VIA-UNSIGNED-PLUGIN-INSTALL")</code> — and
+  because "installing" a plugin means executing its source, that call
+  genuinely runs, recording a proof row the instant the plugin is
+  installed.
+</p>
+<p>Then check the proof:</p>
+<a href="{{ url_for('a08_integrity_failures.rce_proof') }}" class="btn btn-outline-secondary btn-sm">
+  Check RCE Proof
+</a>
+<p class="mt-3">
+  Current recorded proofs ({{ proofs|length }}):
+</p>
+<ul>
+  {% for proof in proofs %}
+  <li>{{ proof.triggered_at }} — {{ proof.message }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
+
+{% block vulnerable_code %}with urllib.request.urlopen(plugin_url, timeout=5) as resp:
+    source = resp.read().decode("utf-8", errors="replace")
+exec(source, {"__builtins__": __builtins__, "write_rce_proof": write_rce_proof})
+# any URL's content is executed with no verification at all
+{% endblock %}
+
+{% block secure_code %}# Same fix as the Medium-tier example -- verify a checksum against a
+# trusted-source registry before ever calling exec() on fetched content.
+{% endblock %}
+
+{% block live_example %}
+<a href="{{ url_for('a08_integrity_failures.plugin_marketplace') }}" class="btn btn-primary">
+  Go to Plugin Marketplace
+</a>
+{% endblock %}

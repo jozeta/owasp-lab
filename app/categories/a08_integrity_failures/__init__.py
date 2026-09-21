@@ -51,6 +51,13 @@ CATEGORIES.append(
                 difficulty="Hard",
                 endpoint="a08_integrity_failures.cart_rce_demo",
             ),
+            ExampleNav(
+                id="plugin-marketplace-rce",
+                title="Unsigned Plugin Installation Leads to RCE",
+                group="Unsigned Software Updates & Supply Chain",
+                difficulty="Hard",
+                endpoint="a08_integrity_failures.plugin_marketplace_rce_demo",
+            ),
         ],
     )
 )

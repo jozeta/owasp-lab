@@ -101,6 +101,14 @@ def rce_proof():
     return render_template("a08_integrity_failures/rce_proof.html", proofs=proofs)
 
 
+@a08_bp.route("/plugin-marketplace-rce-demo")
+def plugin_marketplace_rce_demo():
+    proofs = RceProof.query.order_by(RceProof.triggered_at.desc()).all()
+    return render_template(
+        "a08_integrity_failures/plugin_marketplace_rce_demo.html", proofs=proofs
+    )
+
+
 OFFICIAL_PLUGIN_SOURCE = (
     "# Official Widget Theme Plugin v1.0\n"
     'PLUGIN_NAME = "Widget Theme"\n'
