@@ -23,7 +23,8 @@ def test_old_session_id_survives_logout_for_a_separate_holder(app, client):
     # cookie was cleared) -- but a SEPARATE request presenting a manually
     # preserved copy of the old id must still work, proving the
     # server-side record was never actually invalidated.
-    response = client.get("/a07/account", headers={"Cookie": f"a07_session_id={old_sid}"})
+    client.set_cookie("a07_session_id", old_sid, domain="localhost")
+    response = client.get("/a07/account")
     assert b"Logged in as" in response.data
     assert b"dana" in response.data
 

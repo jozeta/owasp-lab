@@ -15,34 +15,9 @@ def app():
         db.drop_all()
 
 
-class CookieHeaderAwareClient:
-    """Test client that properly handles Cookie headers passed via headers parameter."""
-
-    def __init__(self, flask_client):
-        self._client = flask_client
-
-    def __getattr__(self, name):
-        """Delegate all other attributes to the wrapped client."""
-        return getattr(self._client, name)
-
-    def get(self, path, **kwargs):
-        """Override get to handle Cookie headers."""
-        headers = kwargs.get("headers", {})
-        if isinstance(headers, dict) and "Cookie" in headers:
-            cookie_header = headers.pop("Cookie")
-            # Parse and set cookies from the header
-            for cookie_str in cookie_header.split(";"):
-                cookie_str = cookie_str.strip()
-                if "=" in cookie_str:
-                    name, value = cookie_str.split("=", 1)
-                    self._client.set_cookie(name.strip(), value.strip(), domain="localhost")
-
-        return self._client.get(path, **kwargs)
-
-
 @pytest.fixture
 def client(app):
-    return CookieHeaderAwareClient(app.test_client())
+    return app.test_client()
 
 
 @pytest.fixture
