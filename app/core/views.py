@@ -97,6 +97,33 @@ def toggle_progress():
     return redirect(url_for(example.endpoint))
 
 
+@core_bp.route("/stats")
+def stats_page():
+    completed_ids = {p.example_id for p in ExampleProgress.query.all()}
+    category_stats = []
+    for category in sorted(CATEGORIES, key=lambda c: c.short_id):
+        completed = sum(1 for e in category.examples if e.id in completed_ids)
+        total = len(category.examples)
+        category_stats.append(
+            {
+                "category": category,
+                "completed": completed,
+                "total": total,
+                "percent": round(completed / total * 100) if total else 0,
+            }
+        )
+    completed_total = sum(cs["completed"] for cs in category_stats)
+    total = sum(cs["total"] for cs in category_stats)
+    overall_percent = round(completed_total / total * 100) if total else 0
+    return render_template(
+        "core/stats.html",
+        completed_total=completed_total,
+        total=total,
+        overall_percent=overall_percent,
+        category_stats=category_stats,
+    )
+
+
 @core_bp.route("/tools")
 def tools_page():
     return render_template("core/tools.html")

@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+{% block title %}Stats — OWASP Top 10 Lab{% endblock %}
+{% block content %}
+<h1>Your Progress</h1>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between mb-1">
+      <span class="fw-bold">Overall</span>
+      <span>{{ completed_total }} of {{ total }} completed — {{ overall_percent }}%</span>
+    </div>
+    <div class="progress" role="progressbar" aria-valuenow="{{ completed_total }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+      <div class="progress-bar" style="width: {{ overall_percent }}%"></div>
+    </div>
+  </div>
+</div>
+
+{% for cs in category_stats %}
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between mb-1">
+      <span class="fw-bold">{{ cs.category.short_id }}: {{ cs.category.title }}</span>
+      <span>{{ cs.completed }} of {{ cs.total }} completed</span>
+    </div>
+    <div class="progress" role="progressbar" aria-valuenow="{{ cs.completed }}" aria-valuemin="0" aria-valuemax="{{ cs.total }}">
+      <div class="progress-bar" style="width: {{ cs.percent }}%"></div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

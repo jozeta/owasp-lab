@@ -119,3 +119,47 @@ def test_reset_lab_clears_progress(app, client):
 
     with app.app_context():
         assert ExampleProgress.query.count() == 0
+
+
+def test_stats_page_loads(client):
+    response = client.get("/stats")
+    assert response.status_code == 200
+    assert b"Your Progress" in response.data
+
+
+def test_stats_page_shows_zero_percent_when_nothing_completed(app, client):
+    seed_database(app)
+    response = client.get("/stats")
+    assert b"0%" in response.data
+
+
+def test_stats_page_shows_correct_overall_count(app, client):
+    seed_database(app)
+    examples = [e for category in CATEGORIES for e in category.examples]
+    assert len(examples) >= 2
+
+    client.post("/progress/toggle", data={"example_id": examples[0].id})
+    client.post("/progress/toggle", data={"example_id": examples[1].id})
+
+    response = client.get("/stats")
+    body = response.data.decode()
+    assert f"2 of {len(examples)} completed" in body
+
+
+def test_stats_page_shows_correct_per_category_count(app, client):
+    seed_database(app)
+    a03 = next(c for c in CATEGORIES if c.id == "a03_injection")
+    example = a03.examples[0]
+
+    client.post("/progress/toggle", data={"example_id": example.id})
+
+    response = client.get("/stats")
+    body = response.data.decode()
+    assert f"1 of {len(a03.examples)} completed" in body
+    assert "A03: Injection" in body
+
+
+def test_stats_link_appears_in_dropdown_menu(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert 'class="dropdown-item" href="/stats"' in response.data.decode()
