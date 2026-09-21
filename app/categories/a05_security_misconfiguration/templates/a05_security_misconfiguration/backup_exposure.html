@@ -1,0 +1,74 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Exposed Database Backup File" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  This site's nightly backup script writes a full database dump to a
+  predictable, web-accessible filename inside the same directory the
+  application serves from — <code>db_backup_&lt;date&gt;.sql.bak</code> —
+  with no authentication check on that path at all. Anyone who guesses
+  (or scans for) the filename pattern can download it directly.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Automated backup files are one of the first things a real attacker
+  scans for, using predictable name patterns
+  (<code>.bak</code>, <code>.sql</code>, <code>.old</code>, dated
+  filenames) against common web roots. Here, simply requesting
+  <code>/a05/backups/db_backup_2024-01-15.sql.bak</code> directly —
+  no login, no special request — returns the file.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Visit
+      <a href="/a05/backups/db_backup_2024-01-15.sql.bak">/a05/backups/db_backup_2024-01-15.sql.bak</a>
+      directly.</li>
+  <li>The response is the raw backup file — a full database connection
+      string (with a real-looking password), a payment-processor secret
+      key, and a session-signing secret, all in plain text.</li>
+  <li>Any one of those three values alone would be enough for an attacker
+      to pivot further: the database URL grants direct DB access, the
+      Stripe key grants payment-API access, and the session secret lets
+      an attacker forge valid session cookies for any user.</li>
+</ol>
+<p>
+  Leftover backup, config, and log files in web-accessible directories are
+  a routinely-exploited real-world pattern — automated scanners
+  (including tools attackers run continuously against the whole internet)
+  specifically look for common backup extensions and naming conventions,
+  because this exact mistake happens constantly: a script writes a backup
+  "temporarily" to a path that was never meant to be public, and it's
+  simply never cleaned up or moved outside the web root.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/backups/db_backup_2024-01-15.sql.bak")
+def backup_file():
+    with open(BACKUP_FILE_PATH) as f:
+        content = f.read()
+    return Response(content, mimetype="text/plain")
+# no authentication check, no access control of any kind
+{% endblock %}
+
+{% block secure_code %}# Never write backups into a web-served directory at all. If a backup
+# must be reachable over HTTP for legitimate reasons, require
+# authentication and store it outside any predictable/guessable path:
+@app.route("/admin/backups/<backup_id>")
+@require_admin
+def backup_file(backup_id):
+    record = Backup.query.get_or_404(backup_id)
+    return send_from_directory(SECURE_BACKUP_DIR, record.stored_filename)
+{% endblock %}
+
+{% block live_example %}
+<p>Try it directly:</p>
+<a href="/a05/backups/db_backup_2024-01-15.sql.bak" class="btn btn-primary" target="_blank" rel="noopener">
+  Download db_backup_2024-01-15.sql.bak
+</a>
+{% endblock %}

@@ -41,6 +41,10 @@ def create_app(config_object=None):
 
     app.register_blueprint(a04_bp)
 
+    from app.categories.a05_security_misconfiguration import a05_bp
+
+    app.register_blueprint(a05_bp)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

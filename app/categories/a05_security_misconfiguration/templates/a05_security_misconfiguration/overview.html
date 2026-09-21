@@ -1,0 +1,65 @@
+{% extends "core/overview_base.html" %}
+{% set category_short_id = "A05" %}
+{% set category_title = "Security Misconfiguration" %}
+{% block title %}A05: Security Misconfiguration{% endblock %}
+
+{% block what_it_is %}
+<p>
+  Security Misconfiguration covers gaps that have nothing to do with a
+  flawed algorithm or a missing escape call — insecure default settings,
+  unnecessary features left enabled, verbose error handling that leaks
+  internals, and debug or admin interfaces that were never meant to be
+  reachable once the application left development.
+</p>
+{% endblock %}
+
+{% block why_it_matters %}
+<p>
+  These flaws are often the easiest of all to exploit — no crafted
+  payload, no injection syntax, sometimes not even a login. An attacker
+  just has to notice what was left switched on, left at its factory
+  default, or left exposed at a predictable path.
+</p>
+{% endblock %}
+
+{% block how_exploited %}
+<p>
+  Attackers scan for exactly this class of mistake at scale: common
+  backup-file names, directory listings, verbose stack traces, permissive
+  cross-origin headers, and debug consoles or admin panels still running
+  their out-of-the-box credentials. None of it requires bypassing a
+  defense — it requires a defense that was never turned on in the first
+  place.
+</p>
+{% endblock %}
+
+{% block attack_flow_diagram %}
+sequenceDiagram
+    participant Attacker
+    participant App as Vulnerable App
+    Attacker->>App: Request a predictable path, trigger an error, or try default credentials
+    Note over App: A hardening step was skipped: no access control, no allowlist, no rotated credential, no disabled debug mode
+    App-->>Attacker: Returns sensitive data, a working session, or a live code-execution console
+{% endblock %}
+
+{% block real_world_impact %}
+<p>
+  Real incidents in this category include entire cloud storage buckets
+  and backup archives found via simple directory scans, production
+  systems compromised through debug consoles accidentally left enabled,
+  and internal admin panels breached using vendor-default credentials
+  that were never rotated after installation — often the very first
+  foothold in a much larger breach.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}app.config["DEBUG"] = True  # left on in production
+# no directory-listing lockdown, no default-credential rotation,
+# no CORS allowlist -- every hardening step skipped
+{% endblock %}
+
+{% block secure_code %}app.config["DEBUG"] = False
+# disable directory listing, rotate every default credential,
+# validate CORS origins against an explicit allowlist, and never
+# serve backup/config files from a web-accessible path
+{% endblock %}
