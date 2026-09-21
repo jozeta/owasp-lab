@@ -67,6 +67,13 @@ def credential_stuffing():
     return _render("a07_auth_failures/credential_stuffing.html", session_row, error=error)
 
 
+@a07_bp.route("/share-session-link")
+def share_session_link():
+    session_row = get_or_create_session()
+    share_url = url_for("a07_auth_failures.account", sid=session_row.id)
+    return _render("a07_auth_failures/session_in_url.html", session_row, share_url=share_url)
+
+
 @a07_bp.route("/logout", methods=["POST"])
 def logout():
     session_row = get_or_create_session()

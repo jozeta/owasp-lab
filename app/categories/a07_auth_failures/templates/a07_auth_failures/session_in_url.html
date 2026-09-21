@@ -1,0 +1,61 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Session Identifier Exposed in URL" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This "Get a shareable link" feature is meant to let you continue your
+  session on another device — but it does that by putting the live session
+  identifier directly into a URL, instead of relying only on the cookie.
+  A URL containing an active session id is a complete, standalone
+  credential: anyone who ever sees that URL is logged in as you, full
+  stop, no cookie required.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Log in first (via either login example in this category), then visit
+  this page and look at the generated link — the session id appears in
+  plain sight as a <code>?sid=</code> query parameter.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in via <a href="{{ url_for('a07_auth_failures.brute_force_login') }}">Customer Login</a>.</li>
+  <li>Return to this page and copy the generated shareable link.</li>
+  <li>Open that exact URL in a completely different browser, or with your
+      cookies cleared — no login form, no cookie, just the URL alone. You
+      land on the account page already authenticated.</li>
+</ol>
+<p>
+  URLs end up in browser history, proxy and server access logs,
+  <code>Referer</code> headers sent to any third-party resource linked
+  from the page, and screenshots shared for support requests — every one
+  of those is now a session-hijacking vector once a valid session id can
+  travel as a URL parameter instead of staying confined to a cookie.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/share-session-link")
+def share_session_link():
+    session_row = get_or_create_session()
+    url = url_for("account", sid=session_row.id)
+    return render_template("session_in_url.html", url=url)
+
+# elsewhere: the session id is accepted from a URL query param at all
+sid = request.args.get("sid") or request.cookies.get(SID_COOKIE)
+{% endblock %}
+
+{% block secure_code %}# never accept a session id from anywhere but the cookie -- no ?sid=
+# fallback, no "shareable link" feature built on the raw session id at all
+sid = request.cookies.get(SID_COOKIE)
+{% endblock %}
+
+{% block live_example %}
+<p>Your shareable link (this session's raw identifier, embedded in a URL):</p>
+<p><a href="{{ share_url }}" id="share-link">{{ share_url }}</a></p>
+<a href="{{ url_for('a07_auth_failures.account') }}" class="btn btn-outline-secondary btn-sm">Go to Account</a>
+{% endblock %}

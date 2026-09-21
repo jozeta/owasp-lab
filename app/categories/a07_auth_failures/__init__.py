@@ -31,6 +31,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a07_auth_failures.credential_stuffing",
             ),
+            ExampleNav(
+                id="session-in-url",
+                title="Session Identifier Exposed in URL",
+                group="Session Identity & Lifecycle",
+                difficulty="Easy",
+                endpoint="a07_auth_failures.share_session_link",
+            ),
         ],
         seed_fn=seed_a07_accounts,
     )
