@@ -1,0 +1,81 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Pickle Cart Tampering" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A08{% endblock %}
+
+{% block explanation %}
+<p>
+  This shopping cart stores its contents in a cookie, serialized with
+  Python's <code>pickle</code> module and base64-encoded. Pickle has no
+  built-in integrity protection at all — it will happily deserialize
+  <em>any</em> valid pickle bytes, whether the server wrote them or an
+  attacker crafted them from scratch.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Reload this page a few times — the cart's contents persist across
+  visits via the <code>a08_cart</code> cookie. Nothing about the cookie's
+  value looks like it's been signed or checksummed; it's just base64-
+  encoded pickle bytes, and the server never asks "did I actually issue
+  this?"
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Run this locally to craft your own cart cookie with a tampered price —
+  you never need to see or modify the server's real cookie, just know
+  the expected shape:
+</p>
+<pre><code class="language-bash">python3 -c "
+import pickle, base64
+print(base64.b64encode(pickle.dumps({'item': 'Widget', 'price': 0.01})).decode())
+"</code></pre>
+<p>
+  Set your <code>a08_cart</code> cookie to the printed value (via browser
+  dev tools, or <code>curl -b "a08_cart=&lt;value&gt;"</code>) and reload
+  this page — the price shows <code>0.01</code>, accepted with no
+  complaint. The server never had a way to tell your crafted pickle from
+  its own.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}def deserialize_cart(token):
+    return pickle.loads(base64.b64decode(token))
+# no HMAC/signature check at all -- the app trusts whatever pickle bytes
+# the client sends back
+{% endblock %}
+
+{% block secure_code %}import hmac, hashlib, json
+
+def serialize_cart(cart):
+    payload = json.dumps(cart).encode()
+    sig = hmac.new(SECRET_KEY, payload, hashlib.sha256).hexdigest()
+    return base64.b64encode(payload).decode() + "." + sig
+
+def deserialize_cart(token):
+    payload_b64, sig = token.rsplit(".", 1)
+    payload = base64.b64decode(payload_b64)
+    expected_sig = hmac.new(SECRET_KEY, payload, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected_sig, sig):
+        raise ValueError("tampered cart")
+    return json.loads(payload)  # JSON, not pickle -- no code-execution risk either
+{% endblock %}
+
+{% block live_example %}
+<p>Your current cart:</p>
+<table class="table table-sm w-auto">
+  <tbody>
+    <tr><th scope="row">Item</th><td>{{ cart.item }}</td></tr>
+    <tr><th scope="row">Price</th><td>${{ cart.price }}</td></tr>
+  </tbody>
+</table>
+{% if error %}
+<p class="text-danger">{{ error }}</p>
+{% endif %}
+<form method="post">
+  <button type="submit" class="btn btn-outline-secondary btn-sm">Reset Cart</button>
+</form>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "core/overview_base.html" %}
+{% set category_short_id = "A08" %}
+{% set category_title = "Software and Data Integrity Failures" %}
+{% block title %}A08: Software and Data Integrity Failures{% endblock %}
+
+{% block what_it_is %}
+<p>
+  Software and Data Integrity Failures cover code and data that should
+  have been cryptographically verified before being trusted — a
+  deserialized object, an installed plugin, a signed token — but wasn't,
+  either because the check was never written, was written but never
+  called, or can be defeated by an attacker who controls part of the
+  verification process itself.
+</p>
+{% endblock %}
+
+{% block why_it_matters %}
+<p>
+  Integrity checks exist specifically to answer one question: did this
+  data or code come from where it claims to, unmodified? Skip that
+  question and an attacker doesn't need to break your authentication or
+  your encryption — they can just hand you data or code that lies about
+  where it came from, and you'll trust it completely.
+</p>
+{% endblock %}
+
+{% block how_exploited %}
+<p>
+  Attackers craft their own serialized objects, substitute plugin or
+  update content at the source, or forge tokens that exploit ambiguity in
+  how the verification code decides what to check — none of it requires
+  breaking real cryptography, only finding the place where a check that
+  should have run, didn't.
+</p>
+{% endblock %}
+
+{% block attack_flow_diagram %}
+sequenceDiagram
+    participant Attacker
+    participant App as Vulnerable App
+    Attacker->>App: Submit crafted serialized data, substituted content, or a forged token
+    Note over App: No integrity check ran at all, or the check trusted attacker-controlled input about how to verify itself
+    App-->>Attacker: Data is tampered, code executes, or an identity is forged
+{% endblock %}
+
+{% block real_world_impact %}
+<p>
+  Real incidents in this category include the 2020 SolarWinds supply-chain
+  compromise (a trusted auto-update channel delivered attacker-modified
+  code to thousands of organizations), countless Java/PHP/Python
+  applications compromised via insecure deserialization of
+  attacker-controlled objects, and JWT libraries historically vulnerable
+  to the `alg: none` signature-bypass class used here.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}cart = pickle.loads(base64.b64decode(request.cookies.get("a08_cart")))
+# no HMAC/signature check -- any pickle bytes the client sends are trusted
+{% endblock %}
+
+{% block secure_code %}# Never deserialize untrusted data with pickle. Use JSON (or another
+# format with no code-execution capability) and sign it:
+import hmac, hashlib
+data = json.loads(base64.b64decode(token))
+if not hmac.compare_digest(expected_sig, data.pop("sig")):
+    abort(400)
+{% endblock %}

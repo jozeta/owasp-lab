@@ -53,6 +53,10 @@ def create_app(config_object=None):
 
     app.register_blueprint(a07_bp)
 
+    from app.categories.a08_integrity_failures import a08_bp
+
+    app.register_blueprint(a08_bp)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}
