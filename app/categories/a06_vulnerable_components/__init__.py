@@ -37,6 +37,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a06_vulnerable_components.comment_preview",
             ),
+            ExampleNav(
+                id="lodash-prototype-pollution",
+                title="Lodash Prototype Pollution via _.defaultsDeep()",
+                group="Vulnerable Library: Lodash Prototype Pollution",
+                difficulty="Medium",
+                endpoint="a06_vulnerable_components.notification_preferences",
+            ),
         ],
     )
 )

@@ -1,0 +1,114 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Lodash Prototype Pollution via _.defaultsDeep()" %}
+{% set example_difficulty = "Medium" %}
+{% set code_language = "javascript" %}
+{% block title %}{{ example_title }} — A06{% endblock %}
+
+{% block explanation %}
+<p>
+  This "Notification Preferences" feature lets you submit raw JSON to
+  customize your settings, merged over sane defaults using Lodash's
+  <code>_.defaultsDeep()</code>. This page uses the vendored, vulnerable
+  Lodash 4.17.11 release — one patch version behind the fix for
+  CVE-2019-10744, a prototype-pollution vulnerability in
+  <code>_.merge()</code>, <code>_.mergeWith()</code>, and
+  <code>_.defaultsDeep()</code>.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit ordinary preferences JSON like <code>{"theme": "dark"}</code> and
+  it merges exactly as expected. The bug isn't visible in the merge result
+  itself — it's visible in whether a completely unrelated, freshly-created
+  object elsewhere on the page picks up a property it was never given.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>Paste this exact payload into the preferences box and click Apply:</p>
+<pre><code class="language-json">{"constructor": {"prototype": {"isAdmin": true}}}</code></pre>
+<p>
+  Watch the "Fresh object check" panel below flip from <code>undefined</code>
+  to <code>true</code>. That object is a brand-new <code>{}</code> literal,
+  created fresh, with no reference to anything you submitted — the only way
+  it can see <code>isAdmin: true</code> is if <code>Object.prototype</code>
+  itself was mutated.
+</p>
+<p>
+  Here's the mechanism: <code>_.defaultsDeep()</code> on Lodash before
+  4.17.12 recursively walks every key in your input, including
+  <code>"constructor"</code> and <code>"prototype"</code>, and happily
+  assigns through them without checking whether it's about to write onto
+  <code>Object.prototype</code> instead of a plain data object. Every
+  object in the page inherits from <code>Object.prototype</code>, so every
+  object — past, present, and future — now has <code>isAdmin: true</code>.
+</p>
+<p>
+  This demo is a single browser tab, so the "blast radius" here is just
+  this page. In a real production system, the exact same bug in a Node.js
+  backend using this exact Lodash version would pollute the shared server
+  process — meaning every concurrent request from every user would see the
+  polluted property, not just the attacker's own session. That's what
+  makes this class of bug severe in practice.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}var DEFAULT_PREFS = { theme: "light", notifications: "digest" };
+document.getElementById('apply-btn').addEventListener('click', function () {
+  var raw = document.getElementById('prefs-json').value;
+  var userPrefs = JSON.parse(raw);
+  // VULNERABLE: _.defaultsDeep() on Lodash < 4.17.12 recursively merges
+  // attacker-controlled keys -- including "constructor.prototype" -- onto
+  // Object.prototype itself (CVE-2019-10744), not just the local object.
+  var merged = _.defaultsDeep({}, DEFAULT_PREFS, userPrefs);
+});
+{% endblock %}
+
+{% block secure_code %}// Upgrade Lodash past 4.17.12 (the actual fix), AND never deep-merge
+// untrusted input directly -- validate against an explicit allowlist of
+// keys, or strip "__proto__"/"constructor"/"prototype" before merging:
+var ALLOWED_KEYS = ["theme", "notifications"];
+var userPrefs = JSON.parse(raw);
+var safePrefs = {};
+ALLOWED_KEYS.forEach(function (key) {
+  if (Object.prototype.hasOwnProperty.call(userPrefs, key)) {
+    safePrefs[key] = userPrefs[key];
+  }
+});
+var merged = _.defaultsDeep({}, DEFAULT_PREFS, safePrefs);
+{% endblock %}
+
+{% block live_example %}
+<p>Try it:</p>
+<div class="mb-2">
+  <textarea id="prefs-json" class="form-control" rows="3">{"theme": "dark"}</textarea>
+</div>
+<button type="button" id="apply-btn" class="btn btn-primary mb-2">Apply</button>
+<p id="prefs-error" class="text-danger"></p>
+<p>Applied theme: <span id="applied-theme">(none yet)</span></p>
+<p>Fresh object check (<code>({}).isAdmin</code>): <span id="fresh-object-isadmin">(none yet)</span></p>
+
+<script src="{{ url_for('static', filename='vendor/lodash-vulnerable/lodash-4.17.11.js') }}"></script>
+<script>
+  var DEFAULT_PREFS = { theme: "light", notifications: "digest" };
+  document.getElementById('apply-btn').addEventListener('click', function () {
+    var errorEl = document.getElementById('prefs-error');
+    errorEl.textContent = '';
+    try {
+      var raw = document.getElementById('prefs-json').value;
+      var userPrefs = JSON.parse(raw);
+      // VULNERABLE: _.defaultsDeep() on Lodash < 4.17.12 recursively merges
+      // attacker-controlled keys -- including "constructor.prototype" --
+      // onto Object.prototype itself (CVE-2019-10744), not just the local
+      // object.
+      var merged = _.defaultsDeep({}, DEFAULT_PREFS, userPrefs);
+      document.getElementById('applied-theme').textContent = merged.theme;
+      var freshCheck = {};
+      document.getElementById('fresh-object-isadmin').textContent = String(freshCheck.isAdmin);
+    } catch (e) {
+      errorEl.textContent = 'Invalid JSON: ' + e.message;
+    }
+  });
+</script>
+{% endblock %}

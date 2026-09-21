@@ -37,3 +37,8 @@ def legacy_widgets():
 @a06_bp.route("/comment-preview")
 def comment_preview():
     return render_template("a06_vulnerable_components/comment_preview.html")
+
+
+@a06_bp.route("/notification-preferences")
+def notification_preferences():
+    return render_template("a06_vulnerable_components/notification_preferences.html")
