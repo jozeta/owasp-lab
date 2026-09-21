@@ -44,6 +44,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a08_integrity_failures.admin_api",
             ),
+            ExampleNav(
+                id="cart-pickle-rce",
+                title="Pickle Deserialization RCE",
+                group="Insecure Deserialization",
+                difficulty="Hard",
+                endpoint="a08_integrity_failures.cart_rce_demo",
+            ),
         ],
     )
 )

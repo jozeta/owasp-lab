@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+{% block title %}RCE Proof — A08{% endblock %}
+
+{% block content %}
+<h1>RCE Proof Log</h1>
+<p>Every row here was written by code that ran during deserialization or plugin installation, not by this page itself.</p>
+{% if proofs %}
+<table class="table table-sm">
+  <thead><tr><th>Time</th><th>Message</th></tr></thead>
+  <tbody>
+    {% for proof in proofs %}
+    <tr><td>{{ proof.triggered_at }}</td><td>{{ proof.message }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No proofs recorded yet.</p>
+{% endif %}
+{% endblock %}

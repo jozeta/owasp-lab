@@ -1,0 +1,73 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Pickle Deserialization RCE" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A08{% endblock %}
+
+{% block explanation %}
+<p>
+  The "Pickle Cart Tampering" example proved data tampering — no code
+  ran, just a manipulated price. Pickle's real danger goes further: any
+  object whose class defines <code>__reduce__</code> can tell pickle to
+  call an arbitrary function, with arbitrary arguments, the moment it's
+  <em>deserialized</em> — not when it's created, not in the attacker's
+  own process, but inside your server, the instant
+  <code>pickle.loads()</code> runs.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Visiting this page plants a specially-crafted cart cookie in your
+  browser (shown below). Nothing happens yet — pickling doesn't run the
+  payload, only loading does.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>This page just planted the following cookie value for you:</p>
+<pre><code class="language-text">{{ malicious_cookie_value }}</code></pre>
+<p>
+  It was generated from a class whose <code>__reduce__</code> method
+  returns <code>(write_rce_proof, ("PWNED-VIA-PICKLE-RCE",))</code> — an
+  instruction telling pickle "when you reconstruct me, call
+  <code>write_rce_proof("PWNED-VIA-PICKLE-RCE")</code> instead."
+</p>
+<p>
+  Now visit <a href="{{ url_for('a08_integrity_failures.cart') }}">/a08/cart</a>
+  — that's the same vulnerable endpoint from the Easy-tier example, and
+  it's about to deserialize the cookie you're now carrying.
+</p>
+<p>Then check the proof:</p>
+<a href="{{ url_for('a08_integrity_failures.rce_proof') }}" class="btn btn-outline-secondary btn-sm">
+  Check RCE Proof
+</a>
+<p class="mt-3">
+  Current recorded proofs ({{ proofs|length }}):
+</p>
+<ul>
+  {% for proof in proofs %}
+  <li>{{ proof.triggered_at }} — {{ proof.message }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
+
+{% block vulnerable_code %}class _EvilCartPayload:
+    def __reduce__(self):
+        return (write_rce_proof, ("PWNED-VIA-PICKLE-RCE",))
+
+# any callable + args works here -- write_rce_proof is used in this lab
+# to keep the proof safe and contained, but pickle.loads() will call
+# ANY function a crafted __reduce__ points it at, with full application
+# privileges
+{% endblock %}
+
+{% block secure_code %}# Never deserialize untrusted data with pickle -- use JSON (which has no
+# mechanism for arbitrary code execution at all) and verify a signature
+# before trusting it, exactly as shown in the Easy-tier example's fix.
+{% endblock %}
+
+{% block live_example %}
+<a href="{{ url_for('a08_integrity_failures.cart') }}" class="btn btn-primary">
+  Trigger It: Go to Cart
+</a>
+{% endblock %}
