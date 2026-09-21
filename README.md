@@ -19,9 +19,14 @@ authorization, mass assignment / role escalation), **A02 Cryptographic Failures*
 (leaked credential dump, weak ECB encryption, predictable password-reset token),
 **A03 Injection** (SQL injection auth bypass, UNION-based exfiltration, reflected XSS,
 blind time-based SQLi, OS command injection, stored XSS, XXE file disclosure, XXE SSRF),
-and **A04 Insecure Design**
-(unlimited coupon reuse, negative-quantity price manipulation, multi-step checkout
-bypass). Remaining categories (A06–A10) are tracked separately and follow the same
+**A04 Insecure Design** (unlimited coupon reuse, negative-quantity price manipulation,
+multi-step checkout bypass), **A05 Security Misconfiguration** (exposed database backup,
+directory listing, verbose error disclosure, permissive CORS with credentials, exposed
+debug console, forgotten admin panel with default credentials), and **A06 Vulnerable
+and Outdated Components** (component version disclosure, outdated JS library detection,
+jQuery DOM XSS via a real CVE, jQuery XSS chained to session-token theft, Lodash
+prototype pollution via a real CVE, prototype pollution bypassing a client-side access
+check). Remaining categories (A07–A10) are tracked separately and follow the same
 pattern.
 
 ## Quick start
@@ -76,7 +81,8 @@ provided) or by clearing your browser's cookies for this site.
 | A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard) |
 | A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Negative Quantity Price Manipulation (Medium), Multi-Step Checkout Bypass (Hard) |
 | A05 Security Misconfiguration | Implemented | Exposed Database Backup File (Easy), Directory Listing Exposed (Easy), Verbose Error Message Disclosure (Medium), Permissive CORS with Credentials (Medium), Exposed Debug Console (Hard), Forgotten Admin Panel with Default Credentials (Hard) |
-| A06–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
+| A06 Vulnerable and Outdated Components | Implemented | Component Version Disclosure (Easy), Outdated Vulnerable JS Library Detection (Easy), jQuery DOM XSS via Vulnerable htmlPrefilter (Medium), Lodash Prototype Pollution via _.defaultsDeep() (Medium), jQuery DOM XSS Chained to Session Token Theft (Hard), Prototype Pollution Bypasses a Client-Side Access Check (Hard) |
+| A07–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
 
 ## Safety model
 
