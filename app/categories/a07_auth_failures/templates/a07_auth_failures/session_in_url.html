@@ -42,8 +42,8 @@
 {% block vulnerable_code %}@app.route("/share-session-link")
 def share_session_link():
     session_row = get_or_create_session()
-    url = url_for("account", sid=session_row.id)
-    return render_template("session_in_url.html", url=url)
+    share_url = url_for("account", sid=session_row.id)
+    return render_template("session_in_url.html", share_url=share_url)
 
 # elsewhere: the session id is accepted from a URL query param at all
 sid = request.args.get("sid") or request.cookies.get(SID_COOKIE)

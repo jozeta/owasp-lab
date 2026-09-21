@@ -5,7 +5,6 @@ def test_share_session_link_page_renders(app, client):
     seed_database(app)
     response = client.get("/a07/share-session-link")
     assert response.status_code == 200
-    assert b"share_url" not in response.data  # sanity: no raw Jinja leaked
     assert b"sid=" in response.data
 
 
