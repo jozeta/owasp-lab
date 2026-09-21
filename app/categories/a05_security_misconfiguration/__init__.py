@@ -23,6 +23,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a05_security_misconfiguration.backup_exposure",
             ),
+            ExampleNav(
+                id="directory-listing",
+                title="Directory Listing Exposed",
+                group="Exposed Files & Directories",
+                difficulty="Easy",
+                endpoint="a05_security_misconfiguration.directory_listing",
+            ),
         ],
     )
 )

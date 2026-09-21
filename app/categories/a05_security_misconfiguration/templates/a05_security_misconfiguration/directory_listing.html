@@ -1,0 +1,57 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Directory Listing Exposed" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  The web server is configured to show a full directory listing for
+  <code>/a05/uploads/</code> instead of returning a 403 or 404 when no
+  index page exists there. Every filename in the folder is visible to
+  anyone who requests the bare directory path — no guessing required.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Visit <code>/a05/uploads/</code> directly. A real, properly-configured
+  server would return a 403 Forbidden or 404 Not Found for a directory
+  with no index file. Instead, this one lists every file inside it.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Visit <a href="/a05/uploads/">/a05/uploads/</a> — every filename
+      in the folder is listed, plain as day.</li>
+  <li>One of them, <code>Q3_payroll_export.csv</code>, doesn't sound like
+      something meant for public viewing. Click it.</li>
+  <li>The file downloads directly, no authentication required — a full
+      export of employee names, Social Security numbers, and salaries.</li>
+</ol>
+<p>
+  Directory listing is one of the OWASP-cited default examples of this
+  entire vulnerability category precisely because it's so passive: no
+  scanning, no guesswork, no crafted request — the server volunteers its
+  own contents to anyone who asks for the folder.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/uploads/")
+def uploads_index():
+    # directory listing enabled -- returns every filename in the folder
+    return render_template("uploads_index.html", filenames=os.listdir(UPLOAD_DIR))
+{% endblock %}
+
+{% block secure_code %}@app.route("/uploads/")
+def uploads_index():
+    abort(404)  # never list directory contents; serve only known,
+    # explicitly-authorized files by their own dedicated route
+{% endblock %}
+
+{% block live_example %}
+<p>Try it directly:</p>
+<a href="/a05/uploads/" class="btn btn-primary" target="_blank" rel="noopener">
+  Browse /a05/uploads/
+</a>
+{% endblock %}
