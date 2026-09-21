@@ -1,6 +1,7 @@
 import os
+import traceback
 
-from flask import Response, abort, render_template
+from flask import Response, abort, render_template, request
 
 from app.categories.a05_security_misconfiguration import a05_bp
 
@@ -66,3 +67,31 @@ def uploads_file(filename):
 @a05_bp.route("/directory-listing")
 def directory_listing():
     return render_template("a05_security_misconfiguration/directory_listing.html")
+
+
+WAREHOUSE_DB_PASSWORD = "wh_S3rv1ce_2024!"
+
+
+@a05_bp.route("/inventory-check", methods=["GET", "POST"])
+def inventory_check():
+    sku = ""
+    error_detail = None
+    if request.method == "POST":
+        sku = request.form.get("sku", "")
+        try:
+            # VULNERABLE: a real internal connection string, including a
+            # real-looking password, gets embedded directly in the
+            # exception message
+            raise ConnectionError(
+                f"Failed to connect to warehouse DB at "
+                f"postgresql://warehouse_svc:{WAREHOUSE_DB_PASSWORD}@10.0.4.12:5432/inventory "
+                f"while looking up SKU '{sku}'"
+            )
+        except Exception as e:
+            # VULNERABLE: the raw exception message and full traceback are
+            # rendered directly back to the client instead of a generic
+            # "something went wrong" message
+            error_detail = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+    return render_template(
+        "a05_security_misconfiguration/inventory_check.html", sku=sku, error_detail=error_detail
+    )

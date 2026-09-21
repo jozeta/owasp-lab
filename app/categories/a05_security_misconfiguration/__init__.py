@@ -30,6 +30,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a05_security_misconfiguration.directory_listing",
             ),
+            ExampleNav(
+                id="verbose-errors",
+                title="Verbose Error Message Disclosure",
+                group="Insecure Response Configuration",
+                difficulty="Medium",
+                endpoint="a05_security_misconfiguration.inventory_check",
+            ),
         ],
     )
 )

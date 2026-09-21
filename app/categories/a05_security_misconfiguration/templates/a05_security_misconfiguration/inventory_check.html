@@ -1,0 +1,65 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Verbose Error Message Disclosure" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  This "check warehouse inventory" feature has verbose error reporting
+  left on: whenever the (simulated) warehouse database connection fails,
+  the full exception message and Python traceback are rendered directly
+  in the response, instead of a generic error message.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit any SKU. The lookup always fails (this demo simulates a
+  permanently-unreachable warehouse system), and the response includes
+  far more than "something went wrong" — read what comes back.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Submit any SKU value, e.g. <code>SKU-001</code>.</li>
+  <li>The error message includes the full connection string the app was
+      using to reach the warehouse database — including its password.</li>
+  <li>That single leaked value is often enough to pivot directly into an
+      internal system the attacker would otherwise have no path to.</li>
+</ol>
+<p>
+  Verbose error reporting is convenient during development — it's exactly
+  what a developer wants to see while debugging locally. The
+  misconfiguration is leaving it turned on once the application is
+  actually serving real traffic, where every visitor becomes a potential
+  attacker reading the same detail a developer would.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}try:
+    connect_to_warehouse_db()
+except Exception as e:
+    error_detail = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+    return render_template("inventory_check.html", error_detail=error_detail)
+{% endblock %}
+
+{% block secure_code %}try:
+    connect_to_warehouse_db()
+except Exception:
+    app.logger.exception("warehouse DB connection failed")  # log internally only
+    error_detail = "Something went wrong. Please try again later."
+    return render_template("inventory_check.html", error_detail=error_detail)
+{% endblock %}
+
+{% block live_example %}
+<form method="post" class="mb-3">
+  <div class="input-group">
+    <input type="text" class="form-control" name="sku" value="{{ sku }}" placeholder="e.g. SKU-001">
+    <button type="submit" class="btn btn-primary">Check inventory</button>
+  </div>
+</form>
+{% if error_detail %}
+<pre class="border rounded p-2 bg-body-secondary">{{ error_detail }}</pre>
+{% endif %}
+{% endblock %}
