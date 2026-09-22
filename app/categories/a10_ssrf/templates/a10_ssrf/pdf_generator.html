@@ -1,0 +1,61 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "PDF Generator Reads Local Files via file:// URL" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A10{% endblock %}
+
+{% block explanation %}
+<p>
+  This "generate a PDF from this webpage" feature passes whatever URL
+  you give it straight to a fetch call, exactly like the Webhook Tester
+  -- but here the bug isn't the destination, it's the scheme. Nothing
+  restricts this to <code>http://</code>/<code>https://</code>, and
+  Python's own URL library has built-in support for reading local files
+  via <code>file://</code>.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit an ordinary webpage URL and a PDF-worthy response comes back.
+  Submit a <code>file://</code> URL instead and the "generated PDF"
+  content is actually a local file's contents.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>Submit this exact URL below:</p>
+<pre><code class="language-text">{{ fake_secret_file_url }}</code></pre>
+<p>
+  The response shows this server's own local file contents -- not a
+  fetched webpage at all.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}page_url = request.form.get("page_url", "")
+with urllib.request.urlopen(page_url, timeout=5) as resp:
+    result = resp.read().decode("utf-8", errors="replace")
+# no scheme restriction at all -- file://, and anything urllib supports,
+# is fetched exactly like http(s)://
+{% endblock %}
+
+{% block secure_code %}from urllib.parse import urlparse
+if urlparse(page_url).scheme not in ("http", "https"):
+    abort(400, "Only http:// and https:// URLs are allowed.")
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Page URL</label>
+    <input class="form-control" type="text" name="page_url" value="{{ page_url }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Generate PDF</button>
+</form>
+{% if result %}
+<p class="mt-3">Generated content:</p>
+<pre><code class="language-text">{{ result }}</code></pre>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

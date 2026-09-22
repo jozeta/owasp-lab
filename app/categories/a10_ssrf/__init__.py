@@ -30,6 +30,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a10_ssrf.port_scan_demo",
             ),
+            ExampleNav(
+                id="file-scheme-local-read",
+                title="PDF Generator Reads Local Files via file:// URL",
+                group="Unsafe URL Scheme Handling",
+                difficulty="Easy",
+                endpoint="a10_ssrf.pdf_generator",
+            ),
         ],
     )
 )
