@@ -40,7 +40,7 @@
 
 {% block vulnerable_code %}hostname = urllib.parse.urlparse(avatar_url).hostname
 if hostname is not None and hostname.lower() in BLOCKED_HOSTS:
-    abort(403)
+    error = "That host is not allowed."
 else:
     with urllib.request.urlopen(avatar_url, timeout=5) as resp:
         result = resp.read().decode("utf-8", errors="replace")

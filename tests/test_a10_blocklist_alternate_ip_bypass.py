@@ -49,7 +49,9 @@ def test_alternate_ip_encodings_bypass_the_blocklist(client):
             assert b"REACHED-VIA-ALTERNATE-ENCODING" in response.data, (
                 f"payload {host!r} did not bypass the blocklist"
             )
-            assert b"That host is not allowed" not in response.data
+            # Verify no error message appears in the error section (the red error text)
+            # Note: the error message string may appear in the code display, but not in an actual error
+            assert b'<p class="mt-3 text-danger">That host is not allowed' not in response.data
     finally:
         server.shutdown()
         thread.join(timeout=5)
