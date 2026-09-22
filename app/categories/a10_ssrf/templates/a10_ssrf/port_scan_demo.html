@@ -24,20 +24,16 @@
 {% block exploitation %}
 <p>
   Go to the <a href="{{ url_for('a10_ssrf.webhook_tester') }}">Webhook
-  Tester</a> and submit a few different internal addresses:
+  Tester</a> and submit a couple of different internal addresses:
 </p>
 <ul>
   <li><code>http://127.0.0.1:5000/a10/internal/metadata</code> -- a real
       HTTP service, responds with content.</li>
-  <li><code>http://127.0.0.1:5432/</code> -- something is listening (this
-      container's own database), but it doesn't speak HTTP, so the
-      response looks entirely different from either of the other two
-      cases.</li>
   <li><code>http://127.0.0.1:9999/</code> -- nothing is listening at
       all, and the connection is refused immediately.</li>
 </ul>
 <p>
-  Three different outcomes, three different facts learned about the
+  Two different outcomes, two different facts learned about the
   internal network -- all through a feature that was only ever supposed
   to test a webhook URL.
 </p>
