@@ -1,0 +1,60 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Webhook Tester Reaches Internal Metadata Endpoint" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A10{% endblock %}
+
+{% block explanation %}
+<p>
+  This "test your webhook URL" feature fetches whatever URL you give it
+  and shows you the raw response -- exactly what a webhook tester should
+  do, except it never checks where that URL actually points before
+  fetching it.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit any ordinary URL and the response comes back as expected. The
+  vulnerability only becomes visible once you point it somewhere it
+  should never be allowed to go.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Submit <code>http://127.0.0.1:5000/a10/internal/metadata</code> below.
+  This app's own internal-only endpoint only trusts requests that arrive
+  from localhost -- and that's exactly what this feature's own outbound
+  request looks like from the endpoint's point of view.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}webhook_url = request.form.get("webhook_url", "")
+with urllib.request.urlopen(webhook_url, timeout=5) as resp:
+    result = resp.read().decode("utf-8", errors="replace")
+# no validation of scheme, host, or destination at all
+{% endblock %}
+
+{% block secure_code %}import ipaddress, socket
+hostname = urllib.parse.urlparse(webhook_url).hostname
+ip = ipaddress.ip_address(socket.gethostbyname(hostname))
+if ip.is_private or ip.is_loopback or ip.is_link_local:
+    abort(400)
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Webhook URL</label>
+    <input class="form-control" type="text" name="webhook_url" value="{{ webhook_url }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Test Webhook</button>
+</form>
+{% if result %}
+<p class="mt-3">Response:</p>
+<pre><code class="language-text">{{ result }}</code></pre>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

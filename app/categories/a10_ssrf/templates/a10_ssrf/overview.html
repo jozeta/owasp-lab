@@ -1,0 +1,69 @@
+{% extends "core/overview_base.html" %}
+{% set category_short_id = "A10" %}
+{% set category_title = "Server-Side Request Forgery" %}
+{% block title %}A10: Server-Side Request Forgery{% endblock %}
+
+{% block what_it_is %}
+<p>
+  Server-Side Request Forgery happens when a feature fetches a URL on the
+  server's behalf -- a webhook test, a link preview, an avatar import, a
+  PDF generator -- without validating where that URL actually points. The
+  server ends up making requests an external attacker could never make
+  directly, from inside whatever network boundary protects it.
+</p>
+{% endblock %}
+
+{% block why_it_matters %}
+<p>
+  A firewall, a VPN, or a network ACL exists to keep outsiders away from
+  internal-only services. None of that matters if the application itself
+  will happily fetch any URL it's handed and hand the response right
+  back -- the server becomes the attacker's proxy into the network it's
+  supposed to be protected by.
+</p>
+{% endblock %}
+
+{% block how_exploited %}
+<p>
+  Attackers submit URLs pointing at internal-only services, local files
+  via unrestricted schemes, or crafted addresses designed to slip past a
+  blocklist or allowlist that only checks the URL's most obvious form --
+  none of it requires breaking into the network directly, only handing
+  the server a URL it shouldn't trust.
+</p>
+{% endblock %}
+
+{% block attack_flow_diagram %}
+sequenceDiagram
+    participant Attacker
+    participant App as Vulnerable App
+    participant Internal as Internal-Only Service
+    Attacker->>App: Submit a URL (webhook, avatar, mirror, PDF source)
+    App->>Internal: Server-side fetch, no validation or a bypassable one
+    Internal-->>App: Response the attacker could never have requested directly
+    App-->>Attacker: Raw response, exposing internal data
+{% endblock %}
+
+{% block real_world_impact %}
+<p>
+  SSRF has been used to reach cloud metadata services and steal instance
+  credentials in real-world breaches (most famously the 2019 Capital One
+  breach, which began with an SSRF request to AWS's metadata endpoint),
+  and routinely shows up in bug bounty reports against webhook,
+  PDF-generation, and link-preview features that fetch attacker-supplied
+  URLs.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}webhook_url = request.form.get("webhook_url", "")
+with urllib.request.urlopen(webhook_url, timeout=5) as resp:
+    result = resp.read().decode("utf-8", errors="replace")
+# no validation of scheme, host, or destination at all
+{% endblock %}
+
+{% block secure_code %}import ipaddress, socket
+hostname = urllib.parse.urlparse(webhook_url).hostname
+ip = ipaddress.ip_address(socket.gethostbyname(hostname))
+if ip.is_private or ip.is_loopback or ip.is_link_local:
+    abort(400)
+{% endblock %}
