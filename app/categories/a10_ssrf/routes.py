@@ -115,3 +115,34 @@ def import_avatar():
         result=result,
         error=error,
     )
+
+
+ALLOWED_MIRROR_HOSTS = {"trusted-mirror.example"}
+
+
+@a10_bp.route("/mirror-fetcher", methods=["GET", "POST"])
+def mirror_fetcher():
+    result = None
+    error = None
+    mirror_url = ""
+    if request.method == "POST":
+        mirror_url = request.form.get("mirror_url", "")
+        hostname = urllib.parse.urlparse(mirror_url).hostname
+        if hostname not in ALLOWED_MIRROR_HOSTS:
+            error = "Only approved content mirrors are allowed."
+        else:
+            try:
+                # VULNERABLE: urlopen() follows redirects by default and
+                # never re-validates the Location header's host against
+                # ALLOWED_MIRROR_HOSTS -- the allowlist check above only
+                # ever sees the URL the client originally submitted.
+                with urllib.request.urlopen(mirror_url, timeout=5) as resp:
+                    result = resp.read().decode("utf-8", errors="replace")
+            except Exception as e:
+                error = f"Could not fetch from mirror: {e}"
+    return render_template(
+        "a10_ssrf/mirror_fetcher.html",
+        mirror_url=mirror_url,
+        result=result,
+        error=error,
+    )

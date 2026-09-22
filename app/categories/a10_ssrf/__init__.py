@@ -44,6 +44,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a10_ssrf.import_avatar",
             ),
+            ExampleNav(
+                id="blocklist-redirect-bypass",
+                title="Open Redirect Bypasses a Trusted-Domain Allowlist",
+                group="Blocklist Bypass Techniques",
+                difficulty="Hard",
+                endpoint="a10_ssrf.mirror_fetcher",
+            ),
         ],
     )
 )
