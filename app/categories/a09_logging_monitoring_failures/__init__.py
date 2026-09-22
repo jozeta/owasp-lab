@@ -40,6 +40,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a09_logging_monitoring_failures.support_login",
             ),
+            ExampleNav(
+                id="log-file-world-readable",
+                title="Unauthenticated Log File Exposure",
+                group="Insecure Log Storage",
+                difficulty="Hard",
+                endpoint="a09_logging_monitoring_failures.log_exposure_demo",
+            ),
         ],
     )
 )

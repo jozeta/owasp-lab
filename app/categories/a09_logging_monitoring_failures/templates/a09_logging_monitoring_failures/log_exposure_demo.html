@@ -1,0 +1,51 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Unauthenticated Log File Exposure" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A09{% endblock %}
+
+{% block explanation %}
+<p>
+  The "Sensitive Data Leaked Into Log Files" example proved secrets end up
+  in a log file. Here's the consequence spelled out: that log file has no
+  access control of its own. Anyone who can reach this app can read the
+  whole thing, no login required.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Fetch <a href="{{ url_for('a09_logging_monitoring_failures.download_log') }}">/a09/download-log</a>
+  directly, with no prior login, no cookie, nothing -- and the file
+  downloads anyway.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Visiting this page just planted one more secret into the shared
+  application log file. Now fetch
+  <a href="{{ url_for('a09_logging_monitoring_failures.download_log') }}">/a09/download-log</a>
+  directly -- no login, no session, nothing -- and the entire raw log
+  file downloads, including that secret and anything logged by the
+  Sensitive Data Leaked Into Log Files example.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@a09_bp.route("/download-log")
+def download_log():
+    # no session/role check at all -- anyone can fetch the whole file
+    return Response(_read_app_log(), mimetype="text/plain")
+{% endblock %}
+
+{% block secure_code %}@a09_bp.route("/download-log")
+def download_log():
+    if not current_user_is_admin():
+        abort(403)
+    return Response(_read_app_log(), mimetype="text/plain")
+{% endblock %}
+
+{% block live_example %}
+<a href="{{ url_for('a09_logging_monitoring_failures.download_log') }}" class="btn btn-primary">
+  Download Raw Log File (No Login Required)
+</a>
+{% endblock %}

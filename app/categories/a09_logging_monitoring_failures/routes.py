@@ -1,6 +1,6 @@
 import os
 
-from flask import render_template, request, session
+from flask import Response, render_template, request, session
 
 from app import BASE_DIR
 from app.categories.a09_logging_monitoring_failures import a09_bp
@@ -111,3 +111,22 @@ def support_login():
             )
             error = "Invalid username or password."
     return render_template("a09_logging_monitoring_failures/support_login.html", error=error)
+
+
+@a09_bp.route("/log-exposure-demo")
+def log_exposure_demo():
+    # Plant a secret into the same log file every time this page loads,
+    # so this example is self-contained even if example 3 was never
+    # visited.
+    append_to_app_log(
+        "support-login failed: username='demo-visitor' password='PLANTED-DEMO-SECRET'"
+    )
+    return render_template("a09_logging_monitoring_failures/log_exposure_demo.html")
+
+
+@a09_bp.route("/download-log")
+def download_log():
+    # VULNERABLE: the operational log file -- which may contain plaintext
+    # credentials logged by the support-login example -- is served to
+    # absolutely anyone, no session or role check at all.
+    return Response(_read_app_log(), mimetype="text/plain")
