@@ -8,7 +8,7 @@ def test_import_avatar_blocks_literal_127_0_0_1(client):
         "/a10/import-avatar", data={"avatar_url": "http://127.0.0.1:9999/"}
     )
     assert response.status_code == 200
-    assert b"That host is not allowed" in response.data
+    assert b'<p class="mt-3 text-danger">That host is not allowed' in response.data
 
 
 def test_import_avatar_blocks_literal_localhost(client):
@@ -16,7 +16,7 @@ def test_import_avatar_blocks_literal_localhost(client):
         "/a10/import-avatar", data={"avatar_url": "http://localhost:9999/"}
     )
     assert response.status_code == 200
-    assert b"That host is not allowed" in response.data
+    assert b'<p class="mt-3 text-danger">That host is not allowed' in response.data
 
 
 def test_alternate_ip_encodings_bypass_the_blocklist(client):
