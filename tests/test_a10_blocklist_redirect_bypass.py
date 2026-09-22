@@ -8,7 +8,10 @@ def test_mirror_fetcher_rejects_a_non_allowlisted_host(client):
         "/a10/mirror-fetcher", data={"mirror_url": "http://evil.example/"}
     )
     assert response.status_code == 200
-    assert b"Only approved content mirrors are allowed" in response.data
+    assert (
+        b'<p class="mt-3 text-danger">Only approved content mirrors are allowed'
+        in response.data
+    )
 
 
 def test_mirror_fetcher_fetches_a_directly_allowlisted_host(client, monkeypatch):
