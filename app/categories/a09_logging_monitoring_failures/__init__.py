@@ -26,6 +26,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a09_logging_monitoring_failures.login",
             ),
+            ExampleNav(
+                id="admin-action-no-audit",
+                title="High-Value Admin Action With No Audit Trail",
+                group="Missing Audit Logging",
+                difficulty="Medium",
+                endpoint="a09_logging_monitoring_failures.admin_actions",
+            ),
         ],
     )
 )

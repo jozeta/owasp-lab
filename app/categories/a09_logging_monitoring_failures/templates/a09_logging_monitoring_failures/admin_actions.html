@@ -1,0 +1,67 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "High-Value Admin Action With No Audit Trail" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A09{% endblock %}
+
+{% block explanation %}
+<p>
+  This admin panel has two actions that look equally important: creating
+  a user account and deleting one. Only one of them writes to the
+  security event log.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Create a user below and check the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">security event log</a>
+  -- a new entry appears. Then delete a user and check again.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Delete any user from the list below, then check the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">security event log</a>
+  again. The deletion succeeded -- the user is gone from the list -- but
+  no record of who deleted whom, or when, exists anywhere. A destructive
+  action with real consequences left absolutely no audit trail.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}if action == "create":
+    users.append(username)
+    log_security_event("admin_user_created", f"username={username}")
+elif action == "delete":
+    users.remove(username)
+    # no log_security_event() call at all on this branch
+{% endblock %}
+
+{% block secure_code %}if action == "create":
+    users.append(username)
+    log_security_event("admin_user_created", f"username={username}")
+elif action == "delete":
+    users.remove(username)
+    log_security_event("admin_user_deleted", f"username={username}")
+{% endblock %}
+
+{% block live_example %}
+<p>Current users: {{ users|join(", ") if users else "(none)" }}</p>
+<form method="post" class="mb-2">
+  <input type="hidden" name="action" value="create">
+  <div class="input-group">
+    <input class="form-control" type="text" name="username" placeholder="username to create">
+    <button type="submit" class="btn btn-primary">Create User</button>
+  </div>
+</form>
+<form method="post">
+  <input type="hidden" name="action" value="delete">
+  <div class="input-group">
+    <input class="form-control" type="text" name="username" placeholder="username to delete">
+    <button type="submit" class="btn btn-danger">Delete User</button>
+  </div>
+</form>
+<p class="mt-3">
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">View security event log</a>
+</p>
+{% endblock %}

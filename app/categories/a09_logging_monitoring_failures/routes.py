@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template, request, session
 
 from app.categories.a09_logging_monitoring_failures import a09_bp
 from app.categories.a09_logging_monitoring_failures.models import SecurityEvent
@@ -42,3 +42,29 @@ def login():
             # how many times it's hit.
             error = "Invalid username or password."
     return render_template("a09_logging_monitoring_failures/login.html", error=error)
+
+
+ADMIN_ACTIONS_SESSION_KEY = "a09_demo_users"
+DEFAULT_DEMO_USERS = ["alice", "bob"]
+
+
+@a09_bp.route("/admin-actions", methods=["GET", "POST"])
+def admin_actions():
+    users = session.get(ADMIN_ACTIONS_SESSION_KEY, list(DEFAULT_DEMO_USERS))
+    if request.method == "POST":
+        action = request.form.get("action")
+        username = request.form.get("username", "")
+        if action == "create":
+            if username and username not in users:
+                users.append(username)
+            log_security_event("admin_user_created", f"username={username}")
+        elif action == "delete":
+            if username in users:
+                users.remove(username)
+            # VULNERABLE: a destructive, high-value admin action -- the
+            # exact kind of event OWASP's A09 calls out by name -- and it
+            # writes nothing to the audit log at all.
+        session[ADMIN_ACTIONS_SESSION_KEY] = users
+    return render_template(
+        "a09_logging_monitoring_failures/admin_actions.html", users=sorted(users)
+    )
