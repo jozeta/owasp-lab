@@ -1,0 +1,69 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "No Alert Threshold for Repeated Failures" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A09{% endblock %}
+
+{% block explanation %}
+<p>
+  Unlike the "Failed Login Attempts Never Logged" example, this login
+  form logs every attempt correctly -- success and failure both write a
+  real security-event row. The gap here isn't logging; it's that nothing
+  ever reacts to what's been logged.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit a few wrong passwords below and check the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">security event log</a>
+  -- every attempt is genuinely there.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Submit 20 or more consecutive wrong passwords below, then check the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">security event log</a>.
+  All 20 attempts are logged, correctly, in full detail -- and "Active
+  Alerts" is still 0. No lockout, no escalation, no notification, no
+  matter how obvious the pattern in the data already is.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}if username == DEMO_USERNAME and password == DEMO_PASSWORD:
+    log_security_event("monitored_login_success", f"user={username}")
+else:
+    log_security_event("monitored_login_failed", f"user={username}")
+    error = "Invalid username or password."
+# every attempt is logged -- but nothing anywhere counts failures per
+# user/IP or raises an alert once a threshold is crossed
+{% endblock %}
+
+{% block secure_code %}if username == DEMO_USERNAME and password == DEMO_PASSWORD:
+    log_security_event("monitored_login_success", f"user={username}")
+else:
+    log_security_event("monitored_login_failed", f"user={username}")
+    if recent_failure_count(username) >= 5:
+        raise_alert("repeated_login_failures", username)
+    error = "Invalid username or password."
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log In</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+<p class="mt-3">
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">View security event log</a>
+</p>
+{% endblock %}

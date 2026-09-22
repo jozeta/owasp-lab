@@ -47,6 +47,13 @@ CATEGORIES.append(
                 difficulty="Hard",
                 endpoint="a09_logging_monitoring_failures.log_exposure_demo",
             ),
+            ExampleNav(
+                id="no-alert-threshold",
+                title="No Alert Threshold for Repeated Failures",
+                group="No Detection & Alerting for Active Attacks",
+                difficulty="Medium",
+                endpoint="a09_logging_monitoring_failures.monitored_login",
+            ),
         ],
     )
 )

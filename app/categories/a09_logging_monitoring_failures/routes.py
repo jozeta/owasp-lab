@@ -130,3 +130,19 @@ def download_log():
     # credentials logged by the support-login example -- is served to
     # absolutely anyone, no session or role check at all.
     return Response(_read_app_log(), mimetype="text/plain")
+
+
+@a09_bp.route("/monitored-login", methods=["GET", "POST"])
+def monitored_login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        if username == DEMO_USERNAME and password == DEMO_PASSWORD:
+            log_security_event("monitored_login_success", f"user={username}")
+        else:
+            log_security_event("monitored_login_failed", f"user={username}")
+            error = "Invalid username or password."
+    return render_template(
+        "a09_logging_monitoring_failures/monitored_login.html", error=error
+    )
