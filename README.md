@@ -29,11 +29,15 @@ prototype pollution via a real CVE, prototype pollution bypassing a client-side 
 check), **A07 Identification and Authentication Failures** (no rate limiting
 enables brute force, credential stuffing across multiple accounts, session
 identifier exposed in a URL, session not invalidated on logout, full
-session fixation, bypassable multi-factor authentication), and **A08
+session fixation, bypassable multi-factor authentication), **A08
 Software and Data Integrity Failures** (pickle cart tampering, pickle
 deserialization RCE, unsigned plugin content trust, unsigned plugin
 installation leading to RCE, unchecked signature on a preferences cookie,
-JWT alg:none signature bypass). Remaining categories (A09–A10) are tracked
+JWT alg:none signature bypass), and **A09 Security Logging and Monitoring
+Failures** (failed login attempts never logged, high-value admin action
+with no audit trail, sensitive data leaked into log files, unauthenticated
+log file exposure, no alert threshold for repeated failures, attack
+signature logged but never flagged). Remaining categories (A10) are tracked
 separately and follow the same pattern.
 
 ## Quick start
@@ -91,7 +95,8 @@ provided) or by clearing your browser's cookies for this site.
 | A06 Vulnerable and Outdated Components | Implemented | Component Version Disclosure (Easy), Outdated Vulnerable JS Library Detection (Easy), jQuery DOM XSS via Vulnerable htmlPrefilter (Medium), Lodash Prototype Pollution via _.defaultsDeep() (Medium), jQuery DOM XSS Chained to Session Token Theft (Hard), Prototype Pollution Bypasses a Client-Side Access Check (Hard) |
 | A07 Identification and Authentication Failures | Implemented | No Rate Limiting Enables Brute Force (Easy), Credential Stuffing Across Multiple Accounts (Medium), Session Identifier Exposed in URL (Easy), Session Not Invalidated on Logout (Medium), Session Fixation (Hard), Bypassable Multi-Factor Authentication (Hard) |
 | A08 Software and Data Integrity Failures | Implemented | Pickle Cart Tampering (Easy), Unsigned Plugin Content Trust (Medium), Unchecked Signature on Preferences Cookie (Easy), JWT alg:none Signature Bypass (Medium), Pickle Deserialization RCE (Hard), Unsigned Plugin Installation Leads to RCE (Hard) |
-| A09–A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
+| A09 Security Logging and Monitoring Failures | Implemented | Failed Login Attempts Never Logged (Easy), High-Value Admin Action With No Audit Trail (Medium), Sensitive Data Leaked Into Log Files (Easy), Unauthenticated Log File Exposure (Hard), No Alert Threshold for Repeated Failures (Medium), Attack Signature Logged But Never Flagged (Hard) |
+| A10 | Planned | See `docs/superpowers/specs/2026-09-18-owasp-lab-design.md` |
 
 ## Safety model
 
