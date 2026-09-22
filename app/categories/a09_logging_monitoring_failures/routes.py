@@ -146,3 +146,13 @@ def monitored_login():
     return render_template(
         "a09_logging_monitoring_failures/monitored_login.html", error=error
     )
+
+
+@a09_bp.route("/product-search")
+def product_search():
+    query = request.args.get("q", "")
+    if query:
+        log_security_event("product_search", f"query={query}")
+    return render_template(
+        "a09_logging_monitoring_failures/product_search.html", query=query
+    )

@@ -54,6 +54,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a09_logging_monitoring_failures.monitored_login",
             ),
+            ExampleNav(
+                id="attack-signature-not-flagged",
+                title="Attack Signature Logged But Never Flagged",
+                group="No Detection & Alerting for Active Attacks",
+                difficulty="Hard",
+                endpoint="a09_logging_monitoring_failures.product_search",
+            ),
         ],
     )
 )

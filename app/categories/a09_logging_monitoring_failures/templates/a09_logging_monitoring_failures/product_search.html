@@ -1,0 +1,63 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Attack Signature Logged But Never Flagged" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A09{% endblock %}
+
+{% block explanation %}
+<p>
+  This search box logs every query it receives, verbatim, to the security
+  event log -- proving the app genuinely captures the evidence. Nothing
+  in this app, anywhere, ever inspects that logged content for known
+  attack patterns.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Search for something ordinary, then check the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">security event log</a>
+  -- your query is there, verbatim.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Search for an unmistakable attack signature -- a SQL injection probe
+  like <code>&#39; OR &#39;1&#39;=&#39;1&#39; --</code>, or a
+  path-traversal attempt like <code>../../../../etc/passwd</code> -- then
+  check the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">security event log</a>.
+  The exact string is sitting there in plain view, and "Active Alerts" is
+  still 0 -- nothing in this app ever pattern-matches logged content
+  against known attack signatures, no matter how obvious the signal is.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}query = request.args.get("q", "")
+if query:
+    log_security_event("product_search", f"query={query}")
+# logged verbatim -- but nothing anywhere checks logged content against
+# any known attack-signature pattern, so this never raises an alert
+{% endblock %}
+
+{% block secure_code %}query = request.args.get("q", "")
+if query:
+    log_security_event("product_search", f"query={query}")
+    if matches_known_attack_signature(query):
+        raise_alert("suspicious_search_query", query)
+{% endblock %}
+
+{% block live_example %}
+<form method="get">
+  <div class="input-group">
+    <input class="form-control" type="text" name="q" value="{{ query }}">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </div>
+</form>
+{% if query %}
+<p class="mt-3">You searched for: {{ query }}</p>
+{% endif %}
+<p class="mt-3">
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">View security event log</a>
+</p>
+{% endblock %}
