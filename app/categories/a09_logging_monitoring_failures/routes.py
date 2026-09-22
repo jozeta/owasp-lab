@@ -1,11 +1,32 @@
+import os
+
 from flask import render_template, request, session
 
+from app import BASE_DIR
 from app.categories.a09_logging_monitoring_failures import a09_bp
 from app.categories.a09_logging_monitoring_failures.models import SecurityEvent
 from app.extensions import db
 
 DEMO_USERNAME = "demo"
 DEMO_PASSWORD = "demo-password"
+
+LOG_FILE_PATH = os.path.join(BASE_DIR, "instance", "a09_app.log")
+
+SUPPORT_USERNAME = "support"
+SUPPORT_PASSWORD = "letmein123"
+
+
+def append_to_app_log(line):
+    os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
+    with open(LOG_FILE_PATH, "a") as f:
+        f.write(line + "\n")
+
+
+def _read_app_log():
+    if not os.path.exists(LOG_FILE_PATH):
+        return ""
+    with open(LOG_FILE_PATH) as f:
+        return f.read()
 
 
 def log_security_event(event_type, detail):
@@ -23,8 +44,11 @@ def overview():
 @a09_bp.route("/security-events")
 def security_events():
     events = SecurityEvent.query.order_by(SecurityEvent.logged_at.desc()).all()
+    log_contents = _read_app_log()
     return render_template(
-        "a09_logging_monitoring_failures/security_events.html", events=events
+        "a09_logging_monitoring_failures/security_events.html",
+        events=events,
+        log_contents=log_contents,
     )
 
 
@@ -68,3 +92,22 @@ def admin_actions():
     return render_template(
         "a09_logging_monitoring_failures/admin_actions.html", users=sorted(users)
     )
+
+
+@a09_bp.route("/support-login", methods=["GET", "POST"])
+def support_login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        if username == SUPPORT_USERNAME and password == SUPPORT_PASSWORD:
+            error = None
+        else:
+            # VULNERABLE: logs the FULL submitted credentials, including
+            # the plaintext password, straight into the app's log file --
+            # a textbook CWE-532 sensitive-data-in-logs bug.
+            append_to_app_log(
+                f"support-login failed: username={username!r} password={password!r}"
+            )
+            error = "Invalid username or password."
+    return render_template("a09_logging_monitoring_failures/support_login.html", error=error)

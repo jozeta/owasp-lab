@@ -33,6 +33,13 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a09_logging_monitoring_failures.admin_actions",
             ),
+            ExampleNav(
+                id="sensitive-data-in-logs",
+                title="Sensitive Data Leaked Into Log Files",
+                group="Insecure Log Storage",
+                difficulty="Easy",
+                endpoint="a09_logging_monitoring_failures.support_login",
+            ),
         ],
     )
 )

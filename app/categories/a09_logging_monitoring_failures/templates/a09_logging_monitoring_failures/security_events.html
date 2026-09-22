@@ -25,4 +25,13 @@
   <p>No events recorded yet.</p>
   {% endif %}
 </section>
+
+<section class="mb-4">
+  <h2 class="h5">Raw Application Log</h2>
+  {% if log_contents %}
+  <pre>{{ log_contents }}</pre>
+  {% else %}
+  <p>No log file yet.</p>
+  {% endif %}
+</section>
 {% endblock %}

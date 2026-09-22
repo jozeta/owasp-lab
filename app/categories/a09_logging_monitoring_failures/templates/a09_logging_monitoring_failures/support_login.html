@@ -1,0 +1,61 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Sensitive Data Leaked Into Log Files" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A09{% endblock %}
+
+{% block explanation %}
+<p>
+  This "support portal" login writes a diagnostic line to the
+  application's log file whenever a login attempt fails -- including the
+  full submitted form data, exactly as the client sent it.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit any wrong password below, then check the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">raw application log</a>
+  -- your password is sitting there in plaintext.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Submit any password below -- try something memorable -- then check the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">raw application log</a>.
+  Whatever you typed appears there in cleartext, in a file meant for
+  operational diagnostics, not credential storage -- and this file has no
+  access control of its own (the next example proves exactly how little).
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}else:
+    append_to_app_log(
+        f"support-login failed: username={username!r} password={password!r}"
+    )
+{% endblock %}
+
+{% block secure_code %}else:
+    append_to_app_log(f"support-login failed: username={username!r}")
+    # never write a password -- not even a failed one -- to a log file
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log In</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+<p class="mt-3">
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">View raw application log</a>
+</p>
+{% endblock %}
