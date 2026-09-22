@@ -37,6 +37,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a10_ssrf.pdf_generator",
             ),
+            ExampleNav(
+                id="blocklist-alternate-ip-bypass",
+                title="Alternate IP Representation Bypasses a Naive Blocklist",
+                group="Blocklist Bypass Techniques",
+                difficulty="Medium",
+                endpoint="a10_ssrf.import_avatar",
+            ),
         ],
     )
 )

@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 import urllib.request
 
 from flask import Response, abort, render_template, request
@@ -83,4 +84,34 @@ def pdf_generator():
         result=result,
         error=error,
         fake_secret_file_url=f"file://{FAKE_SECRET_FILE_PATH}",
+    )
+
+
+BLOCKED_HOSTS = {"127.0.0.1", "localhost"}
+
+
+@a10_bp.route("/import-avatar", methods=["GET", "POST"])
+def import_avatar():
+    result = None
+    error = None
+    avatar_url = ""
+    if request.method == "POST":
+        avatar_url = request.form.get("avatar_url", "")
+        hostname = urllib.parse.urlparse(avatar_url).hostname
+        # VULNERABLE: blocks the exact strings "127.0.0.1"/"localhost" --
+        # any other representation of the same address sails right
+        # through.
+        if hostname is not None and hostname.lower() in BLOCKED_HOSTS:
+            error = "That host is not allowed."
+        else:
+            try:
+                with urllib.request.urlopen(avatar_url, timeout=5) as resp:
+                    result = resp.read().decode("utf-8", errors="replace")
+            except Exception as e:
+                error = f"Could not fetch avatar: {e}"
+    return render_template(
+        "a10_ssrf/import_avatar.html",
+        avatar_url=avatar_url,
+        result=result,
+        error=error,
     )

@@ -1,0 +1,71 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Alternate IP Representation Bypasses a Naive Blocklist" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A10{% endblock %}
+
+{% block explanation %}
+<p>
+  This "import your avatar from a URL" feature checks the submitted
+  URL's host against a blocklist before fetching it -- but the check
+  only recognizes the exact strings <code>127.0.0.1</code> and
+  <code>localhost</code>. Any other way of writing the same address
+  sails straight through.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submitting <code>http://127.0.0.1:5000/a10/internal/metadata</code>
+  directly is correctly rejected. The blocklist looks like it works --
+  until you write the same address a different way.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>Any of these reach the exact same address the blocklist just refused:</p>
+<ul>
+  <li><code>http://2130706433:5000/a10/internal/metadata</code> (decimal)</li>
+  <li><code>http://0x7f000001:5000/a10/internal/metadata</code> (hexadecimal)</li>
+  <li><code>http://127.1:5000/a10/internal/metadata</code> (short form)</li>
+  <li><code>http://0:5000/a10/internal/metadata</code> (bare zero --
+      Linux treats this as "any address," which routes to loopback for
+      an outbound connection)</li>
+</ul>
+<p>
+  None of these strings contain <code>127.0.0.1</code> or
+  <code>localhost</code>, so the blocklist never even looks at them
+  twice.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}hostname = urllib.parse.urlparse(avatar_url).hostname
+if hostname is not None and hostname.lower() in BLOCKED_HOSTS:
+    abort(403)
+else:
+    with urllib.request.urlopen(avatar_url, timeout=5) as resp:
+        result = resp.read().decode("utf-8", errors="replace")
+# BLOCKED_HOSTS = {"127.0.0.1", "localhost"} -- exact-string matching only
+{% endblock %}
+
+{% block secure_code %}import ipaddress, socket
+ip = ipaddress.ip_address(socket.gethostbyname(hostname))
+if ip.is_private or ip.is_loopback or ip.is_link_local:
+    abort(403)
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Avatar URL</label>
+    <input class="form-control" type="text" name="avatar_url" value="{{ avatar_url }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Import Avatar</button>
+</form>
+{% if result %}
+<p class="mt-3">Response:</p>
+<pre><code class="language-text">{{ result }}</code></pre>
+{% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}
