@@ -1,0 +1,28 @@
+{% extends "core/base.html" %}
+{% block title %}Security Events — A09{% endblock %}
+
+{% block content %}
+<h1>Security Monitoring Dashboard</h1>
+<p>This is the operator-facing view every A09 example writes to (or fails to write to).</p>
+
+<section class="mb-4">
+  <h2 class="h5">Active Alerts (0)</h2>
+  <p>No alerting or detection logic exists anywhere in this application -- this count never changes, no matter what appears below.</p>
+</section>
+
+<section class="mb-4">
+  <h2 class="h5">Security Event Log</h2>
+  {% if events %}
+  <table class="table table-sm">
+    <thead><tr><th>Time</th><th>Event Type</th><th>Detail</th></tr></thead>
+    <tbody>
+      {% for event in events %}
+      <tr><td>{{ event.logged_at }}</td><td>{{ event.event_type }}</td><td>{{ event.detail }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No events recorded yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

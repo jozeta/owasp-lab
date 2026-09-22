@@ -57,6 +57,10 @@ def create_app(config_object=None):
 
     app.register_blueprint(a08_bp)
 
+    from app.categories.a09_logging_monitoring_failures import a09_bp
+
+    app.register_blueprint(a09_bp)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}
