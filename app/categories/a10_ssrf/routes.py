@@ -49,3 +49,8 @@ def webhook_tester():
         result=result,
         error=error,
     )
+
+
+@a10_bp.route("/port-scan-demo")
+def port_scan_demo():
+    return render_template("a10_ssrf/port_scan_demo.html")

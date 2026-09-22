@@ -1,0 +1,61 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Same Fetcher Enables Internal Port Scanning" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A10{% endblock %}
+
+{% block explanation %}
+<p>
+  The "Webhook Tester" example proved this feature reaches an internal
+  endpoint and shows you what's there. Here's a different use of the
+  exact same mechanism: submitting URLs at different internal ports
+  produces genuinely different, distinguishable responses -- letting an
+  attacker map which internal services exist without ever seeing a byte
+  of their actual protocol traffic.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  No new vulnerable code exists for this example -- it's the same
+  unrestricted fetch from the Webhook Tester, used differently.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Go to the <a href="{{ url_for('a10_ssrf.webhook_tester') }}">Webhook
+  Tester</a> and submit a few different internal addresses:
+</p>
+<ul>
+  <li><code>http://127.0.0.1:5000/a10/internal/metadata</code> -- a real
+      HTTP service, responds with content.</li>
+  <li><code>http://127.0.0.1:5432/</code> -- something is listening (this
+      container's own database), but it doesn't speak HTTP, so the
+      response looks entirely different from either of the other two
+      cases.</li>
+  <li><code>http://127.0.0.1:9999/</code> -- nothing is listening at
+      all, and the connection is refused immediately.</li>
+</ul>
+<p>
+  Three different outcomes, three different facts learned about the
+  internal network -- all through a feature that was only ever supposed
+  to test a webhook URL.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}webhook_url = request.form.get("webhook_url", "")
+with urllib.request.urlopen(webhook_url, timeout=5) as resp:
+    result = resp.read().decode("utf-8", errors="replace")
+# the exact same unrestricted fetch as the Webhook Tester example -- no
+# new code was written for this one, only a different way of using it
+{% endblock %}
+
+{% block secure_code %}# Same fix as the Webhook Tester example -- validate the resolved IP is
+# not private/loopback/link-local before ever calling urlopen().
+{% endblock %}
+
+{% block live_example %}
+<a href="{{ url_for('a10_ssrf.webhook_tester') }}" class="btn btn-primary">
+  Go to Webhook Tester
+</a>
+{% endblock %}

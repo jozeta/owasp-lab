@@ -23,6 +23,13 @@ CATEGORIES.append(
                 difficulty="Easy",
                 endpoint="a10_ssrf.webhook_tester",
             ),
+            ExampleNav(
+                id="fetch-based-port-scan",
+                title="Same Fetcher Enables Internal Port Scanning",
+                group="Unrestricted Server-Side Fetch",
+                difficulty="Medium",
+                endpoint="a10_ssrf.port_scan_demo",
+            ),
         ],
     )
 )
