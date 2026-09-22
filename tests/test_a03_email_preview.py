@@ -40,7 +40,14 @@ def test_email_preview_secure_pattern_neutralizes_ssti_payload():
     assert payload in html.unescape(result)
 
 
-def test_email_preview_static_teaching_text_shows_literal_braces_not_evaluated(client):
+def test_email_preview_static_teaching_text_shows_literal_braces_not_evaluated(app, client):
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a03/email-preview")
     assert response.status_code == 200
     body = response.data.decode()

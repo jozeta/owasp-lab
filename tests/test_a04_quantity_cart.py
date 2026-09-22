@@ -54,7 +54,14 @@ def test_quantity_cart_shows_vulnerable_vs_secure_code(client):
     assert b"min(quantity, 99)" in response.data
 
 
-def test_quantity_cart_shows_detect_content(client):
+def test_quantity_cart_shows_detect_content(app, client):
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a04/quantity-cart")
     assert response.status_code == 200
     assert b"no bounds validation" in response.data

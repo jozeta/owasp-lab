@@ -2,14 +2,31 @@
 {% block title %}OWASP Top 10 Training Lab{% endblock %}
 {% block content %}
 <h1>OWASP Top 10 (2021) Training Lab</h1>
-<p class="lead">Pick a category above to see its overview and graduated, exploitable examples.</p>
+<p class="lead">Pick a category below to see its overview and graduated, exploitable examples.</p>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between mb-1">
+      <span class="fw-bold">Overall</span>
+      <span>{{ completed_total }} of {{ total }} completed — {{ overall_percent }}%</span>
+    </div>
+    <div class="progress" role="progressbar" aria-label="Overall progress" aria-valuenow="{{ completed_total }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+      <div class="progress-bar" style="width: {{ overall_percent }}%"></div>
+    </div>
+  </div>
+</div>
+
 <div class="row row-cols-1 row-cols-md-2 g-3 mt-2">
-  {% for category in categories %}
+  {% for cs in category_stats %}
   <div class="col">
     <div class="card h-100">
       <div class="card-body">
-        <h5 class="card-title">{{ category.short_id }}: {{ category.title }}</h5>
-        <a href="{{ url_for(category.overview_endpoint) }}" class="btn btn-outline-primary btn-sm">Open overview</a>
+        <h5 class="card-title">{{ cs.category.short_id }}: {{ cs.category.title }}</h5>
+        <div class="mb-1">{{ cs.completed }} of {{ cs.total }} completed</div>
+        <div class="progress mb-3" role="progressbar" aria-label="{{ cs.category.short_id }} progress" aria-valuenow="{{ cs.completed }}" aria-valuemin="0" aria-valuemax="{{ cs.total }}">
+          <div class="progress-bar" style="width: {{ cs.percent }}%"></div>
+        </div>
+        <a href="{{ url_for(cs.category.overview_endpoint) }}" class="btn btn-outline-primary btn-sm">Open overview</a>
       </div>
     </div>
   </div>

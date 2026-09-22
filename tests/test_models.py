@@ -8,7 +8,7 @@ def test_settings_get_creates_and_returns_singleton(app):
         second = Settings.get()
         assert first.id == second.id
         assert first.show_explanations is True
-        assert first.show_exploit_instructions is True
+        assert first.show_exploit_instructions is False
 
 
 def test_user_model_round_trips_fields(app):

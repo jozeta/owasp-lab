@@ -3,6 +3,13 @@ from app.core.seed import seed_database
 
 def test_session_fixation_demo_page_renders(app, client):
     seed_database(app)
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a07/session-fixation-demo")
     assert response.status_code == 200
     assert b"sid=attacker-planted-9f8e7d" in response.data

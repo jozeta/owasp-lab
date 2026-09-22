@@ -15,7 +15,14 @@ def test_account_preview_wires_up_the_same_vulnerable_html_call(client):
     assert "jquery-vulnerable/jquery-3" not in body
 
 
-def test_account_preview_shows_the_python_collector_command(client):
+def test_account_preview_shows_the_python_collector_command(app, client):
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a06/account-preview")
     body = response.data.decode()
     assert "python3 -m http.server 9000" in body

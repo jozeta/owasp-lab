@@ -8,13 +8,13 @@ class Settings(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     show_explanations = db.Column(db.Boolean, nullable=False, default=True)
-    show_exploit_instructions = db.Column(db.Boolean, nullable=False, default=True)
+    show_exploit_instructions = db.Column(db.Boolean, nullable=False, default=False)
 
     @classmethod
     def get(cls):
         settings = cls.query.first()
         if settings is None:
-            settings = cls(show_explanations=True, show_exploit_instructions=True)
+            settings = cls(show_explanations=True, show_exploit_instructions=False)
             db.session.add(settings)
             db.session.commit()
         return settings

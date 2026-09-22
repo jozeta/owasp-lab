@@ -1,7 +1,14 @@
 from app.categories.a08_integrity_failures.models import RceProof
 
 
-def test_plugin_marketplace_rce_demo_page_renders(client):
+def test_plugin_marketplace_rce_demo_page_renders(app, client):
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a08/plugin-marketplace-rce-demo")
     assert response.status_code == 200
     assert b"malicious-plugin-demo.py" in response.data

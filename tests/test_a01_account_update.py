@@ -41,8 +41,14 @@ def test_account_update_shows_vulnerable_vs_secure_code(client, login):
     assert b"ALLOWED_FIELDS" in response.data
 
 
-def test_account_update_shows_detect_content(client, login):
+def test_account_update_shows_detect_content(app, client, login):
     login("alice")
+    with app.app_context():
+        from app.core.models import Settings
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a01/account/update")
     assert response.status_code == 200
     assert b"private_notes=PROBE" in response.data

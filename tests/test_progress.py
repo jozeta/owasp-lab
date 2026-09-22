@@ -120,21 +120,21 @@ def test_reset_lab_clears_progress(app, client):
         assert ExampleProgress.query.count() == 0
 
 
-def test_stats_page_loads(client):
-    response = client.get("/stats")
+def test_home_page_shows_progress(client):
+    response = client.get("/")
     assert response.status_code == 200
-    assert b"Your Progress" in response.data
+    assert b"Overall" in response.data
 
 
-def test_stats_page_shows_zero_percent_when_nothing_completed(app, client):
+def test_home_page_shows_zero_percent_when_nothing_completed(app, client):
     seed_database(app)
     examples = [e for category in CATEGORIES for e in category.examples]
-    response = client.get("/stats")
+    response = client.get("/")
     body = response.data.decode()
     assert f"0 of {len(examples)} completed — 0%" in body
 
 
-def test_stats_page_shows_correct_overall_count(app, client):
+def test_home_page_shows_correct_overall_count(app, client):
     seed_database(app)
     examples = [e for category in CATEGORIES for e in category.examples]
     assert len(examples) >= 2
@@ -142,26 +142,29 @@ def test_stats_page_shows_correct_overall_count(app, client):
     client.post("/progress/toggle", data={"example_id": examples[0].id})
     client.post("/progress/toggle", data={"example_id": examples[1].id})
 
-    response = client.get("/stats")
+    response = client.get("/")
     body = response.data.decode()
     expected_percent = round(2 / len(examples) * 100)
     assert f"2 of {len(examples)} completed — {expected_percent}%" in body
 
 
-def test_stats_page_shows_correct_per_category_count(app, client):
+def test_home_page_shows_correct_per_category_count(app, client):
     seed_database(app)
     a03 = next(c for c in CATEGORIES if c.id == "a03_injection")
     example = a03.examples[0]
 
     client.post("/progress/toggle", data={"example_id": example.id})
 
-    response = client.get("/stats")
+    response = client.get("/")
     body = response.data.decode()
     assert f"1 of {len(a03.examples)} completed" in body
     assert "A03: Injection" in body
 
 
-def test_stats_link_appears_in_dropdown_menu(client):
+def test_stats_page_and_dropdown_link_are_removed(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert 'class="dropdown-item" href="/stats"' in response.data.decode()
+    assert "/stats" not in response.data.decode()
+
+    response = client.get("/stats")
+    assert response.status_code == 404

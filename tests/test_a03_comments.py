@@ -55,7 +55,14 @@ def test_comments_shows_vulnerable_vs_secure_code(client):
     assert b"comment.body|safe" in response.data
 
 
-def test_comments_shows_detect_content(client):
+def test_comments_shows_detect_content(app, client):
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a03/comments")
     assert response.status_code == 200
     assert b"the comment body is being interpreted as" in response.data

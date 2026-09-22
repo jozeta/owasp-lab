@@ -38,8 +38,14 @@ def test_admin_users_shows_vulnerable_vs_secure_code(client, login):
     assert b'viewer.role != "admin"' in response.data
 
 
-def test_admin_users_shows_detect_content(client, login):
+def test_admin_users_shows_detect_content(app, client, login):
     login("alice")
+    with app.app_context():
+        from app.core.models import Settings
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a01/admin/users")
     assert response.status_code == 200
     assert b"you haven't changed anyone's role yet" in response.data

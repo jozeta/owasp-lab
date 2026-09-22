@@ -47,7 +47,14 @@ def test_credential_dump_shows_vulnerable_vs_secure_code(client):
     assert b"generate_password_hash" in response.data
 
 
-def test_credential_dump_shows_detect_content(client):
+def test_credential_dump_shows_detect_content(app, client):
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a02/credential-dump")
     assert response.status_code == 200
     assert b"signature of raw MD5" in response.data

@@ -76,7 +76,14 @@ def test_checkout_shipping_shows_vulnerable_vs_secure_code(client):
     assert b"not order.paid" in response.data
 
 
-def test_checkout_shipping_shows_detect_content(client):
+def test_checkout_shipping_shows_detect_content(app, client):
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a04/checkout/shipping")
     assert response.status_code == 200
     assert b"that confirms the server never" in response.data

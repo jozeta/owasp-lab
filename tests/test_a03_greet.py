@@ -41,7 +41,14 @@ def test_greet_shows_vulnerable_vs_secure_code(client):
     assert b"autoescaping" in response.data
 
 
-def test_greet_shows_detect_content(client):
+def test_greet_shows_detect_content(app, client):
+    with app.app_context():
+        from app.core.models import Settings
+        from app.extensions import db
+
+        settings = Settings.get()
+        settings.show_exploit_instructions = True
+        db.session.commit()
     response = client.get("/a03/greet")
     assert response.status_code == 200
     assert b"before ever running JavaScript" in response.data
