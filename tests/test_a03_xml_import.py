@@ -46,7 +46,7 @@ def test_xml_import_still_works_with_teaching_text_hidden(app, client):
     assert response.status_code == 200
     assert b"Alice" in response.data
     assert b"Vulnerable vs. Secure" in response.data
-    assert b"Detect" not in response.data
+    assert b'<div class="card-header">Detect</div>' not in response.data
 
 
 def test_xml_import_link_appears_in_overview_once_registered(client):

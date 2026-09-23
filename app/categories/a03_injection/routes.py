@@ -473,3 +473,30 @@ def product_lookup():
         result=result,
         error=error,
     )
+
+
+@a03_bp.route("/inventory-lookup", methods=["GET", "POST"])
+def inventory_lookup():
+    sku = ""
+    count = None
+    error = None
+    if request.method == "POST":
+        sku = request.form.get("sku", "")
+        try:
+            # VULNERABLE: raw string-concatenated SQL passed to a driver
+            # that permits multiple, semicolon-separated statements in
+            # one call -- there is no query-count restriction, so an
+            # attacker who can inject one statement can inject an
+            # unlimited chain of them.
+            query = f"SELECT COUNT(*) FROM a03_secrets WHERE id = {sku}"
+            count = db.session.execute(text(query)).scalar()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            error = str(e)
+    return render_template(
+        "a03_injection/inventory_lookup.html",
+        sku=sku,
+        count=count,
+        error=error,
+    )

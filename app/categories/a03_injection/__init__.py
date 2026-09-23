@@ -60,6 +60,13 @@ CATEGORIES.append(
                 endpoint="a03_injection.roster_lookup",
             ),
             ExampleNav(
+                id="sqli-to-rce",
+                title="Advanced SQL Injection: From Detection to Remote Code Execution",
+                group="SQL Injection",
+                difficulty="Hard",
+                endpoint="a03_injection.inventory_lookup",
+            ),
+            ExampleNav(
                 id="reflected-xss",
                 title="Reflected XSS in Greeting Page",
                 group="Cross-Site Scripting (XSS)",

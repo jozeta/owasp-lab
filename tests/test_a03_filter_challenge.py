@@ -135,7 +135,7 @@ def test_filter_challenge_tasks_hidden_when_exploit_instructions_off(app, client
     response = client.get("/a03/filter-challenge")
     assert response.status_code == 200
     assert b"Vulnerable vs. Secure" in response.data
-    assert b"Detect" not in response.data
+    assert b'<div class="card-header">Detect</div>' not in response.data
     assert b"Tasks" not in response.data
 
 
