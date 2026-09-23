@@ -11,7 +11,7 @@ def test_a04_registered_in_nav(app):
 
     a04 = next(c for c in CATEGORIES if c.id == "a04_insecure_design")
     assert a04.short_id == "A04"
-    assert [e.difficulty for e in a04.examples] == ["Easy", "Medium", "Hard"]
+    assert [e.difficulty for e in a04.examples] == ["Easy", "Medium", "Hard", "Hard"]
 
 
 def test_a04_examples_grouped_by_vulnerability_subtype(app):
@@ -22,9 +22,11 @@ def test_a04_examples_grouped_by_vulnerability_subtype(app):
     assert [name for name, _ in grouped] == [
         "Business Logic Abuse",
         "Workflow Bypass",
+        "Password Reset Design Flaws",
     ]
     assert [e.id for e in grouped[0][1]] == ["unlimited-coupon", "negative-quantity"]
     assert [e.id for e in grouped[1][1]] == ["checkout-bypass"]
+    assert [e.id for e in grouped[2][1]] == ["host-header-reset-poisoning"]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
@@ -36,3 +38,4 @@ def test_a04_overview_shows_vulnerability_subtype_group_headings(client):
     body = response.data.decode()
     assert "Business Logic Abuse" in body
     assert "Workflow Bypass" in body
+    assert "Password Reset Design Flaws" in body

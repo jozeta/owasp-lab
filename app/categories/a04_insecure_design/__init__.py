@@ -53,6 +53,19 @@ CATEGORIES.append(
                     "This is a workflow-bypass / business-logic flaw: enforcing a UI sequence (multi-page checkout) is not the same as enforcing it server-side. The fix is for the confirm step to verify session state set by the earlier steps rather than trusting that the user simply followed the intended page order.",
                 ],
             ),
+            ExampleNav(
+                id="host-header-reset-poisoning",
+                title="Password Reset Poisoning via Host Header",
+                group="Password Reset Design Flaws",
+                difficulty="Hard",
+                endpoint="a04_insecure_design.forgot_password",
+                hints=[
+                    "This 'forgot password' form generates a reset link for you (since this lab doesn't send real email). Look closely at the domain in the generated link — where does the server get it from?",
+                    "The reset link's domain comes directly from the request's Host header (or X-Forwarded-Host if present) rather than a fixed, server-configured value.",
+                    "Send the request with a forged Host header — e.g. curl -X POST http://127.0.0.1:5000/a04/forgot-password -H 'Host: attacker.evil.test' -d 'email=victim@owasp-lab.local' — the generated reset link now points to attacker.evil.test instead of the real site.",
+                    "In a real deployment behind a reverse proxy, X-Forwarded-Host is often trusted the same way and is even easier to forge — try -H 'X-Forwarded-Host: attacker.evil.test' too. If a victim's real password-reset email had been built this way and they clicked the poisoned link, their reset token would be sent straight to the attacker's server instead of the real one.",
+                ],
+            ),
         ],
     )
 )

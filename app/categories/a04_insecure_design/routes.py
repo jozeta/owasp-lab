@@ -1,3 +1,5 @@
+import secrets
+
 from flask import redirect, render_template, request, session, url_for
 
 from app.categories.a04_insecure_design import a04_bp
@@ -120,4 +122,24 @@ def checkout_confirm():
         "a04_insecure_design/checkout_confirm.html",
         order=order,
         total_display=_format_cents(order.total_cents),
+    )
+
+
+@a04_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    reset_link = None
+    email = None
+    if request.method == "POST":
+        email = request.form.get("email", "")
+        # VULNERABLE: builds the password-reset link using the Host the
+        # client claims to be talking to -- preferring X-Forwarded-Host
+        # when present, exactly as a real app behind a reverse proxy
+        # often does -- instead of a fixed, server-configured domain. An
+        # attacker who controls either header controls where the "reset"
+        # link points.
+        host = request.headers.get("X-Forwarded-Host") or request.host
+        token = secrets.token_hex(8)
+        reset_link = f"http://{host}/a04/reset-password-confirm?token={token}&email={email}"
+    return render_template(
+        "a04_insecure_design/forgot_password.html", reset_link=reset_link, email=email
     )
