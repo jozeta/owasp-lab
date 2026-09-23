@@ -448,3 +448,28 @@ def generate_report():
         submitted=submitted,
         secret_path=CMD_SECRET_PATH,
     )
+
+
+@a03_bp.route("/product-lookup", methods=["GET", "POST"])
+def product_lookup():
+    product_id = ""
+    result = None
+    error = None
+    if request.method == "POST":
+        product_id = request.form.get("product_id", "")
+        try:
+            # VULNERABLE: raw string-concatenated SQL, no parameterization
+            # -- and the raw database exception is shown directly to the
+            # user as "helpful" debugging output, turning a syntax or
+            # type-mismatch error into a data-exfiltration channel.
+            query = f"SELECT * FROM a03_secrets WHERE id = {product_id}"
+            result = db.session.execute(text(query)).mappings().first()
+        except Exception as e:
+            db.session.rollback()
+            error = str(e)
+    return render_template(
+        "a03_injection/product_lookup.html",
+        product_id=product_id,
+        result=result,
+        error=error,
+    )

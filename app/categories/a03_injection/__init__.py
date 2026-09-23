@@ -39,6 +39,13 @@ CATEGORIES.append(
                 endpoint="a03_injection.roster",
             ),
             ExampleNav(
+                id="error-based-sqli",
+                title="Error-Based SQL Injection via Product Lookup",
+                group="SQL Injection",
+                difficulty="Medium",
+                endpoint="a03_injection.product_lookup",
+            ),
+            ExampleNav(
                 id="blind-sqli",
                 title="Blind Time-Based SQL Injection",
                 group="SQL Injection",

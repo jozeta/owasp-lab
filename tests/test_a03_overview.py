@@ -25,6 +25,7 @@ def test_a03_registered_in_nav(app):
         "Easy",
         "Medium",
         "Medium",
+        "Medium",
         "Hard",
         "Hard",
         "Medium",
@@ -59,6 +60,7 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "sqli-login",
         "union-exfiltration",
         "roster-sort",
+        "error-based-sqli",
         "blind-sqli",
         "roster-lookup",
     ]
