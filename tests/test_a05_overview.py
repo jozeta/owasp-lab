@@ -18,6 +18,7 @@ def test_a05_registered_in_nav(app):
         "Medium",
         "Hard",
         "Hard",
+        "Easy",
     ]
 
 
@@ -30,10 +31,12 @@ def test_a05_examples_grouped_by_vulnerability_subtype(app):
         "Exposed Files & Directories",
         "Insecure Response Configuration",
         "Exposed Debug & Admin Interfaces",
+        "Missing Security Headers",
     ]
     assert [e.id for e in grouped[0][1]] == ["exposed-backup", "directory-listing"]
     assert [e.id for e in grouped[1][1]] == ["verbose-errors", "cors-credentials"]
     assert [e.id for e in grouped[2][1]] == ["debug-console-rce", "default-admin-creds"]
+    assert [e.id for e in grouped[3][1]] == ["clickjacking-delete-account"]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
@@ -49,3 +52,4 @@ def test_a05_overview_shows_vulnerability_subtype_group_headings(client):
     assert "Exposed Files &amp; Directories" in body
     assert "Insecure Response Configuration" in body
     assert "Exposed Debug &amp; Admin Interfaces" in body
+    assert "Missing Security Headers" in body

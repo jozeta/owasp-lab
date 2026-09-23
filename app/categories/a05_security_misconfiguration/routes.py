@@ -168,3 +168,23 @@ def admin_panel():
     return render_template(
         "a05_security_misconfiguration/admin_panel.html", records=FAKE_CUSTOMER_RECORDS
     )
+
+
+@a05_bp.route("/delete-account", methods=["GET", "POST"])
+def delete_account():
+    deleted = False
+    if request.method == "POST":
+        # VULNERABLE: performs a real, irreversible action immediately
+        # from a plain POST with no confirmation step -- and, just as
+        # importantly, this response (like every other page in this app)
+        # sets no X-Frame-Options header and no Content-Security-Policy
+        # frame-ancestors directive, so it can be embedded in an
+        # invisible iframe on any attacker-controlled page and clicked
+        # through without the victim ever realizing it.
+        deleted = True
+    return render_template("a05_security_misconfiguration/delete_account.html", deleted=deleted)
+
+
+@a05_bp.route("/delete-account-clickjack-demo")
+def delete_account_clickjack_demo():
+    return render_template("a05_security_misconfiguration/delete_account_clickjack_demo.html")

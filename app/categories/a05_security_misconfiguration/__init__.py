@@ -90,6 +90,19 @@ CATEGORIES.append(
                     "Log in at /a05/admin-login with username admin and password DataVault@2019 — these factory-default credentials were never changed after this internal tool went live, and they grant full access to the admin panel's customer records (names, emails, and password hints) at /a05/admin-panel.",
                 ],
             ),
+            ExampleNav(
+                id="clickjacking-delete-account",
+                title="Clickjacking on a Sensitive Action Page",
+                group="Missing Security Headers",
+                difficulty="Easy",
+                endpoint="a05_security_misconfiguration.delete_account",
+                hints=[
+                    "This 'delete my account' page performs a real, irreversible action from a plain POST. Check its response headers — is there anything that would stop this page from being loaded inside another site's <iframe>?",
+                    "There's no X-Frame-Options header and no Content-Security-Policy frame-ancestors directive anywhere in this app — any page on the internet can embed this exact page inside an invisible iframe.",
+                    "Visit /a05/delete-account-clickjack-demo — it shows a fake 'Claim your prize' button with the real delete-account page loaded invisibly underneath it, precisely aligned. Clicking the decoy button actually clicks the real Delete Account button hidden beneath it.",
+                    "This is a real technique: an attacker hosts a page styled however they like, embeds the victim's already-logged-in sensitive-action page in a transparent iframe positioned exactly under a decoy element, and tricks the victim into clicking through — the browser sends the victim's real session cookie, so the resulting action is completely genuine from the server's point of view.",
+                ],
+            ),
         ],
     )
 )

@@ -1,0 +1,29 @@
+{% extends "core/base.html" %}
+{% block title %}Claim Your Prize! — Clickjacking Demo{% endblock %}
+
+{% block content %}
+<h1>Clickjacking Demo</h1>
+<p class="text-muted">
+  This page simulates an attacker-controlled site. The box below layers a
+  transparent iframe of the real <code>/a05/delete-account</code> page
+  directly over a decoy "Claim your prize" button, aligned so that
+  clicking the decoy actually clicks the real "Delete my account" button
+  hidden underneath.
+</p>
+<div style="position: relative; width: 260px; height: 80px;">
+  <button
+    style="position: absolute; top: 0; left: 0; width: 260px; height: 80px; font-size: 1.2rem;"
+    class="btn btn-success"
+  >
+    🎉 Claim Your Prize!
+  </button>
+  <iframe
+    src="{{ url_for('a05_security_misconfiguration.delete_account') }}"
+    style="position: absolute; top: 0; left: 0; width: 260px; height: 80px; opacity: 0.15; border: 2px dashed red;"
+  ></iframe>
+</div>
+<p class="text-muted mt-3">
+  (The iframe is shown at 15% opacity here so you can see the overlay
+  technique — a real attacker would set it to fully transparent.)
+</p>
+{% endblock %}

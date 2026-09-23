@@ -1,0 +1,80 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Clickjacking on a Sensitive Action Page" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  This "delete my account" page performs a real, irreversible action from
+  a single click, with no confirmation dialog and no re-authentication.
+  On its own that's already risky UX — but the more fundamental
+  misconfiguration is that this response, like every other page in this
+  app, sets no <code>X-Frame-Options</code> header and no
+  <code>Content-Security-Policy: frame-ancestors</code> directive. That
+  means this exact page can be loaded inside an <code>&lt;iframe&gt;</code>
+  on any other website in the world.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Check this page's response headers for <code>X-Frame-Options</code> or
+  a <code>Content-Security-Policy</code> containing
+  <code>frame-ancestors</code> — neither is present anywhere in this app.
+  A sensitive, one-click, irreversible action page with no framing
+  protection at all is exactly what clickjacking targets.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Visit <a href="{{ url_for('a05_security_misconfiguration.delete_account_clickjack_demo') }}">the
+  clickjacking demo page</a> — it shows a fake "Claim your prize" button
+  with this real delete-account page loaded invisibly underneath it,
+  precisely positioned so the decoy button sits directly on top of the
+  real "Delete my account" button. Clicking the decoy actually clicks the
+  real button hidden beneath it.
+</p>
+<p>
+  This is a real, well-documented technique: an attacker hosts a page
+  styled however they like, embeds the victim's already-logged-in
+  sensitive-action page in a transparent (<code>opacity: 0</code>)
+  iframe positioned exactly under a decoy element, and tricks the victim
+  into clicking through. Because it's a real click inside a real,
+  logged-in iframe, the browser attaches the victim's genuine session
+  cookie — the resulting action is completely authentic from the
+  server's point of view, indistinguishable from the victim clicking the
+  real button on purpose.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/delete-account", methods=["POST"])
+def delete_account():
+    # no X-Frame-Options / CSP frame-ancestors set anywhere in the app
+    perform_account_deletion(current_user)
+    return render_template("delete_account.html", deleted=True)
+{% endblock %}
+
+{% block secure_code %}@app.after_request
+def set_security_headers(response):
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+    return response
+
+@app.route("/delete-account", methods=["POST"])
+def delete_account():
+    if not verify_password(current_user, request.form["current_password"]):
+        abort(403)
+    perform_account_deletion(current_user)
+    return render_template("delete_account.html", deleted=True)
+{% endblock %}
+
+{% block live_example %}
+{% if deleted %}
+<div class="alert alert-danger">Account deleted.</div>
+{% else %}
+<form method="post">
+  <button type="submit" class="btn btn-danger">Delete my account</button>
+</form>
+{% endif %}
+{% endblock %}
