@@ -18,7 +18,8 @@ Currently implemented: **A01 Broken Access Control** (IDOR, missing function-lev
 authorization, mass assignment / role escalation), **A02 Cryptographic Failures**
 (leaked credential dump, weak ECB encryption, predictable password-reset token),
 **A03 Injection** (SQL injection auth bypass, UNION-based exfiltration, reflected XSS,
-blind time-based SQLi, OS command injection, stored XSS, XXE file disclosure, XXE SSRF),
+blind time-based SQLi, error-based SQLi, OS command injection, SQL injection escalating
+to remote code execution, stored XSS, XXE file disclosure, XXE SSRF),
 **A04 Insecure Design** (unlimited coupon reuse, negative-quantity price manipulation,
 multi-step checkout bypass), **A05 Security Misconfiguration** (exposed database backup,
 directory listing, verbose error disclosure, permissive CORS with credentials, exposed
@@ -92,7 +93,7 @@ provided) or by clearing your browser's cookies for this site.
 | --- | --- | --- |
 | A01 Broken Access Control | Implemented | IDOR (Easy), Hidden Admin Panel (Medium), Mass Assignment Role Escalation (Hard) |
 | A02 Cryptographic Failures | Implemented | Leaked Credential Dump (Easy), Weak Encryption / ECB Mode (Medium), Predictable Password Reset Token (Hard) |
-| A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard) |
+| A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Error-Based SQLi (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), SQLi to RCE (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard) |
 | A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Negative Quantity Price Manipulation (Medium), Multi-Step Checkout Bypass (Hard) |
 | A05 Security Misconfiguration | Implemented | Exposed Database Backup File (Easy), Directory Listing Exposed (Easy), Verbose Error Message Disclosure (Medium), Permissive CORS with Credentials (Medium), Exposed Debug Console (Hard), Forgotten Admin Panel with Default Credentials (Hard) |
 | A06 Vulnerable and Outdated Components | Implemented | Component Version Disclosure (Easy), Outdated Vulnerable JS Library Detection (Easy), jQuery DOM XSS via Vulnerable htmlPrefilter (Medium), Lodash Prototype Pollution via _.defaultsDeep() (Medium), jQuery DOM XSS Chained to Session Token Theft (Hard), Prototype Pollution Bypasses a Client-Side Access Check (Hard) |
