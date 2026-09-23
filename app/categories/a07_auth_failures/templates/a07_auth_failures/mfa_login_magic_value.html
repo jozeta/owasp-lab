@@ -1,0 +1,77 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "MFA Bypass via Magic/Null Value" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This login has a real second factor with a real, per-login generated
+  code — hidden from you, same as this category's brute-force example.
+  The flaw is a leftover developer/testing shortcut: the verify endpoint
+  accepts a small set of hardcoded "magic" values as ALWAYS valid,
+  regardless of what the real code actually is. Backdoors like this are
+  meant to be removed before shipping and, in this lab, weren't.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Before trying to guess or intercept the real code, try a handful of
+  suspiciously common "test" values first — <code>000000</code>,
+  <code>111111</code>, the literal string <code>null</code> — many
+  internal test/QA bypasses use exactly these.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in with a valid account below (<code>dana</code> / <code>welcome1</code>).</li>
+  <li>On the code-entry page — without ever learning the real code —
+      submit <code>000000</code>.</li>
+</ol>
+<p>
+  It's accepted. The verify endpoint checks the submitted code against
+  the real per-login code OR a small hardcoded set of magic values —
+  <code>000000</code> and the literal string <code>null</code> both
+  work — completely independent of what the real code is.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}MFA_MAGIC_VALUES = {"000000", "null"}  # leftover dev/QA backdoor
+
+@app.route("/mfa-verify-magic-value", methods=["POST"])
+def mfa_verify_magic_value():
+    code = request.form["code"]
+    # VULNERABLE: accepts the backdoor values regardless of the real code
+    if code == session_row.pending_mfa_code or code in MFA_MAGIC_VALUES:
+        session_row.mfa_verified = True
+        db.session.commit()
+        return redirect(url_for("mfa_dashboard"))
+{% endblock %}
+
+{% block secure_code %}@app.route("/mfa-verify-magic-value", methods=["POST"])
+def mfa_verify_magic_value():
+    code = request.form["code"]
+    # No backdoor values -- only the real, per-login code is ever valid
+    if code == session_row.pending_mfa_code:
+        session_row.mfa_verified = True
+        db.session.commit()
+        return redirect(url_for("mfa_dashboard"))
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username" value="dana">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

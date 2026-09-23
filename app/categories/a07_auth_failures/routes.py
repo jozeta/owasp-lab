@@ -448,3 +448,60 @@ def mfa_verify_unbound():
         demo_code=demo_code,
         prefill_username=session_row.username or "",
     )
+
+
+MFA_MAGIC_VALUES = {"000000", "null"}
+
+
+@a07_bp.route("/mfa-login-magic-value", methods=["GET", "POST"])
+def mfa_login_magic_value():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        account_row = A07Account.query.filter_by(username=username).first()
+        if account_row and check_password_hash(account_row.password_hash, password):
+            session_row.username = account_row.username
+            session_row.mfa_verified = False
+            session_row.pending_mfa_code = f"{secrets.randbelow(1000000):06d}"
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_verify_magic_value", session_row)
+        error = "Invalid username or password."
+    return _render("a07_auth_failures/mfa_login_magic_value.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-verify-magic-value", methods=["GET", "POST"])
+def mfa_verify_magic_value():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        code = request.form.get("code", "")
+        # VULNERABLE: a leftover developer/testing backdoor -- either the
+        # real per-login code OR one of a small set of hardcoded magic
+        # values is accepted, regardless of what the real code actually
+        # is.
+        if code and (code == session_row.pending_mfa_code or code in MFA_MAGIC_VALUES):
+            session_row.mfa_verified = True
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_dashboard", session_row)
+        error = "Incorrect code."
+    return _render("a07_auth_failures/mfa_verify_magic_value.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-settings")
+def mfa_settings():
+    session_row = get_or_create_session()
+    return _render("a07_auth_failures/mfa_settings.html", session_row)
+
+
+@a07_bp.route("/mfa/disable", methods=["POST"])
+def mfa_disable():
+    session_row = get_or_create_session()
+    # VULNERABLE: no CSRF token, no re-authentication or password/code
+    # confirmation -- any POST carrying the victim's existing session
+    # cookie succeeds, including one triggered by an auto-submitting form
+    # hosted on a completely different, attacker-controlled site.
+    session_row.mfa_verified = False
+    db.session.commit()
+    return _redirect("a07_auth_failures.mfa_settings", session_row)

@@ -1,0 +1,81 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "CSRF on Disabling 2FA" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This settings page shows whether two-factor authentication is currently
+  enabled for your session and offers a "Disable 2FA" button once it is.
+  The form that button submits has no CSRF token, and the endpoint it
+  posts to requires no re-authentication (no password, no verification
+  code) before acting — the only thing that "protects" it is a valid
+  session cookie, which a forged cross-site request carries automatically
+  too.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Complete this app's real MFA login flow first, then view this settings
+  page's HTML source and look for a hidden <code>csrf_token</code> field
+  on the disable form — there isn't one.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Complete the real MFA flow at
+      <a href="{{ url_for('a07_auth_failures.mfa_login') }}">/a07/mfa-login</a>
+      with <code>dana</code> / <code>welcome1</code>, then enter the code
+      shown on the following page.</li>
+  <li>Return to this page — it now shows "2FA is currently enabled."</li>
+  <li>Instead of clicking the real button, imagine this HTML hosted on a
+      completely different, attacker-controlled site:</li>
+</ol>
+<pre><code class="language-html">&lt;form action="http://127.0.0.1:5001/a07/mfa/disable" method="POST" id="f"&gt;&lt;/form&gt;
+&lt;script&gt;document.getElementById('f').submit();&lt;/script&gt;</code></pre>
+<p>
+  A logged-in, MFA-verified victim who merely visits that attacker page
+  has their session cookie sent along automatically — the request looks
+  completely legitimate to the server, and their account's 2FA is
+  silently disabled with zero confirmation, exactly matching this
+  category's own PayloadsAllTheThings source material: "No CSRF
+  Protection on disabling 2FA, also there is no auth confirmation."
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/mfa/disable", methods=["POST"])
+def mfa_disable():
+    session_row = get_or_create_session()
+    # VULNERABLE: no CSRF token, no password/code re-confirmation
+    session_row.mfa_verified = False
+    db.session.commit()
+{% endblock %}
+
+{% block secure_code %}@app.route("/mfa/disable", methods=["POST"])
+def mfa_disable():
+    session_row = get_or_create_session()
+    validate_csrf_token(request.form.get("csrf_token"))  # rejects if missing/wrong
+    if not verify_mfa_code(session_row, request.form.get("confirm_code", "")):
+        abort(403)
+    session_row.mfa_verified = False
+    db.session.commit()
+{% endblock %}
+
+{% block live_example %}
+{% if session_row.username and session_row.mfa_verified %}
+<p>2FA is <strong>currently enabled</strong> for this session ({{ session_row.username }}).</p>
+<form method="post" action="{{ url_for('a07_auth_failures.mfa_disable') }}">
+  <button type="submit" class="btn btn-danger">Disable 2FA</button>
+</form>
+{% elif session_row.username %}
+<p>2FA is <strong>currently disabled</strong> for this session ({{ session_row.username }}).</p>
+{% else %}
+<p>
+  You need to complete the real MFA login flow first — log in at
+  <a href="{{ url_for('a07_auth_failures.mfa_login') }}">/a07/mfa-login</a>
+  with <code>dana</code> / <code>welcome1</code>.
+</p>
+{% endif %}
+{% endblock %}
