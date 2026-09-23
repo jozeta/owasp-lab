@@ -5,12 +5,6 @@ from app.config import TestConfig
 from app.extensions import db
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _ensure_app_initialized():
-    """Ensure the app is created to populate CATEGORIES before test modules are imported."""
-    create_app(TestConfig)
-
-
 @pytest.fixture
 def app():
     flask_app = create_app(TestConfig)
