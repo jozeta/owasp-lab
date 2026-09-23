@@ -93,6 +93,13 @@ state — like a demo cart or coupon count stored only in your session — isn't
 that database and is cleared by that example's own "Start over" control (where
 provided) or by clearing your browser's cookies for this site.
 
+If you're running under Docker and your Postgres data volume was created before a
+schema change landed (for example, an older checkout without the A07 MFA examples'
+`pending_mfa_code` column), clicking "Reset lab" in the UI reseeds rows but won't add
+new columns to already-existing tables. In that case, run
+`docker compose down -v && docker compose up -d` once to drop the old volume and let
+the app recreate the schema from scratch, then use "Reset lab" as normal afterward.
+
 ## More pages
 
 - **Home** (`/`) — your progress across every example, overall and per category,

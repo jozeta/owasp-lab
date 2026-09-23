@@ -32,7 +32,10 @@ def test_unicode_lookalike_username_collides_with_real_account(app, client):
     # The lookalike NFKC-normalizes to "demo" and collides with the victim's account.
     response = client.post("/a07/account-lookup", data={"username": lookalike_username}, follow_redirects=True)
     assert response.status_code == 200
-    assert b"demo" in response.data
+    # Check the actual rendered success line (not just a bare substring --
+    # the lookup form's own placeholder text could satisfy a weaker check
+    # vacuously, regardless of whether a match was actually found).
+    assert b"Matched and logged in as: <strong>demo</strong>" in response.data
 
     # The attacker's session is now authenticated AS the victim's real account.
     account_response = client.get("/a07/account")

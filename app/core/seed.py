@@ -72,3 +72,10 @@ def reset_database(app):
         db.drop_all()
         db.create_all()
     seed_database(app)
+    # The A07 "MFA Code Not Bound to Session" example keeps pending codes in
+    # a module-level dict, not in the database, so a DB reset alone would
+    # otherwise leave old codes valid indefinitely. Import locally to avoid
+    # a circular import at module load time.
+    from app.categories.a07_auth_failures.routes import PENDING_MFA_CODES_BY_USERNAME
+
+    PENDING_MFA_CODES_BY_USERNAME.clear()

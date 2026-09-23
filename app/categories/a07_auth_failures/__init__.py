@@ -177,9 +177,9 @@ CATEGORIES.append(
                 endpoint="a07_auth_failures.register",
                 hints=[
                     "This registration form stores your username exactly as you typed it. What happens if you add invisible whitespace to a username that already belongs to someone else?",
-                    "Register an account with a username that already exists PLUS a trailing space (e.g. admin with a space appended) — since it's technically a different string, registration succeeds as a brand-new, separate account.",
+                    "Register an account with a username that already exists PLUS a trailing space (e.g. dana with a space appended) — since it's technically a different string, registration succeeds as a brand-new, separate account.",
                     "The password-reset flow that follows registration strips whitespace before looking up which account to update. If a REAL account already exists whose username exactly equals your padded username after stripping, the reset targets that real account instead of the one you just registered.",
-                    "Exact reproduction: register username 'admin ' (with a trailing space) at /a07/register with any password, then submit a new password at the forgot-password page you're redirected to — the real admin account's password changes, not the 'admin ' account you registered. This mirrors a real CVE (CTFd, CVE-2020-7245).",
+                    "Exact reproduction: register username 'dana ' (with a trailing space) at /a07/register with any password, then submit a new password at the forgot-password page you're redirected to — the real, seeded dana account's password changes, not the 'dana ' account you registered. This mirrors a real CVE (CTFd, CVE-2020-7245).",
                 ],
             ),
             ExampleNav(
@@ -190,9 +190,9 @@ CATEGORIES.append(
                 endpoint="a07_auth_failures.account_lookup",
                 hints=[
                     "This 'find my account' feature normalizes usernames before comparing them, to be forgiving about accents and capitalization. Some Unicode characters LOOK like ordinary letters but aren't — what happens if normalization turns two visually-similar-but-different usernames into the exact same string?",
-                    "First register an account at /a07/register using an unusual Unicode character in place of an ordinary letter (e.g. U+24DE, CIRCLED LATIN SMALL LETTER O, in place of a real 'o') — it looks almost identical but is a completely different character.",
-                    "Unicode NFKC normalization strips the circle decoration from a character like U+24DE, turning it into a plain 'o'. Submit the REAL account's plain-ASCII username into this lookup form — the normalized comparison treats your lookalike-username account and the real account as the same identity.",
-                    "Exact reproduction: register username 'dem' + chr(0x24DE) (renders as 'demⓞ') at /a07/register, then submit 'demo' into this page's lookup form — you're logged in as the real demo account, no password required at all.",
+                    "First register an account at /a07/register using an unusual Unicode character in place of an ordinary letter (e.g. U+24D0, CIRCLED LATIN SMALL LETTER A, in place of a real 'a') — it looks almost identical but is a completely different character.",
+                    "Unicode NFKC normalization strips the circle decoration from a character like U+24D0, turning it into a plain 'a'. Submit that SAME lookalike username (not the plain-ASCII version) into this lookup form — since the lookup normalizes every stored username before comparing, your freshly-registered lookalike account and the already-seeded, real 'dana' account both normalize to the identical string, and the app logs you in as whichever one it finds first.",
+                    "Exact reproduction: register username 'd' + chr(0x24D0) + 'na' (renders as 'dⓐna') at /a07/register, then submit that SAME 'dⓐna' string into this page's lookup form — you're logged in as the real, seeded dana account, no password required at all.",
                 ],
             ),
             ExampleNav(

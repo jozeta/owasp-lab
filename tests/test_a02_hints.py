@@ -1,7 +1,7 @@
 from app.core.nav import CATEGORIES
 
 
-def test_a02_examples_have_well_formed_hint_sequences(app):
+def test_a02_examples_have_well_formed_hint_sequences():
     a02 = next(c for c in CATEGORIES if c.id == "a02_crypto_failures")
     assert len(a02.examples) == 5
     for example in a02.examples:

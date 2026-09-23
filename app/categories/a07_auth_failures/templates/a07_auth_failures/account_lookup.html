@@ -20,9 +20,10 @@
 {% block detect %}
 <p>
   Register an account using a username built from an unusual-looking
-  Unicode character in place of an ordinary letter, then use this lookup
-  form with a target username that's the plain-ASCII version — see
-  whether the lookup treats them as the same account.
+  Unicode character in place of an ordinary letter, then submit that
+  SAME lookalike username into this lookup form — see whether it's
+  treated as matching an already-existing, real account whose username
+  is the plain-ASCII spelling.
 </p>
 {% endblock %}
 
@@ -30,18 +31,19 @@
 <p>
   Register a new account at
   <a href="{{ url_for('a07_auth_failures.register') }}">/a07/register</a> with the username
-  <code>demⓞ</code> (that's "dem" followed by U+24DE, CIRCLED LATIN
-  SMALL LETTER O — it looks like an "o" but isn't one). Any password
-  works.
+  <code>dⓐna</code> (that's "d" followed by U+24D0, CIRCLED LATIN
+  SMALL LETTER A, followed by "na" — it looks like an "a" but isn't
+  one). Any password works.
 </p>
 <p>
-  Then submit <code>demo</code> (the real, existing account's plain
-  ASCII username) into the lookup form below. Unicode NFKC normalization
-  strips the circle decoration from U+24DE, turning
-  <code>"dem" + "ⓞ"</code> into plain <code>"demo"</code> — so the
+  Then submit that SAME <code>dⓐna</code> string (not the plain-ASCII
+  <code>dana</code>) into the lookup form below. Unicode NFKC
+  normalization strips the circle decoration from U+24D0, turning
+  <code>"d" + "ⓐ" + "na"</code> into plain <code>"dana"</code> — so the
   lookup's normalized comparison treats your lookalike registration and
-  the real <code>demo</code> account as the same identity, and logs your
-  session in AS the real <code>demo</code> account.
+  the real, already-seeded <code>dana</code> account as the same
+  identity, and (since the real account exists first) logs your session
+  in AS the real <code>dana</code> account.
 </p>
 <p>
   Tools like <a href="https://github.com/tomnomnom/hacks/tree/master/unisub">unisub</a>
@@ -84,7 +86,7 @@ def account_lookup():
 <form method="post">
   <div class="mb-2">
     <label class="form-label">Username to look up</label>
-    <input class="form-control" type="text" name="username" placeholder="demo">
+    <input class="form-control" type="text" name="username" placeholder="dana">
   </div>
   <button type="submit" class="btn btn-primary">Find account</button>
 </form>

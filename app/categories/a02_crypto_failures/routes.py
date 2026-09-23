@@ -1,6 +1,6 @@
 import hashlib
 
-from flask import jsonify, render_template, request, session
+from flask import jsonify, render_template, request
 
 from app.categories.a02_crypto_failures import a02_bp
 from app.categories.a02_crypto_failures.crypto import decrypt_ecb, encrypt_ecb
@@ -134,7 +134,6 @@ def external_referrer_sink():
     # visitor's in-flight reset token via the Referer header their browser
     # sends automatically.
     captured_referer = request.headers.get("Referer", "")
-    session["a02_captured_referer"] = captured_referer
     return render_template(
         "a02_crypto_failures/external_referrer_sink.html", captured_referer=captured_referer
     )

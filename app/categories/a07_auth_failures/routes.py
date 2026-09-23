@@ -215,7 +215,7 @@ def account_lookup():
         # string as the SAME account for recovery purposes -- a Unicode
         # lookalike character that NFKC-normalizes to an ASCII letter
         # collides with a completely different, real ASCII-only account.
-        for account_row in A07Account.query.all():
+        for account_row in A07Account.query.order_by(A07Account.id).all():
             if _normalize_username(account_row.username) == normalized_query:
                 matched_username = account_row.username
                 session_row.username = account_row.username
