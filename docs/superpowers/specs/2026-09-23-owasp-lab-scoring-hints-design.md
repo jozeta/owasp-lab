@@ -54,8 +54,12 @@ Explored fresh before this design (not assumed):
   this — it's a deployment note, not a migration system.
 - **63 examples total, verified by count**: A01:3, A02:3, A03:19, A04:3,
   A05:6, A06:6, A07:6, A08:6, A09:6, A10:5. By difficulty: 19 Easy / 20
-  Medium / 25 Hard. Max possible score if every example is completed with
-  zero hints: `19×10 + 20×20 + 25×30 = 1340`.
+  Medium / 24 Hard. Max possible score if every example is completed with
+  zero hints: `19×10 + 20×20 + 24×30 = 1310`. (This section's arithmetic
+  originally miscounted 25 Hard/1340 — corrected here after the framework
+  implementation task caught and verified the error against the real,
+  live-registered example set; see the implementation plan's Task 1
+  ledger for the verification.)
 
 ## Decisions (confirmed with the user during brainstorming)
 
@@ -263,7 +267,7 @@ lightweight zero-value stand-in (`hints_used=0`, `points_awarded=None`,
 **Nav bar (`base.html`)**: when `scoring_enabled`, a small persistent
 badge showing the running total score (sum of `points_awarded` across all
 completed examples) out of the current max possible (sum of `base_points`
-across all 63 examples) — e.g. "Score: 187 / 1340".
+across all 63 examples) — e.g. "Score: 187 / 1310".
 
 **Home page (`home.html` / `views.py home()`)**: when `scoring_enabled`,
 each category card and the overall summary additionally show that
