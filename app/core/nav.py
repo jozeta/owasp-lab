@@ -8,6 +8,7 @@ class ExampleNav:
     group: str
     difficulty: str
     endpoint: str
+    hints: list = field(default_factory=list)
 
     def difficulty_badge_class(self) -> str:
         return {
@@ -15,6 +16,9 @@ class ExampleNav:
             "Medium": "text-bg-warning",
             "Hard": "text-bg-danger",
         }[self.difficulty]
+
+    def base_points(self) -> int:
+        return {"Easy": 10, "Medium": 20, "Hard": 30}[self.difficulty]
 
 
 @dataclass
