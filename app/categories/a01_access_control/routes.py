@@ -1,4 +1,5 @@
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, jsonify, redirect, render_template, request, url_for
+from werkzeug.security import generate_password_hash
 
 from app.categories.a01_access_control import a01_bp
 from app.core.auth import get_current_user
@@ -48,3 +49,38 @@ def account_update():
         flash("Account updated.")
         return redirect(url_for("a01_access_control.account_update"))
     return render_template("a01_access_control/account_update.html", viewer=viewer)
+
+
+@a01_bp.route("/change-email", methods=["GET", "POST"])
+def change_email():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    changed = False
+    if request.method == "POST":
+        # VULNERABLE: no CSRF token, no confirmation of the current
+        # email/password -- any POST that arrives carrying the victim's
+        # session cookie succeeds, including one triggered by an
+        # auto-submitting form on an attacker's own page.
+        viewer.email = request.form.get("new_email", "")
+        db.session.commit()
+        changed = True
+    return render_template("a01_access_control/change_email.html", viewer=viewer, changed=changed)
+
+
+@a01_bp.route("/api/password-change", methods=["GET", "POST"])
+def password_change_api():
+    if request.method == "GET":
+        return render_template("a01_access_control/password_change_api.html")
+    data = request.get_json(silent=True) or {}
+    email = data.get("email", "")
+    new_password = data.get("new_password", "")
+    # VULNERABLE: trusts the client-supplied "email" field to pick which
+    # account to update -- no session, no ownership check, no
+    # confirmation that the caller is the account holder at all.
+    target = User.query.filter_by(email=email).first()
+    if target is None:
+        return jsonify({"error": "No account with that email."}), 404
+    target.password_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
+    db.session.commit()
+    return jsonify({"status": "password updated"})

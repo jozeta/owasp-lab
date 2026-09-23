@@ -29,6 +29,18 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="password-change-idor",
+                title="IDOR on Password-Change API",
+                group="Insecure Direct Object References (IDOR)",
+                difficulty="Medium",
+                endpoint="a01_access_control.password_change_api",
+                hints=[
+                    "This JSON API is meant to change YOUR password. Look at how it decides whose password to change — does it use your session, or something you supply?",
+                    "The endpoint looks up the target account by an 'email' field in your request body, never checking it against any authenticated session at all.",
+                    "With no login, no cookie, no authentication header whatsoever: curl -X POST http://127.0.0.1:5000/a01/api/password-change -H 'Content-Type: application/json' -d '{\"email\": \"bob@owasp-lab.local\", \"new_password\": \"attacker-chosen-password\"}' — Bob's password is now whatever you set it to, with zero proof you own his account.",
+                ],
+            ),
+            ExampleNav(
                 id="admin-users",
                 title="Hidden Admin Panel",
                 group="Missing Function-Level Access Control",
@@ -51,6 +63,19 @@ CATEGORIES.append(
                     "The handler loops over every key in the submitted form data and sets it directly as an attribute on your user record, skipping only the 'id' field. Nothing limits it to display_name/bio.",
                     "The User model has a 'role' column. Submit the account-update form with an extra field named role set to admin (e.g. by adding a hidden field via your browser's dev tools, or crafting the raw request) — the handler happily sets your own role to admin, since it never restricts which fields it accepts.",
                     "Exact reproduction: POST to /a01/account/update with form data including role=admin alongside the normal fields — e.g. curl -X POST -d \"display_name=Me&bio=hi&role=admin\" http://127.0.0.1:5000/a01/account/update (with your session cookie) works.",
+                ],
+            ),
+            ExampleNav(
+                id="csrf-email-change",
+                title="Account Takeover via CSRF (Email Change)",
+                group="Cross-Site Request Forgery",
+                difficulty="Medium",
+                endpoint="a01_access_control.change_email",
+                hints=[
+                    "This 'change my email' form updates a sensitive field with a plain POST. Check the form's HTML source for anything that would stop a DIFFERENT website from submitting the exact same request on your behalf.",
+                    "There is no CSRF token anywhere in this form, and the server never checks where the request came from — only that a valid session cookie was attached, which browsers do automatically for same-origin AND cross-origin form submissions alike.",
+                    "Build a tiny HTML page hosted anywhere else with an auto-submitting form targeting http://127.0.0.1:5000/a01/change-email with a hidden new_email field set to an address you control, then visit that page while logged in here — your email changes with no further interaction.",
+                    "Why this matters beyond just changing an email: whoever controls the email on file controls every future password-reset flow for that account, making an email-change CSRF just as dangerous as a direct password-change CSRF.",
                 ],
             ),
         ],

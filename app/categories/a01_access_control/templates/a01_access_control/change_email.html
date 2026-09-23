@@ -1,0 +1,90 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Account Takeover via CSRF (Email Change)" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This "change my email" form updates your account's registered email
+  address from a plain POST, with no CSRF token and no confirmation of
+  your current password or current email. Changing the registered email
+  is just as dangerous as changing the password directly — whoever
+  controls the email on file controls every future "forgot password"
+  flow for that account.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  View the page source of the form below (or fetch it with curl) and
+  search for any hidden field named something like <code>token</code>
+  or <code>csrf</code> — there isn't one. A form this sensitive with no
+  anti-CSRF protection at all is the detection signal: any page anywhere on
+  the internet can build an identical form and target it at this exact
+  URL, and the browser will attach your session cookie automatically.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Log in as any user, then — instead of using the real form below —
+  imagine this HTML hosted on a completely different, attacker-controlled
+  site:
+</p>
+<pre><code class="language-html">&lt;form action="http://127.0.0.1:5001/a01/change-email" method="POST" id="f"&gt;
+  &lt;input type="hidden" name="new_email" value="attacker@evil.test"&gt;
+&lt;/form&gt;
+&lt;script&gt;document.getElementById('f').submit();&lt;/script&gt;</code></pre>
+<p>
+  A logged-in victim who merely visits that attacker page has their
+  session cookie sent along automatically by the browser — the request
+  looks completely legitimate to the server, and the victim's account
+  email silently changes to one the attacker controls, with no
+  interaction beyond loading a page.
+</p>
+<p>
+  CSRF was folded into OWASP's Broken Access Control category in the
+  2021 revision, but it remains one of the most common real-world
+  findings whenever a state-changing endpoint is reachable by a plain,
+  unauthenticated-origin-checked POST — this app has zero CSRF protection
+  anywhere, and this is the first example to name that gap directly as
+  the vulnerability rather than relying on it incidentally.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/change-email", methods=["POST"])
+def change_email():
+    viewer = get_current_user()
+    # no protection check, no current-password confirmation
+    viewer.email = request.form.get("new_email", "")
+    db.session.commit()
+{% endblock %}
+
+{% block secure_code %}@app.route("/change-email", methods=["POST"])
+def change_email():
+    viewer = get_current_user()
+    validate_token(request.form.get("token"))  # rejects if missing/wrong
+    if not check_password_hash(viewer.password_hash, request.form.get("current_password", "")):
+        abort(403)
+    viewer.email = request.form.get("new_email", "")
+    db.session.commit()
+{% endblock %}
+
+{% block live_example %}
+{% if viewer %}
+<p>Logged in as <strong>{{ viewer.username }}</strong> — current email: <strong>{{ viewer.email }}</strong></p>
+<h4>Change email address</h4>
+{% if changed %}
+<div class="alert alert-success">Email updated.</div>
+{% endif %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">New email</label>
+    <input type="email" class="form-control" name="new_email" placeholder="new@example.com">
+  </div>
+  <button type="submit" class="btn btn-primary">Update email</button>
+</form>
+{% else %}
+<a href="{{ url_for('core.switch_user', next=request.path) }}">Log in to try this example</a>
+{% endif %}
+{% endblock %}

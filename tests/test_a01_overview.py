@@ -11,7 +11,7 @@ def test_a01_registered_in_nav(app):
 
     a01 = next(c for c in CATEGORIES if c.id == "a01_access_control")
     assert a01.short_id == "A01"
-    assert [e.difficulty for e in a01.examples] == ["Easy", "Medium", "Hard"]
+    assert [e.difficulty for e in a01.examples] == ["Easy", "Medium", "Medium", "Hard", "Medium"]
 
 
 def test_a01_examples_grouped_by_vulnerability_subtype(app):
@@ -23,6 +23,7 @@ def test_a01_examples_grouped_by_vulnerability_subtype(app):
         "Insecure Direct Object References (IDOR)",
         "Missing Function-Level Access Control",
         "Mass Assignment",
+        "Cross-Site Request Forgery",
     ]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
@@ -36,3 +37,4 @@ def test_a01_overview_shows_vulnerability_subtype_group_headings(client):
     assert "Insecure Direct Object References (IDOR)" in body
     assert "Missing Function-Level Access Control" in body
     assert "Mass Assignment" in body
+    assert "Cross-Site Request Forgery" in body
