@@ -116,6 +116,11 @@ CATEGORIES.append(
                 group="Cross-Site Scripting (XSS)",
                 difficulty="Medium",
                 endpoint="a03_injection.greet",
+                hints=[
+                    "This page builds a greeting from a URL query parameter and marks the result 'safe' before rendering it — think about what 'safe' means to a template engine, and what that implies about escaping.",
+                    "Try putting a harmless HTML tag in the name parameter, like <b>test</b> — if it renders as bold instead of literal text, your input is being interpreted as markup, not escaped.",
+                    "Since HTML renders, script tags should too. Submit ?name=<script>alert(document.cookie)</script> as the query string — the script executes immediately when the page loads, no clicking required beyond visiting the crafted URL.",
+                ],
             ),
             ExampleNav(
                 id="stored-xss",
@@ -123,6 +128,11 @@ CATEGORIES.append(
                 group="Cross-Site Scripting (XSS)",
                 difficulty="Hard",
                 endpoint="a03_injection.comments",
+                hints=[
+                    "This comment form stores exactly what you type and shows it back to every future visitor — check whether the stored text goes through the same escaping-bypass trick as the reflected XSS example.",
+                    "Post a comment with a harmless tag like <b>test</b> in the body. If it renders bold on reload instead of literal text, the stored comment is being rendered unescaped for everyone who views the page, not just you.",
+                    "Post a comment with the body <script>alert('stored XSS')</script> — reload the page and the script fires immediately, with no link-clicking or social engineering needed, and it fires again for every future visitor until the lab is reset.",
+                ],
             ),
             ExampleNav(
                 id="filter-challenge",
@@ -130,6 +140,13 @@ CATEGORIES.append(
                 group="Cross-Site Scripting (XSS)",
                 difficulty="Hard",
                 endpoint="a03_injection.filter_challenge",
+                hints=[
+                    "Three separate filters are running here, and each one blocks the 'obvious' script-tag payload in a different way. Look at each filter's actual code — a naive filter's blind spot is usually a case it never considered, not a case it got wrong.",
+                    "Level 1 only checks for the literal substring '<script'. Any other tag can carry executable JavaScript too — think about an <img> tag with a broken image source and an event handler.",
+                    "Level 1 bypass: submit <img src=x onerror=console.log('LEVEL-1-BYPASS')>. Level 2 strips '<script>' and '</script>' as two separate one-time passes and never re-checks its own output afterward — what happens if you nest one script tag inside another so the stripped-out fragments recombine?",
+                    "Level 2 bypass: submit <scr<script>ipt>console.log('LEVEL-2-BYPASS')</scr</script>ipt> — removing the inner tags leaves the outer fragments sitting next to each other, reconstituting a real <script> tag. Level 3 only escapes < and > — but its output is reflected inside an HTML attribute (value=\"...\"), where a bare quote is what actually breaks out, no angle brackets required.",
+                    "Level 3 bypass: submit \" autofocus onfocus=\"console.log('LEVEL-3-BYPASS'). The lone double-quote closes the value=\"...\" attribute early; everything after becomes two new attributes on the same tag, and autofocus makes onfocus fire the instant the page loads.",
+                ],
             ),
             ExampleNav(
                 id="filtered-host-lookup",
@@ -137,6 +154,11 @@ CATEGORIES.append(
                 group="OS Command Injection",
                 difficulty="Medium",
                 endpoint="a03_injection.filtered_host_lookup",
+                hints=[
+                    "This version blocks the obvious shell separators before running the command. Think about what OTHER characters a shell treats as a command separator that a blacklist author might forget.",
+                    "The filter checks for semicolon, ampersand, and pipe. A literal newline character does the exact same job in /bin/sh — terminates one command and starts the next — and isn't on this list at all.",
+                    "The input field is a textarea, so you can type a real newline. Submit localhost on one line and whoami on the next (in the same submission) — the filter lets it through since it never checks for a newline, and whoami's output appears in the response.",
+                ],
             ),
             ExampleNav(
                 id="command-injection",
@@ -144,6 +166,12 @@ CATEGORIES.append(
                 group="OS Command Injection",
                 difficulty="Hard",
                 endpoint="a03_injection.host_lookup",
+                hints=[
+                    "This 'hostname lookup' tool runs a shell command built directly from your input, with no filtering at all this time. What shell metacharacter lets you chain a second, completely different command onto the first?",
+                    "Try appending a semicolon and a second command after a normal-looking hostname — /bin/sh treats everything after the semicolon as a brand-new command.",
+                    "Submit localhost; whoami as the hostname — the output includes the result of whoami appended after the lookup, proving you've executed an arbitrary command on the server. $(id) also works via command substitution.",
+                    "Once you've proven basic command execution works, this example's own Exploitation section goes further — it walks through escalating this exact injection point into a full interactive reverse shell using nc or bash's /dev/tcp, if you want to take it that far.",
+                ],
             ),
             ExampleNav(
                 id="blind-report-injection",
@@ -151,6 +179,13 @@ CATEGORIES.append(
                 group="OS Command Injection",
                 difficulty="Hard",
                 endpoint="a03_injection.generate_report",
+                hints=[
+                    "This 'generate report' feature never shows you any output — success, failure, or anything else all look identical. When a page gives you zero visible signal, what OTHER property of an HTTP response can still leak information?",
+                    "Submit an ordinary report name, then submit one designed to make a shell command pause for several seconds. If the SECOND request visibly takes longer to respond, you've found a timing side-channel with command execution behind it.",
+                    "Confirm it: submit x; sleep 5 # as the report name. A ~5-second-slower response (compared to a normal report name) proves your input reaches a real shell — even though the page text itself never changes.",
+                    "A timing oracle can answer yes/no questions about data you can't see, one bit at a time. To read the first byte of a secret file on the server, build a conditional sleep shaped like: x; [ $(printf %d \\'$(head -c1 /path/to/file)) -gt 128 ] && sleep 3 # — slow means the byte's value is above 128, instant means it isn't. Binary-search that range (halving each guess) and you'll pin down the exact byte in about 8 requests.",
+                    "Doing that one byte at a time for an entire file by hand doesn't scale — this is exactly the kind of blind extraction that tools like commix automate: point it at this endpoint and it recovers a whole file unattended in a couple of minutes, the same technique as the manual binary search, just automated across every byte.",
+                ],
             ),
             ExampleNav(
                 id="xml-import",
@@ -158,6 +193,11 @@ CATEGORIES.append(
                 group="XML External Entity Injection (XXE)",
                 difficulty="Easy",
                 endpoint="a03_injection.xml_import",
+                hints=[
+                    "This 'import a contact' feature parses whatever XML you upload. XML has a mechanism for declaring custom shorthand values ('entities') inside a <!DOCTYPE> block — some of those can point outside the document entirely, at a resource on the server's own filesystem.",
+                    "Try declaring an entity whose value is file:///etc/hostname — a file every Linux system has and that's safe to read. If the imported 'name' shows the container's hostname instead of an error, external entity resolution is enabled and file contents are getting substituted into your document.",
+                    "Submit this XML as the upload: <?xml version=\"1.0\"?><!DOCTYPE contact [<!ENTITY xxe SYSTEM \"file:///etc/hostname\">]><contact><name>&xxe;</name></contact> — the response shows the real file contents, since the parser expands your entity before extracting the <name> element's text.",
+                ],
             ),
             ExampleNav(
                 id="xxe-ssrf",
@@ -165,6 +205,12 @@ CATEGORIES.append(
                 group="XML External Entity Injection (XXE)",
                 difficulty="Hard",
                 endpoint="a03_injection.xxe_ssrf",
+                hints=[
+                    "This 'status feed' importer has the same XML-entity-expansion flaw as the contact importer — but this time, think about what happens if the entity's SYSTEM identifier is a URL instead of a local file path.",
+                    "The server has a health-check endpoint at /healthz that only makes sense to call from inside the server's own network. What if you could make the SERVER issue that request FOR you, through the XML parser?",
+                    "Declare an entity pointing at http://127.0.0.1:5000/healthz and submit that XML as the status feed. If the response includes the exact body /healthz returns, the server itself just made an outbound HTTP request on your behalf: <!DOCTYPE status [<!ENTITY probe SYSTEM \"http://127.0.0.1:5000/healthz\">]><status><message>&probe;</message></status>",
+                    "This is Server-Side Request Forgery reached through an XML parser: in a real deployment, the actual target of interest wouldn't be a harmless health check but an internal-only address like a cloud metadata service (e.g. 169.254.169.254 on AWS/GCP/Azure) — anything the server can reach on its internal network that an external attacker never could directly.",
+                ],
             ),
             ExampleNav(
                 id="ssti-email-preview",
@@ -172,6 +218,12 @@ CATEGORIES.append(
                 group="Server-Side Template Injection (SSTI)",
                 difficulty="Easy",
                 endpoint="a03_injection.email_preview",
+                hints=[
+                    "This 'preview my email' feature runs your typed greeting text through Flask's template renderer. Template engines don't just display text — they can evaluate expressions inside it. What syntax does Jinja use for an expression?",
+                    "Try submitting {{ 7*7 }} as your greeting text. If the preview shows 49 instead of the literal text {{ 7*7 }}, your input is being evaluated as template code, not displayed as data.",
+                    "Jinja templates have access to Python's object internals through attributes like self.__init__.__globals__. Chaining through those eventually reaches __builtins__, and from there __import__.",
+                    "Submit this as your greeting text: {{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }} — the preview shows the real output of the id command, executed on the server itself.",
+                ],
             ),
             ExampleNav(
                 id="ssti-blacklist-bypass",
@@ -179,6 +231,12 @@ CATEGORIES.append(
                 group="Server-Side Template Injection (SSTI)",
                 difficulty="Hard",
                 endpoint="a03_injection.bio_preview",
+                hints=[
+                    "This bio-preview feature has the exact same SSTI bug as the email-preview example, but it now checks your input against a list of forbidden words first. Confirm the underlying template-evaluation bug still exists with a payload that doesn't contain any blocked word at all.",
+                    "{{ 7*7 }} contains none of the blocked words and still evaluates — the blacklist only blocks specific keywords, not the ability to run arbitrary template expressions.",
+                    "The direct RCE payload from the email-preview example gets blocked because it literally contains the words os, import, and popen. Jinja has a string-concatenation operator, ~, that combines strings AT RENDER TIME, inside the expression itself — meaning the blocked words never appear as literal substrings in what you submit.",
+                    "Build each blocked word from smaller pieces using ~, e.g. 'o'~'s' becomes the string \"os\" only once Jinja evaluates it. Submit: {{ self.__init__.__globals__.__builtins__['__imp'~'ort__']('o'~'s').__dict__['pop'~'en']('id').read() }} — the blacklist's substring check passes (none of the forbidden words appear literally), and the exact same command execution as the email-preview example happens.",
+                ],
             ),
             ExampleNav(
                 id="ldap-directory-login",
@@ -186,6 +244,11 @@ CATEGORIES.append(
                 group="LDAP Injection",
                 difficulty="Easy",
                 endpoint="a03_injection.directory_login",
+                hints=[
+                    "This login form builds an LDAP search filter directly from your username and password. LDAP filters have their own special characters, just like SQL has quotes — what does a bare asterisk mean inside one?",
+                    "In LDAP filter syntax, * means 'any non-empty value', not a literal asterisk. Try logging in as a username you know exists (alice) with * as the password.",
+                    "If that logs you in as alice without her real password, the filter is genuinely unescaped. Now aim higher: log in with username root_admin and password * — you're authenticated as the Root Administrator account, whose real password you never supplied, because the filter the server evaluates becomes '(&(uid=root_admin)(userPassword=*))' — match any entry with that uid that has SOME password set, which every real account does.",
+                ],
             ),
             ExampleNav(
                 id="ldap-directory-search",
@@ -193,6 +256,12 @@ CATEGORIES.append(
                 group="LDAP Injection",
                 difficulty="Hard",
                 endpoint="a03_injection.directory_search",
+                hints=[
+                    "This directory search never shows you the matched value — only whether a match was found at all. That's a single bit of signal per request, exactly like this lab's blind SQL injection example, just against LDAP instead of SQL.",
+                    "The filter matches on the description field as a PREFIX (description=QUERY*). Try target=root_admin with query=r — a 'match found' result tells you root_admin's hidden description starts with the letter r.",
+                    "Keep extending the query by one character at a time, trying every letter/digit at each new position — 're' still matches, 'rf' doesn't, so the second character is 'e', and so on. Each correct guess narrows the search by exactly one more confirmed character.",
+                    "Repeating this character-by-character process recovers the entire hidden description value (a secret recovery code) purely from found/not-found responses, without the server ever showing you the value directly — slower than a direct leak, but fully automatable exactly like the blind SQLi technique elsewhere in this lab.",
+                ],
             ),
         ],
         seed_fn=seed_injection_data,
