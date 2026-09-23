@@ -1,0 +1,72 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "MFA Code Leaked to Client" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This login has a real second factor, and — unlike this lab's other MFA
+  examples — the verification code is <strong>not</strong> shown anywhere
+  on the code-entry page itself. That's actually the correct design: a
+  real code should only ever reach the user's own phone or inbox. The bug
+  is elsewhere: a JSON API meant only to trigger sending the code
+  server-side leaves a leftover debug field in its response that echoes
+  the real code straight back to whoever called it.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Log in, then inspect every network request the flow makes — specifically
+  a "send code" style API call. Read its <em>full</em> JSON response body,
+  not just whether it returned success.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in below with <code>dana</code> / <code>welcome1</code>.</li>
+  <li>Without entering anything on the verification page, call:
+    <pre><code class="language-bash">curl -X POST http://127.0.0.1:5001/a07/mfa-leaked-code/api/send-code \
+  -b "a07_session_id=&lt;your session cookie&gt;"</code></pre>
+  </li>
+  <li>The JSON response is
+    <code>{"status": "sent", "debug_code": "482913"}</code> — the real,
+    currently-valid code, handed directly to whoever called this API.</li>
+  <li>Submit that <code>debug_code</code> value at the verify step —
+    MFA completes, with no access to <code>dana</code>'s real phone or
+    inbox ever required.</li>
+</ol>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/mfa/api/send-code", methods=["POST"])
+def send_code_api():
+    session_row = get_or_create_session()
+    send_sms(session_row.username, session_row.pending_mfa_code)  # real send
+    # VULNERABLE: leftover debug field echoes the real code back
+    return jsonify({"status": "sent", "debug_code": session_row.pending_mfa_code})
+{% endblock %}
+
+{% block secure_code %}@app.route("/mfa/api/send-code", methods=["POST"])
+def send_code_api():
+    session_row = get_or_create_session()
+    send_sms(session_row.username, session_row.pending_mfa_code)
+    return jsonify({"status": "sent"})  # code never enters the response
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username" value="dana">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

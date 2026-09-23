@@ -1,6 +1,7 @@
+import secrets
 import unicodedata
 
-from flask import make_response, redirect, render_template, request, url_for
+from flask import jsonify, make_response, redirect, render_template, request, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.categories.a07_auth_failures import a07_bp
@@ -248,3 +249,107 @@ def mfa_forgot_password():
     return _render(
         "a07_auth_failures/mfa_forgot_password.html", session_row, error=error, success=success
     )
+
+
+@a07_bp.route("/mfa-leaked-code/login", methods=["GET", "POST"])
+def mfa_leaked_login():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        account_row = A07Account.query.filter_by(username=username).first()
+        if account_row and check_password_hash(account_row.password_hash, password):
+            session_row.username = account_row.username
+            session_row.mfa_verified = False
+            session_row.pending_mfa_code = f"{secrets.randbelow(1_000_000):06d}"
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_leaked_verify", session_row)
+        error = "Invalid username or password."
+    return _render("a07_auth_failures/mfa_leaked_login.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-leaked-code/api/send-code", methods=["POST"])
+def mfa_leaked_send_code_api():
+    session_row = get_or_create_session()
+    # VULNERABLE: this API exists to trigger sending the code via a real
+    # SMS/email provider server-side -- but a leftover debug field echoes
+    # the real code straight back in the JSON response. Any client that can
+    # call this endpoint (no proof of phone/email ownership required at
+    # all, just an in-progress session) gets the code directly, with no
+    # need to intercept an SMS or email at all.
+    resp = jsonify({"status": "sent", "debug_code": session_row.pending_mfa_code})
+    resp.set_cookie(SID_COOKIE, session_row.id)
+    return resp
+
+
+@a07_bp.route("/mfa-leaked-code/verify", methods=["GET", "POST"])
+def mfa_leaked_verify():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        code = request.form.get("code", "")
+        if code and code == session_row.pending_mfa_code:
+            session_row.mfa_verified = True
+            session_row.pending_mfa_code = None
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_leaked_dashboard", session_row)
+        error = "Incorrect code."
+    return _render("a07_auth_failures/mfa_leaked_verify.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-leaked-code/dashboard")
+def mfa_leaked_dashboard():
+    session_row = get_or_create_session()
+    if not session_row.username or not session_row.mfa_verified:
+        return _redirect("a07_auth_failures.mfa_leaked_login", session_row)
+    return _render("a07_auth_failures/mfa_leaked_dashboard.html", session_row)
+
+
+@a07_bp.route("/mfa-reusable-code/login", methods=["GET", "POST"])
+def mfa_reusable_login():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        account_row = A07Account.query.filter_by(username=username).first()
+        if account_row and check_password_hash(account_row.password_hash, password):
+            session_row.username = account_row.username
+            session_row.mfa_verified = False
+            session_row.pending_mfa_code = f"{secrets.randbelow(1_000_000):06d}"
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_reusable_verify", session_row)
+        error = "Invalid username or password."
+    return _render("a07_auth_failures/mfa_reusable_login.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-reusable-code/verify", methods=["GET", "POST"])
+def mfa_reusable_verify():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        code = request.form.get("code", "")
+        # VULNERABLE: checks the code but never invalidates it afterward --
+        # pending_mfa_code is left in place even after a successful
+        # verification, so the exact same code keeps working for every
+        # future verification attempt on this session, indefinitely.
+        if code and code == session_row.pending_mfa_code:
+            session_row.mfa_verified = True
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_reusable_dashboard", session_row)
+        error = "Incorrect code."
+    return _render(
+        "a07_auth_failures/mfa_reusable_verify.html",
+        session_row,
+        error=error,
+        demo_code=session_row.pending_mfa_code,
+    )
+
+
+@a07_bp.route("/mfa-reusable-code/dashboard")
+def mfa_reusable_dashboard():
+    session_row = get_or_create_session()
+    if not session_row.username or not session_row.mfa_verified:
+        return _redirect("a07_auth_failures.mfa_reusable_login", session_row)
+    return _render("a07_auth_failures/mfa_reusable_dashboard.html", session_row)

@@ -18,3 +18,7 @@ class AuthSession(db.Model):
     username = db.Column(db.String(80), nullable=True)
     mfa_verified = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    # Generic per-session "pending MFA code" slot, set at login time and
+    # checked at verify time by any MFA example that needs one. Reused
+    # across multiple examples rather than each inventing its own column.
+    pending_mfa_code = db.Column(db.String(6), nullable=True)

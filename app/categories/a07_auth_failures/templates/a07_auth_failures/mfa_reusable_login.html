@@ -1,0 +1,84 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "MFA Code Reusability" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This login's verification step checks your code correctly against a
+  real, per-session generated value. The bug is what happens
+  <em>after</em> a successful check: the code is never invalidated, so
+  the exact same code keeps working for every future verification
+  attempt on this session, indefinitely — a one-time code that was never
+  actually made one-time.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Complete this login's MFA step once, successfully. Then try submitting
+  that exact same code again — does the server remember it was already
+  used?
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in below with <code>morgan</code> / <code>Summer2023!</code>.</li>
+  <li>Note the code shown on the verification page and submit it — MFA
+      completes normally.</li>
+  <li>POST to <code>/a07/mfa-reusable-code/verify</code> again with that
+      exact same code:
+    <pre><code class="language-bash">curl -X POST http://127.0.0.1:5001/a07/mfa-reusable-code/verify \
+  -b "a07_session_id=&lt;your session cookie&gt;" \
+  -d "code=&lt;the same code&gt;"</code></pre>
+  </li>
+  <li>It's accepted again, with no "already used" error at all.</li>
+</ol>
+<p>
+  In a real deployment this means anyone who captures a single valid
+  code once — shoulder-surfing, a compromised SMS gateway log, or a
+  leaked API response like this category's "MFA Code Leaked to Client"
+  example — can keep using it to re-authenticate indefinitely, not just
+  for the one login it was meant to protect.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/mfa/verify", methods=["POST"])
+def mfa_verify():
+    session_row = get_or_create_session()
+    code = request.form["code"]
+    if code == session_row.pending_mfa_code:
+        # VULNERABLE: never clears pending_mfa_code -- it stays valid forever
+        session_row.mfa_verified = True
+        db.session.commit()
+        return redirect(url_for("dashboard"))
+{% endblock %}
+
+{% block secure_code %}@app.route("/mfa/verify", methods=["POST"])
+def mfa_verify():
+    session_row = get_or_create_session()
+    code = request.form["code"]
+    if code == session_row.pending_mfa_code:
+        session_row.mfa_verified = True
+        session_row.pending_mfa_code = None  # single-use: invalidate immediately
+        db.session.commit()
+        return redirect(url_for("dashboard"))
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username" value="morgan">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

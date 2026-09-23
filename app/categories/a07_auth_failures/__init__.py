@@ -80,6 +80,32 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="mfa-leaked-code",
+                title="MFA Code Leaked to Client",
+                group="Multi-Factor Authentication Bypass",
+                difficulty="Easy",
+                endpoint="a07_auth_failures.mfa_leaked_login",
+                hints=[
+                    "This login flow doesn't show the verification code anywhere on the page itself — so how would you ever learn it? Look at what other requests get made after you log in (your browser's dev tools network tab, or the app's own JSON API endpoints).",
+                    "There's a JSON API at /mfa-leaked-code/api/send-code that a real app's JavaScript would call to trigger sending the code via SMS/email. Check its full response body, not just whether it says success.",
+                    "POST to /a07/mfa-leaked-code/api/send-code (just your session cookie from having logged in, no body needed) and look at the JSON response — it includes a debug_code field containing the real, currently-valid verification code in plaintext.",
+                    "Exact reproduction: log in at /a07/mfa-leaked-code/login with dana/welcome1, then curl -X POST http://127.0.0.1:5000/a07/mfa-leaked-code/api/send-code with your session cookie attached — copy the debug_code value from the response and submit it at /a07/mfa-leaked-code/verify to complete MFA, with no access to dana's real phone or inbox ever required.",
+                ],
+            ),
+            ExampleNav(
+                id="mfa-reusable-code",
+                title="MFA Code Reusability",
+                group="Multi-Factor Authentication Bypass",
+                difficulty="Medium",
+                endpoint="a07_auth_failures.mfa_reusable_login",
+                hints=[
+                    "Complete this login's MFA step once, successfully. Now try submitting that exact same code again — does the server remember it was already used?",
+                    "The verify endpoint checks your submitted code against the session's stored pending code, but never clears or invalidates that stored code after a successful check — the same code keeps working indefinitely.",
+                    "Log in at /a07/mfa-reusable-code/login with morgan/Summer2023!, note the code shown on the verify page, submit it once to complete MFA, then POST to /a07/mfa-reusable-code/verify again with that exact same code — it's accepted again, with no 'already used' error.",
+                    "In a real deployment this means anyone who captures a single valid code once — shoulder-surfing, a compromised SMS gateway log, or a leaked API response like this category's 'MFA Code Leaked to Client' example — can keep using it to re-authenticate indefinitely, not just for the one login it was meant to protect.",
+                ],
+            ),
+            ExampleNav(
                 id="mfa-bypass",
                 title="Bypassable Multi-Factor Authentication",
                 group="Multi-Factor Authentication Bypass",
