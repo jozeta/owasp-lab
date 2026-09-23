@@ -13,6 +13,9 @@
     <div class="progress" role="progressbar" aria-label="Overall progress" aria-valuenow="{{ completed_total }}" aria-valuemin="0" aria-valuemax="{{ total }}">
       <div class="progress-bar" style="width: {{ overall_percent }}%"></div>
     </div>
+    {% if settings.scoring_enabled %}
+    <div class="mt-2 text-muted">Score: {{ earned_points_total }} / {{ max_points_total }} points</div>
+    {% endif %}
   </div>
 </div>
 
@@ -26,6 +29,9 @@
         <div class="progress mb-3" role="progressbar" aria-label="{{ cs.category.short_id }} progress" aria-valuenow="{{ cs.completed }}" aria-valuemin="0" aria-valuemax="{{ cs.total }}">
           <div class="progress-bar" style="width: {{ cs.percent }}%"></div>
         </div>
+        {% if settings.scoring_enabled %}
+        <div class="mb-2 text-muted small">Score: {{ cs.earned_points }} / {{ cs.max_points }} points</div>
+        {% endif %}
         <a href="{{ url_for(cs.category.overview_endpoint) }}" class="btn btn-outline-primary btn-sm">Open overview</a>
       </div>
     </div>

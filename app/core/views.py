@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, session, url_for
 
-from app.core.models import ExampleProgress, Settings, User
+from app.core.models import ExampleProgress, Settings, User, compute_points
 from app.core.nav import CATEGORIES
 from app.core.seed import reset_database
 from app.extensions import db
@@ -12,30 +14,57 @@ def _is_safe_redirect_target(target):
     return bool(target) and target.startswith("/") and not target.startswith("//")
 
 
+def _find_example(example_id):
+    return next(
+        (
+            e
+            for c in CATEGORIES
+            for e in c.examples
+            if e.id == example_id and e.endpoint in current_app.view_functions
+        ),
+        None,
+    )
+
+
 @core_bp.route("/")
 def home():
-    completed_ids = {p.example_id for p in ExampleProgress.query.all()}
+    progress_rows = {p.example_id: p for p in ExampleProgress.query.all()}
+    completed_ids = {
+        example_id for example_id, p in progress_rows.items() if p.completed_at is not None
+    }
     category_stats = []
     for category in sorted(CATEGORIES, key=lambda c: c.short_id):
         completed = sum(1 for e in category.examples if e.id in completed_ids)
         category_total = len(category.examples)
+        earned_points = sum(
+            progress_rows[e.id].points_awarded or 0
+            for e in category.examples
+            if e.id in completed_ids
+        )
+        max_points = sum(e.base_points() for e in category.examples)
         category_stats.append(
             {
                 "category": category,
                 "completed": completed,
                 "total": category_total,
                 "percent": round(completed / category_total * 100) if category_total else 0,
+                "earned_points": earned_points,
+                "max_points": max_points,
             }
         )
     completed_total = sum(cs["completed"] for cs in category_stats)
     total = sum(cs["total"] for cs in category_stats)
     overall_percent = round(completed_total / total * 100) if total else 0
+    earned_points_total = sum(cs["earned_points"] for cs in category_stats)
+    max_points_total = sum(cs["max_points"] for cs in category_stats)
     return render_template(
         "core/home.html",
         completed_total=completed_total,
         total=total,
         overall_percent=overall_percent,
         category_stats=category_stats,
+        earned_points_total=earned_points_total,
+        max_points_total=max_points_total,
     )
 
 
@@ -62,7 +91,16 @@ def settings_page():
     settings = Settings.get()
     if request.method == "POST":
         settings.show_explanations = "show_explanations" in request.form
-        settings.show_exploit_instructions = "show_exploit_instructions" in request.form
+        new_scoring_enabled = "scoring_enabled" in request.form
+        # While scoring is (or is about to be) enabled, exploit instructions
+        # are always effectively hidden regardless of this checkbox's own
+        # stored value (see example_page_base.html's derived-effective-value
+        # check) -- so leave the stored value untouched rather than letting
+        # a disabled, therefore-unsubmitted checkbox silently flip it to
+        # False on save.
+        if not new_scoring_enabled:
+            settings.show_exploit_instructions = "show_exploit_instructions" in request.form
+        settings.scoring_enabled = new_scoring_enabled
         db.session.commit()
         flash("Settings updated.")
         return redirect(url_for("core.settings_page"))
@@ -103,22 +141,35 @@ def force_reset():
 @core_bp.route("/progress/toggle", methods=["POST"])
 def toggle_progress():
     example_id = request.form.get("example_id", "")
-    example = next(
-        (
-            e
-            for c in CATEGORIES
-            for e in c.examples
-            if e.id == example_id and e.endpoint in current_app.view_functions
-        ),
-        None,
-    )
+    example = _find_example(example_id)
     if example is None:
         abort(404)
-    existing = ExampleProgress.query.filter_by(example_id=example_id).first()
-    if existing:
-        db.session.delete(existing)
+    progress = ExampleProgress.query.filter_by(example_id=example_id).first()
+    if progress is None:
+        progress = ExampleProgress(example_id=example_id, hints_used=0)
+        db.session.add(progress)
+    if progress.completed_at is None:
+        progress.completed_at = datetime.utcnow()
+        progress.points_awarded = compute_points(example, progress.hints_used)
     else:
-        db.session.add(ExampleProgress(example_id=example_id))
+        progress.completed_at = None
+        progress.points_awarded = None
+    db.session.commit()
+    return redirect(url_for(example.endpoint))
+
+
+@core_bp.route("/hints/reveal", methods=["POST"])
+def reveal_hint():
+    example_id = request.form.get("example_id", "")
+    example = _find_example(example_id)
+    if example is None:
+        abort(404)
+    progress = ExampleProgress.query.filter_by(example_id=example_id).first()
+    if progress is None:
+        progress = ExampleProgress(example_id=example_id, hints_used=0)
+        db.session.add(progress)
+    if progress.hints_used < len(example.hints):
+        progress.hints_used += 1
     db.session.commit()
     return redirect(url_for(example.endpoint))
 

@@ -10,10 +10,20 @@
            name="show_explanations" {% if settings.show_explanations %}checked{% endif %}>
     <label class="form-check-label" for="show_explanations">Show vulnerability explanations</label>
   </div>
-  <div class="form-check form-switch mb-3">
+  <div class="form-check form-switch mb-2">
     <input class="form-check-input" type="checkbox" role="switch" id="show_exploit_instructions"
-           name="show_exploit_instructions" {% if settings.show_exploit_instructions %}checked{% endif %}>
+           name="show_exploit_instructions" {% if settings.show_exploit_instructions %}checked{% endif %}
+           {% if settings.scoring_enabled %}disabled{% endif %}>
     <label class="form-check-label" for="show_exploit_instructions">Show exploit instructions / PoC payloads</label>
+    {% if settings.scoring_enabled %}
+    <div class="form-text">Hidden while the scoring system is enabled — use hints instead. Disable scoring to restore manual control over this toggle.</div>
+    {% endif %}
+  </div>
+  <div class="form-check form-switch mb-3">
+    <input class="form-check-input" type="checkbox" role="switch" id="scoring_enabled"
+           name="scoring_enabled" {% if settings.scoring_enabled %}checked{% endif %}>
+    <label class="form-check-label" for="scoring_enabled">Enable scoring system</label>
+    <div class="form-text">Award points on completion: 30 Hard / 20 Medium / 10 Easy, minus a share per hint requested.</div>
   </div>
   <button type="submit" class="btn btn-primary">Save settings</button>
 </form>

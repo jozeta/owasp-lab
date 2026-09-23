@@ -35,7 +35,9 @@ def test_toggle_progress_unmarks_on_second_toggle(app, client):
     client.post("/progress/toggle", data={"example_id": example.id})
 
     with app.app_context():
-        assert ExampleProgress.query.filter_by(example_id=example.id).first() is None
+        progress = ExampleProgress.query.filter_by(example_id=example.id).first()
+        assert progress is not None
+        assert progress.completed_at is None
 
 
 def test_toggle_progress_rejects_unknown_example_id(app, client):

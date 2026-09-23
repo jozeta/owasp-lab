@@ -9,9 +9,13 @@
     <form method="post" action="{{ url_for('core.toggle_progress') }}" class="d-inline">
       <input type="hidden" name="example_id" value="{{ current_example.id }}">
       {% if current_example.id in completed_example_ids %}
-      <button type="submit" class="btn btn-success btn-sm">✓ Completed</button>
+      <button type="submit" class="btn btn-success btn-sm">
+        {% if settings.scoring_enabled %}✓ Completed — {{ current_progress.points_awarded }} pts{% else %}✓ Completed{% endif %}
+      </button>
       {% else %}
-      <button type="submit" class="btn btn-outline-secondary btn-sm">Mark as done</button>
+      <button type="submit" class="btn btn-outline-secondary btn-sm">
+        {% if settings.scoring_enabled %}Mark as done (earn {{ current_example_pending_points }} pts){% else %}Mark as done{% endif %}
+      </button>
       {% endif %}
     </form>
     {% endif %}
@@ -28,7 +32,7 @@
 </section>
 {% endif %}
 
-{% if settings.show_exploit_instructions %}
+{% if settings.show_exploit_instructions and not settings.scoring_enabled %}
 {% set detect_content = self.detect() %}
 {% if detect_content|trim %}
 <section class="card mb-4">
@@ -55,6 +59,27 @@
   </div>
 </section>
 {% endif %}
+{% endif %}
+
+{% if settings.scoring_enabled and current_example %}
+<section class="card mb-4 border-warning">
+  <div class="card-header bg-warning">Hints</div>
+  <div class="card-body">
+    {% for hint in current_example.hints[:current_progress.hints_used] %}
+    <p><strong>Hint {{ loop.index }}:</strong> {{ hint }}</p>
+    {% endfor %}
+    {% if current_progress.hints_used < current_example.hints|length %}
+    <form method="post" action="{{ url_for('core.reveal_hint') }}">
+      <input type="hidden" name="example_id" value="{{ current_example.id }}">
+      <button type="submit" class="btn btn-outline-warning btn-sm">
+        Reveal next hint ({{ current_progress.hints_used }} of {{ current_example.hints|length }} used)
+      </button>
+    </form>
+    {% else %}
+    <p class="text-muted mb-0">All hints revealed.</p>
+    {% endif %}
+  </div>
+</section>
 {% endif %}
 
 {% set vulnerable_content = self.vulnerable_code() %}
