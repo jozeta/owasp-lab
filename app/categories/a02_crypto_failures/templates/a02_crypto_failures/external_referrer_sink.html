@@ -1,0 +1,22 @@
+{% extends "core/base.html" %}
+{% block title %}Security Tips — A02{% endblock %}
+
+{% block content %}
+<h1>Security Tips</h1>
+<p class="text-muted">
+  This page stands in for a third-party site (an analytics widget, an ad,
+  or any other embeddable/clickable resource) that the reset-password
+  page links out to.
+</p>
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">Captured Referer header</h5>
+    <code>{{ captured_referer or "(no Referer header was sent)" }}</code>
+  </div>
+</div>
+{% if "token=" in captured_referer %}
+<div class="alert alert-danger mt-3">
+  A password reset token just leaked to this page via the Referer header.
+</div>
+{% endif %}
+{% endblock %}

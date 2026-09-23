@@ -57,6 +57,31 @@ CATEGORIES.append(
                     "Confirm the takeover by logging in at /a02/legacy-login as admin with your new password.",
                 ],
             ),
+            ExampleNav(
+                id="reset-token-api-leak",
+                title="Reset Token Leaked in API Response",
+                group="Token Leakage",
+                difficulty="Easy",
+                endpoint="a02_crypto_failures.forgot_password_api",
+                hints=[
+                    "This is a JSON API meant to kick off a password reset — trigger it and look closely at the full response body, not just the status code.",
+                    "A real password reset should only ever send the token through email or SMS. Check whether this API's JSON response contains the token itself.",
+                    "curl -X POST http://127.0.0.1:5000/a02/api/forgot-password -H \"Content-Type: application/json\" -d '{\"username\": \"admin\"}' — the response includes a resetToken field directly. Use it immediately at /a02/reset-password/<token> to take over the account, no email access needed at all.",
+                ],
+            ),
+            ExampleNav(
+                id="reset-token-referrer-leak",
+                title="Reset Token Leaked via Referrer Header",
+                group="Token Leakage",
+                difficulty="Medium",
+                endpoint="a02_crypto_failures.reset_password_referrer",
+                hints=[
+                    "This reset-password page is reached via a link containing your token in the URL's query string. Look at what else is on this page — does it link out anywhere?",
+                    "There's a 'Security Tips' link at the bottom pointing to another page. Nothing on this page sets a Referrer-Policy header, so when a browser follows that link, it sends the full current URL — token included — as the Referer header to whatever it links to.",
+                    "Click the Security Tips link on this page — the destination page reads request.headers['Referer'] and recovers your reset token without you ever giving it up directly. In a real deployment that link could point anywhere, including an attacker-controlled domain.",
+                    "Exact reproduction: curl -s http://127.0.0.1:5000/a02/external-referrer-sink -H \"Referer: http://127.0.0.1:5000/a02/reset-password-referrer?token=<any token>\" — the response echoes the captured Referer header back, token and all.",
+                ],
+            ),
         ],
         seed_fn=seed_legacy_credentials,
     )

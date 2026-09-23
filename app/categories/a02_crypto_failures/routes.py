@@ -1,6 +1,6 @@
 import hashlib
 
-from flask import render_template, request
+from flask import jsonify, render_template, request, session
 
 from app.categories.a02_crypto_failures import a02_bp
 from app.categories.a02_crypto_failures.crypto import decrypt_ecb, encrypt_ecb
@@ -92,3 +92,67 @@ def legacy_login():
         else:
             result = "failure"
     return render_template("a02_crypto_failures/legacy_login.html", result=result)
+
+
+@a02_bp.route("/reset-password-referrer", methods=["GET", "POST"])
+def reset_password_referrer():
+    # A demo token for the seeded "admin" account is used when none is
+    # supplied, so this page is directly viewable without first walking
+    # through a real "request a reset" step.
+    token = request.args.get("token") or generate_reset_token("admin")
+    error = None
+    success = False
+    if request.method == "POST":
+        new_password = request.form.get("new_password", "")
+        matched_credential = None
+        for credential in LegacyCredential.query.all():
+            if generate_reset_token(credential.username) == token:
+                matched_credential = credential
+                break
+        if matched_credential is None:
+            error = "This reset token is invalid or expired."
+        else:
+            matched_credential.weak_password_hash = hashlib.md5(new_password.encode()).hexdigest()
+            db.session.commit()
+            success = True
+    # VULNERABLE: the reset token lives in this page's own URL (query
+    # string), and nothing anywhere in this app sets a Referrer-Policy
+    # header -- any outbound link on this page (see the "Security Tips"
+    # link below) carries the full current URL, token included, to
+    # whatever it links to.
+    return render_template(
+        "a02_crypto_failures/reset_password_referrer.html", token=token, error=error, success=success
+    )
+
+
+@a02_bp.route("/external-referrer-sink")
+def external_referrer_sink():
+    # Plays the role of a third-party page (an analytics widget, an ad, a
+    # "security tips" article -- anything embeddable or linkable) that the
+    # reset-password page above links out to. In a real deployment this
+    # would live on an attacker-controlled domain, silently logging every
+    # visitor's in-flight reset token via the Referer header their browser
+    # sends automatically.
+    captured_referer = request.headers.get("Referer", "")
+    session["a02_captured_referer"] = captured_referer
+    return render_template(
+        "a02_crypto_failures/external_referrer_sink.html", captured_referer=captured_referer
+    )
+
+
+@a02_bp.route("/api/forgot-password", methods=["GET", "POST"])
+def forgot_password_api():
+    if request.method == "GET":
+        return render_template("a02_crypto_failures/forgot_password_api.html")
+    data = request.get_json(silent=True) or {}
+    username = data.get("username", "")
+    credential = LegacyCredential.query.filter_by(username=username).first()
+    if credential is None:
+        return jsonify({"error": "No account with that username."}), 404
+    # VULNERABLE: returns the actual reset token directly in the API
+    # response instead of only ever delivering it through a real
+    # email/SMS channel -- anyone who can guess or already knows a
+    # username gets a working reset token immediately, with no access to
+    # that user's inbox required at all.
+    token = generate_reset_token(username)
+    return jsonify({"status": "ok", "resetToken": token})
