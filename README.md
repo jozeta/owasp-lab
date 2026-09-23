@@ -62,12 +62,21 @@ Visit **Settings** in the top nav to:
 
 - Toggle whether example pages show their **Explanation** text.
 - Toggle whether example pages show step-by-step **Exploitation** instructions.
+- **Enable the scoring system** — award points on completion (30 Hard / 20 Medium /
+  10 Easy), reduced by however many progressive hints you request first.
 - **Reset the lab** to its clean seeded state (useful between training sessions or
   between developers sharing the same instance).
 
-Both toggles are global and stored in the database — they affect every example page
+All toggles are global and stored in the database — they affect every example page
 immediately for every visitor. Hiding the teaching text never disables the underlying
 vulnerability; it only conceals the walkthrough, so you can attempt exploitation blind.
+
+When the scoring system is enabled, step-by-step exploitation instructions are always
+hidden (regardless of the exploit-instructions toggle's own setting) — hints become the
+only guidance mechanism. Each example offers 3-5 hints, from a vague nudge toward the
+right technique to a fully explicit payload; each hint you reveal permanently reduces
+the points that example can award once you mark it done, and points are locked in at
+the moment you do. Your running score is shown in the top nav and on the home page.
 
 Reset lab restores database state (seeded accounts, secrets, comments, orders, your
 example-completion progress, etc.) to its clean starting point. Per-browser example
@@ -77,10 +86,11 @@ provided) or by clearing your browser's cookies for this site.
 
 ## More pages
 
-- **Stats** (`/stats`) — your progress across every example, overall and per
-  category. Progress is global and shared by every visitor to this instance —
-  marking an example "done" updates what everyone sees here, the same way the
-  Settings toggles above are shared, not per-browser.
+- **Home** (`/`) — your progress across every example, overall and per category,
+  plus your running score when the scoring system is enabled. Progress is global
+  and shared by every visitor to this instance — marking an example "done" updates
+  what everyone sees here, the same way the Settings toggles above are shared, not
+  per-browser.
 - **Tools** (`/tools`) — what tools are useful for which kinds of exercises, with
   download links.
 - **About** (`/about`) — what this app is, its infrastructure, and its safety model.
