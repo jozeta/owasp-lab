@@ -1,6 +1,7 @@
-def test_a01_examples_have_well_formed_hint_sequences(app):
-    from app.core.nav import CATEGORIES
+from app.core.nav import CATEGORIES
 
+
+def test_a01_examples_have_well_formed_hint_sequences():
     a01 = next(c for c in CATEGORIES if c.id == "a01_access_control")
     assert len(a01.examples) == 3
     for example in a01.examples:
