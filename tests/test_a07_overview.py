@@ -19,6 +19,8 @@ def test_a07_registered_in_nav(app):
         "Hard",
         "Easy",
         "Medium",
+        "Medium",
+        "Hard",
         "Hard",
         "Medium",
         "Hard",
@@ -43,7 +45,13 @@ def test_a07_examples_grouped_by_vulnerability_subtype(app):
         "session-survives-logout",
         "session-fixation",
     ]
-    assert [e.id for e in grouped[2][1]] == ["mfa-leaked-code", "mfa-reusable-code", "mfa-bypass"]
+    assert [e.id for e in grouped[2][1]] == [
+        "mfa-leaked-code",
+        "mfa-reusable-code",
+        "mfa-brute-force",
+        "mfa-bypass",
+        "mfa-not-bound-to-session",
+    ]
     assert [e.id for e in grouped[3][1]] == [
         "password-reset-disables-mfa",
         "username-collision-reset",

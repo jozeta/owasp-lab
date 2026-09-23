@@ -106,6 +106,19 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="mfa-brute-force",
+                title="MFA Brute-Force (No Rate Limiting)",
+                group="Multi-Factor Authentication Bypass",
+                difficulty="Medium",
+                endpoint="a07_auth_failures.mfa_login_bruteforce",
+                hints=[
+                    "This login also has a code-entry step — but this time, the page never tells you the code. Try guessing it: submit any 6-digit number and see what happens on a wrong guess.",
+                    "There's no lockout, no delay, no CAPTCHA, and no attempt counter anywhere on this verify endpoint — every wrong guess returns instantly, ready for another try, exactly like this category's brute-force-login example but for the second factor instead of the password.",
+                    "A 6-digit numeric code has only 1,000,000 possible values. With zero rate limiting, scripting a few hundred or thousand requests per second against /a07/mfa-verify-bruteforce (after logging in at /a07/mfa-login-bruteforce as dana/welcome1) would find the real code in well under a minute in a real deployment.",
+                    "Reproduction without a full brute-force script: log in at /a07/mfa-login-bruteforce, then POST as many wrong codes as you like to /a07/mfa-verify-bruteforce — notice every attempt behaves identically, with nothing ever blocking, slowing, or flagging repeated failures.",
+                ],
+            ),
+            ExampleNav(
                 id="mfa-bypass",
                 title="Bypassable Multi-Factor Authentication",
                 group="Multi-Factor Authentication Bypass",
@@ -116,6 +129,19 @@ CATEGORIES.append(
                     "After a successful password check, the session is updated with your username but mfa_verified is explicitly set to False — the app clearly intends you to complete step two before being treated as logged in.",
                     "Look at what the dashboard route actually checks before granting access — does it verify mfa_verified, or only that a username is present on the session at all?",
                     "Log in with a valid username/password at /a07/mfa-login (this sets your session's username but not mfa_verified), then skip the code-entry step entirely and navigate directly to /a07/mfa-dashboard — the dashboard only checks that a username is set, never that MFA was actually completed, so you're in.",
+                ],
+            ),
+            ExampleNav(
+                id="mfa-not-bound-to-session",
+                title="MFA Code Not Bound to Session",
+                group="Multi-Factor Authentication Bypass",
+                difficulty="Hard",
+                endpoint="a07_auth_failures.mfa_login_unbound",
+                hints=[
+                    "This verify page asks for both a username and a code. Why would a verify step need you to tell it your username again — doesn't it already know who you are from your session?",
+                    "The verify endpoint looks up the pending code by the USERNAME FIELD YOU SUBMIT in the form, not by anything tied to your own session — the code was never actually bound to the session that requested it in the first place.",
+                    "Log in as dana at /a07/mfa-login-unbound in one browser/session to generate a real pending code for dana. In a COMPLETELY SEPARATE session (a different browser, an incognito window, or simply clearing your cookies) that never entered dana's password anywhere, submit dana's username together with that same code to /a07/mfa-verify-unbound.",
+                    "The second, unrelated session is authenticated as dana anyway — proving the code was only ever bound to a username string, never to the specific session/browser that actually proved it knew dana's password.",
                 ],
             ),
             ExampleNav(

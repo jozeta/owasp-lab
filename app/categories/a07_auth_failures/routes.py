@@ -101,6 +101,12 @@ def session_fixation_demo():
 
 MFA_DEMO_CODE = "482913"
 
+# Keyed by username, NOT by session id or any per-browser identifier --
+# this is what makes the "MFA Code Not Bound to Session" example below
+# genuinely exploitable: the pending code for a username is visible to
+# whichever session asks for it, regardless of which session generated it.
+PENDING_MFA_CODES_BY_USERNAME = {}
+
 
 @a07_bp.route("/mfa-login", methods=["GET", "POST"])
 def mfa_login():
@@ -353,3 +359,92 @@ def mfa_reusable_dashboard():
     if not session_row.username or not session_row.mfa_verified:
         return _redirect("a07_auth_failures.mfa_reusable_login", session_row)
     return _render("a07_auth_failures/mfa_reusable_dashboard.html", session_row)
+
+
+@a07_bp.route("/mfa-login-bruteforce", methods=["GET", "POST"])
+def mfa_login_bruteforce():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        account_row = A07Account.query.filter_by(username=username).first()
+        if account_row and check_password_hash(account_row.password_hash, password):
+            session_row.username = account_row.username
+            session_row.mfa_verified = False
+            # A fresh 6-digit code per login, exactly like a real
+            # deployment -- the flaw isn't in code generation, it's that
+            # nothing throttles how many guesses the verify step accepts.
+            session_row.pending_mfa_code = f"{secrets.randbelow(1000000):06d}"
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_verify_bruteforce", session_row)
+        error = "Invalid username or password."
+    return _render("a07_auth_failures/mfa_login_bruteforce.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-verify-bruteforce", methods=["GET", "POST"])
+def mfa_verify_bruteforce():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        code = request.form.get("code", "")
+        # VULNERABLE: no attempt counter, no lockout, no delay, no
+        # CAPTCHA -- this endpoint accepts unlimited guesses against a
+        # 6-digit numeric code (1-in-1,000,000 odds per guess, trivially
+        # brute-forceable with zero throttling in front of it).
+        if code and code == session_row.pending_mfa_code:
+            session_row.mfa_verified = True
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_dashboard", session_row)
+        error = "Incorrect code."
+    return _render("a07_auth_failures/mfa_verify_bruteforce.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-login-unbound", methods=["GET", "POST"])
+def mfa_login_unbound():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        account_row = A07Account.query.filter_by(username=username).first()
+        if account_row and check_password_hash(account_row.password_hash, password):
+            session_row.username = account_row.username
+            session_row.mfa_verified = False
+            db.session.commit()
+            # VULNERABLE: the pending code is stored in a plain global
+            # keyed only by username -- not scoped to this session_row or
+            # this browser's cookie in any way. Any other session that
+            # later learns this username+code pair can use it too.
+            PENDING_MFA_CODES_BY_USERNAME[username] = f"{secrets.randbelow(1000000):06d}"
+            return _redirect("a07_auth_failures.mfa_verify_unbound", session_row)
+        error = "Invalid username or password."
+    return _render("a07_auth_failures/mfa_login_unbound.html", session_row, error=error)
+
+
+@a07_bp.route("/mfa-verify-unbound", methods=["GET", "POST"])
+def mfa_verify_unbound():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        # VULNERABLE: trusts a client-supplied username field instead of
+        # using session_row.username (the identity THIS session actually
+        # proved ownership of via the password step earlier), and looks
+        # the pending code up in a store keyed by that submitted
+        # username -- not scoped to this session at all.
+        submitted_username = request.form.get("username", "")
+        code = request.form.get("code", "")
+        if code and PENDING_MFA_CODES_BY_USERNAME.get(submitted_username) == code:
+            session_row.username = submitted_username
+            session_row.mfa_verified = True
+            db.session.commit()
+            return _redirect("a07_auth_failures.mfa_dashboard", session_row)
+        error = "Incorrect code."
+    demo_code = PENDING_MFA_CODES_BY_USERNAME.get(session_row.username)
+    return _render(
+        "a07_auth_failures/mfa_verify_unbound.html",
+        session_row,
+        error=error,
+        demo_code=demo_code,
+        prefill_username=session_row.username or "",
+    )

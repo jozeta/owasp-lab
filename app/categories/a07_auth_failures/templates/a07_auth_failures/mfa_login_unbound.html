@@ -1,0 +1,86 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "MFA Code Not Bound to Session" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This login also has a password step followed by a code-entry step. The
+  bug is subtle: the pending verification code is stored keyed only by
+  <em>username</em>, not by the specific session/browser that requested
+  it. The verify page even asks you to re-enter your username alongside
+  the code — a small but telling sign that it isn't relying on your
+  session's own identity at all.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Compare this verify page to a normal one: does it ask for a username
+  field at all, given you're already in an authenticated-ish session at
+  this point? If the server needs you to tell it who you are again on
+  the verify step, it may not actually be checking that the code belongs
+  to <em>your</em> session.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>In one browser (or this tab), log in as <code>dana</code> /
+      <code>welcome1</code> below — a real code is generated and shown
+      on the following page, keyed to the username <code>dana</code>.</li>
+  <li>In a <strong>completely separate</strong> browser session (a
+      different browser, an incognito window, or any session that never
+      entered dana's password anywhere), visit
+      <a href="{{ url_for('a07_auth_failures.mfa_verify_unbound') }}">the
+      verify page</a> and submit username <code>dana</code> together with
+      that same code.</li>
+</ol>
+<p>
+  The second, completely unrelated session is authenticated as dana
+  anyway. The code was only ever bound to a username string — never to
+  the specific session that actually proved it knew dana's password in
+  the first place.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/mfa-verify-unbound", methods=["POST"])
+def mfa_verify_unbound():
+    # VULNERABLE: trusts a client-supplied username instead of the
+    # caller's own session identity
+    submitted_username = request.form["username"]
+    code = request.form["code"]
+    if PENDING_MFA_CODES_BY_USERNAME.get(submitted_username) == code:
+        session_row.username = submitted_username
+        session_row.mfa_verified = True
+        db.session.commit()
+        return redirect(url_for("mfa_dashboard"))
+{% endblock %}
+
+{% block secure_code %}@app.route("/mfa-verify-unbound", methods=["POST"])
+def mfa_verify_unbound():
+    code = request.form["code"]
+    # Only ever checked against THIS session's own pending code -- no
+    # client-supplied username involved at all
+    if session_row.pending_mfa_code and code == session_row.pending_mfa_code:
+        session_row.mfa_verified = True
+        db.session.commit()
+        return redirect(url_for("mfa_dashboard"))
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username" value="dana">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

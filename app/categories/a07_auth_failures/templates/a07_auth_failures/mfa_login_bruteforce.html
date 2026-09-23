@@ -1,0 +1,85 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "MFA Brute-Force (No Rate Limiting)" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This login has a real second factor: after your password, you're sent
+  to a 6-digit code-entry page. Unlike this category's other MFA
+  examples, the code generation and check are both correct — the flaw is
+  that the verify endpoint places no limit at all on how many codes you
+  can try. There's no lockout, no delay, no CAPTCHA, and no attempt
+  counter anywhere in front of it.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Log in, then submit a handful of deliberately wrong codes in a row to
+  the verify page. If every attempt behaves identically — no warning, no
+  slowdown, no lockout message — the endpoint has no rate limiting.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Log in with a correct username/password below (<code>dana</code> /
+      <code>welcome1</code>).</li>
+  <li>On the verify page, submit any wrong 6-digit code — notice you're
+      simply told "Incorrect code" and can try again immediately.</li>
+  <li>Nothing stops you from repeating this indefinitely. A 6-digit
+      numeric code has only 1,000,000 possible values — with zero
+      throttling, a real attacker scripting a few hundred requests per
+      second against <code>/a07/mfa-verify-bruteforce</code> would find
+      the correct code in well under a minute.</li>
+</ol>
+<p>
+  This is the same missing-rate-limiting flaw as this category's
+  brute-force-login example, applied to the second factor instead of the
+  password — a real second factor is only as strong as the protections
+  guarding the endpoint that checks it.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/mfa-verify-bruteforce", methods=["POST"])
+def mfa_verify_bruteforce():
+    code = request.form["code"]
+    # VULNERABLE: no attempt counter, no lockout, no delay, no CAPTCHA
+    if code == session_row.pending_mfa_code:
+        session_row.mfa_verified = True
+        db.session.commit()
+        return redirect(url_for("mfa_dashboard"))
+    return render_template("mfa_verify_bruteforce.html", error="Incorrect code.")
+{% endblock %}
+
+{% block secure_code %}@app.route("/mfa-verify-bruteforce", methods=["POST"])
+def mfa_verify_bruteforce():
+    code = request.form["code"]
+    attempts = increment_failed_attempts(session_row)  # tracked server-side
+    if attempts &gt; 5:
+        lock_out_session(session_row, minutes=15)
+        abort(429)
+    if code == session_row.pending_mfa_code:
+        session_row.mfa_verified = True
+        db.session.commit()
+        return redirect(url_for("mfa_dashboard"))
+    return render_template("mfa_verify_bruteforce.html", error="Incorrect code.")
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username" value="dana">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Log in</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}
