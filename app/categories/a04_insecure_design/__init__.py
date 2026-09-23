@@ -22,6 +22,11 @@ CATEGORIES.append(
                 group="Business Logic Abuse",
                 difficulty="Easy",
                 endpoint="a04_insecure_design.coupon_cart",
+                hints=[
+                    "This coupon form doesn't track whether you already used the code. What happens if you submit the same valid code more than once?",
+                    "Every successful submission adds another discount to your session — there's no check for 'already applied' and no maximum number of uses.",
+                    "Submit the coupon code WELCOME10 in the form repeatedly (refresh and resubmit, or script multiple POSTs to /a04/coupon-cart with code=WELCOME10) — the discount keeps stacking, eventually pushing the total to $0 or below.",
+                ],
             ),
             ExampleNav(
                 id="negative-quantity",
@@ -29,6 +34,11 @@ CATEGORIES.append(
                 group="Business Logic Abuse",
                 difficulty="Medium",
                 endpoint="a04_insecure_design.quantity_cart",
+                hints=[
+                    "This cart multiplies price by quantity with no bounds check. What normally-invalid quantity might the server accept anyway?",
+                    "The server parses your submitted quantity as a plain integer and multiplies it directly into the total — negative numbers pass the int() conversion just fine.",
+                    "Submit a negative quantity, e.g. quantity=-5, to /a04/quantity-cart — the total price goes negative, which a real checkout might interpret as money owed TO the customer.",
+                ],
             ),
             ExampleNav(
                 id="checkout-bypass",
@@ -36,6 +46,12 @@ CATEGORIES.append(
                 group="Workflow Bypass",
                 difficulty="Hard",
                 endpoint="a04_insecure_design.checkout_shipping",
+                hints=[
+                    "This checkout has three steps: shipping, payment, confirm. Does the server actually verify you completed steps 1 and 2 before letting you reach step 3?",
+                    "The shipping step just records 'shipping done' in your session and is never read again by any later step. The confirm step only checks whether an order ID already exists in your session.",
+                    "Visit /a04/checkout/confirm directly, skipping /a04/checkout/shipping and /a04/checkout/payment entirely (clear your session first, or use a fresh browser/incognito window) — the server creates a new 'confirmed' order anyway, marked unpaid, with no verification any prior step occurred.",
+                    "This is a workflow-bypass / business-logic flaw: enforcing a UI sequence (multi-page checkout) is not the same as enforcing it server-side. The fix is for the confirm step to verify session state set by the earlier steps rather than trusting that the user simply followed the intended page order.",
+                ],
             ),
         ],
     )
