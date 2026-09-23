@@ -1,0 +1,91 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Account Takeover via Unicode Normalization" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This "find my account" recovery feature looks up an account by
+  comparing usernames after Unicode NFKC normalization and case-folding
+  — meant to be forgiving about accents, full-width characters, and
+  capitalization. The problem: several visually similar Unicode
+  characters normalize down to plain ASCII letters. A username built
+  from one of those lookalike characters can normalize to the exact same
+  string as a completely different, real account's ASCII username — and
+  this feature treats that as a match, logging you in as the matched
+  account.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Register an account using a username built from an unusual-looking
+  Unicode character in place of an ordinary letter, then use this lookup
+  form with a target username that's the plain-ASCII version — see
+  whether the lookup treats them as the same account.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Register a new account at
+  <a href="{{ url_for('a07_auth_failures.register') }}">/a07/register</a> with the username
+  <code>demⓞ</code> (that's "dem" followed by U+24DE, CIRCLED LATIN
+  SMALL LETTER O — it looks like an "o" but isn't one). Any password
+  works.
+</p>
+<p>
+  Then submit <code>demo</code> (the real, existing account's plain
+  ASCII username) into the lookup form below. Unicode NFKC normalization
+  strips the circle decoration from U+24DE, turning
+  <code>"dem" + "ⓞ"</code> into plain <code>"demo"</code> — so the
+  lookup's normalized comparison treats your lookalike registration and
+  the real <code>demo</code> account as the same identity, and logs your
+  session in AS the real <code>demo</code> account.
+</p>
+<p>
+  Tools like <a href="https://github.com/tomnomnom/hacks/tree/master/unisub">unisub</a>
+  can suggest which Unicode lookalike characters normalize to a given
+  target character for exactly this kind of attack.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}import unicodedata
+
+def normalize_username(value):
+    return unicodedata.normalize("NFKC", value).casefold()
+
+@app.route("/account-lookup", methods=["POST"])
+def account_lookup():
+    query = normalize_username(request.form["username"])
+    for account in Account.query.all():
+        # VULNERABLE: treats ANY two usernames with the same normalized
+        # form as the same identity for account-recovery purposes
+        if normalize_username(account.username) == query:
+            session["username"] = account.username  # logs in as the MATCH, not the input
+            return redirect(url_for("account"))
+{% endblock %}
+
+{% block secure_code %}@app.route("/account-lookup", methods=["POST"])
+def account_lookup():
+    # Exact match only -- no normalization-based equivalence between
+    # visually similar but distinct usernames
+    account = Account.query.filter_by(username=request.form["username"]).first()
+    if account is None:
+        abort(404)
+    send_account_recovery_email(account)  # never logs the requester in directly
+{% endblock %}
+
+{% block live_example %}
+{% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
+{% if matched_username %}
+<p class="text-success">Matched and logged in as: <strong>{{ matched_username }}</strong></p>
+{% endif %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username to look up</label>
+    <input class="form-control" type="text" name="username" placeholder="demo">
+  </div>
+  <button type="submit" class="btn btn-primary">Find account</button>
+</form>
+{% endblock %}

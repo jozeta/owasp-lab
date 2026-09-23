@@ -18,6 +18,9 @@ def test_a07_registered_in_nav(app):
         "Medium",
         "Hard",
         "Hard",
+        "Medium",
+        "Hard",
+        "Hard",
     ]
 
 
@@ -30,6 +33,7 @@ def test_a07_examples_grouped_by_vulnerability_subtype(app):
         "Brute Force & Credential Stuffing",
         "Session Identity & Lifecycle",
         "Multi-Factor Authentication Bypass",
+        "Account Recovery Abuse",
     ]
     assert [e.id for e in grouped[0][1]] == ["brute-force-login", "credential-stuffing"]
     assert [e.id for e in grouped[1][1]] == [
@@ -38,6 +42,11 @@ def test_a07_examples_grouped_by_vulnerability_subtype(app):
         "session-fixation",
     ]
     assert [e.id for e in grouped[2][1]] == ["mfa-bypass"]
+    assert [e.id for e in grouped[3][1]] == [
+        "password-reset-disables-mfa",
+        "username-collision-reset",
+        "unicode-normalization-takeover",
+    ]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
@@ -50,3 +59,4 @@ def test_a07_overview_shows_vulnerability_subtype_group_headings(client):
     assert "Brute Force &amp; Credential Stuffing" in body
     assert "Session Identity &amp; Lifecycle" in body
     assert "Multi-Factor Authentication Bypass" in body
+    assert "Account Recovery Abuse" in body

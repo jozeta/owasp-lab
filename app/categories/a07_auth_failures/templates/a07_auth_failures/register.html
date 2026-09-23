@@ -1,0 +1,99 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Password Reset via Username Collision" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A07{% endblock %}
+
+{% block explanation %}
+<p>
+  This registration form accepts any username exactly as typed, including
+  leading or trailing whitespace — <code>"admin"</code> and
+  <code>"admin "</code> are stored as two entirely distinct accounts. The
+  self-service "forgot my password" flow that follows registration,
+  however, looks up which account to reset by <strong>stripping</strong>
+  whitespace from your session's username first. If another account
+  already exists whose username exactly equals yours after stripping,
+  the reset lands on THAT account instead of the one you actually
+  registered.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Register an account whose username is an existing one plus a trailing
+  space (e.g. an account you know exists, with a space appended), then
+  use the "forgot password" flow immediately afterward — check whose
+  password actually changes.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Register a new account with username <code>admin </code> (note the
+      trailing space) and any password of your choosing, at the form
+      below.</li>
+  <li>You're automatically taken to the password reset page. Submit a new
+      password there.</li>
+</ol>
+<p>
+  The reset flow strips whitespace from your session's username
+  (<code>"admin "</code> → <code>"admin"</code>) before looking up which
+  account to update — and if a real <code>admin</code> account already
+  exists, ITS password gets overwritten, not the one you just
+  registered. You now control the real admin account's password without
+  ever knowing its original password, purely by exploiting a whitespace
+  mismatch between registration (no normalization) and password reset
+  (normalizes before matching).
+</p>
+<p>
+  This is the same class of bug as a real-world account-takeover
+  vulnerability in CTFd (CVE-2020-7245): register with the victim's
+  username plus whitespace, then trigger a reset for "yourself" and let
+  the loose matching redirect it onto the victim's real account.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/register", methods=["POST"])
+def register():
+    username = request.form["username"]  # stored exactly as typed, no normalization
+    account = Account(username=username, password_hash=hash_password(request.form["password"]))
+    db.session.add(account)
+    db.session.commit()
+    session["username"] = username  # unstripped
+
+@app.route("/forgot-password", methods=["POST"])
+def forgot_password_self():
+    target_username = session["username"].strip()  # VULNERABLE: normalizes on lookup only
+    target = Account.query.filter_by(username=target_username).first()
+    target.password_hash = hash_password(request.form["new_password"])
+{% endblock %}
+
+{% block secure_code %}@app.route("/register", methods=["POST"])
+def register():
+    username = request.form["username"].strip()  # normalize once, consistently, at write time
+    if Account.query.filter_by(username=username).first():
+        abort(409)
+    account = Account(username=username, password_hash=hash_password(request.form["password"]))
+    db.session.add(account)
+    db.session.commit()
+    session["username"] = username
+
+@app.route("/forgot-password", methods=["POST"])
+def forgot_password_self():
+    target = Account.query.filter_by(username=session["username"]).first()  # same normalized value everywhere
+    target.password_hash = hash_password(request.form["new_password"])
+{% endblock %}
+
+{% block live_example %}
+{% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username</label>
+    <input class="form-control" type="text" name="username" placeholder="admin ">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Password</label>
+    <input class="form-control" type="password" name="password">
+  </div>
+  <button type="submit" class="btn btn-primary">Register</button>
+</form>
+{% endblock %}

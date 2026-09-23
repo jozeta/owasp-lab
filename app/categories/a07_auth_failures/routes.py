@@ -1,5 +1,7 @@
+import unicodedata
+
 from flask import make_response, redirect, render_template, request, url_for
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.categories.a07_auth_failures import a07_bp
 from app.categories.a07_auth_failures.models import A07Account
@@ -139,3 +141,110 @@ def mfa_dashboard():
     # never checks session_row.mfa_verified, so step 2 (the code) can be
     # skipped entirely and this destination reached right after step 1.
     return _render("a07_auth_failures/mfa_dashboard.html", session_row)
+
+
+@a07_bp.route("/register", methods=["GET", "POST"])
+def register():
+    session_row = get_or_create_session()
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        if A07Account.query.filter_by(username=username).first() is not None:
+            error = "That username is already taken."
+        else:
+            # VULNERABLE: stores the username exactly as submitted, with no
+            # whitespace stripping or normalization -- "admin" and "admin "
+            # are treated as two entirely distinct accounts here.
+            account_row = A07Account(
+                username=username, password_hash=generate_password_hash(password, method="pbkdf2:sha256")
+            )
+            db.session.add(account_row)
+            db.session.commit()
+            session_row.username = username
+            db.session.commit()
+            return _redirect("a07_auth_failures.forgot_password_self", session_row)
+    return _render("a07_auth_failures/register.html", session_row, error=error)
+
+
+@a07_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password_self():
+    session_row = get_or_create_session()
+    error = None
+    success = False
+    if request.method == "POST":
+        new_password = request.form.get("new_password", "")
+        # VULNERABLE: strips whitespace when looking up which account to
+        # reset, but registration stored the username with no such
+        # normalization -- if another account exists whose username
+        # exactly equals yours after stripping, THAT account gets reset
+        # instead of the one you actually registered.
+        target_username = (session_row.username or "").strip()
+        target = A07Account.query.filter_by(username=target_username).first()
+        if target is None:
+            error = "No matching account found."
+        else:
+            target.password_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
+            db.session.commit()
+            success = True
+    return _render(
+        "a07_auth_failures/forgot_password_self.html", session_row, error=error, success=success
+    )
+
+
+def _normalize_username(value):
+    return unicodedata.normalize("NFKC", value).casefold()
+
+
+@a07_bp.route("/account-lookup", methods=["GET", "POST"])
+def account_lookup():
+    session_row = get_or_create_session()
+    error = None
+    matched_username = None
+    if request.method == "POST":
+        query_username = request.form.get("username", "")
+        normalized_query = _normalize_username(query_username)
+        # VULNERABLE: treats any two usernames that normalize to the same
+        # string as the SAME account for recovery purposes -- a Unicode
+        # lookalike character that NFKC-normalizes to an ASCII letter
+        # collides with a completely different, real ASCII-only account.
+        for account_row in A07Account.query.all():
+            if _normalize_username(account_row.username) == normalized_query:
+                matched_username = account_row.username
+                session_row.username = account_row.username
+                db.session.commit()
+                break
+        if matched_username is None:
+            error = "No account found."
+    return _render(
+        "a07_auth_failures/account_lookup.html",
+        session_row,
+        error=error,
+        matched_username=matched_username,
+    )
+
+
+@a07_bp.route("/mfa-forgot-password", methods=["GET", "POST"])
+def mfa_forgot_password():
+    session_row = get_or_create_session()
+    error = None
+    success = False
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        new_password = request.form.get("new_password", "")
+        account_row = A07Account.query.filter_by(username=username).first()
+        if account_row is None:
+            error = "No account with that username."
+        else:
+            account_row.password_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
+            session_row.username = account_row.username
+            # VULNERABLE: completing a password reset marks this session as
+            # already MFA-verified -- the code-entry step (the actual
+            # second factor) is never required at all after a reset,
+            # silently disabling MFA protection for the account.
+            session_row.mfa_verified = True
+            db.session.commit()
+            success = True
+    return _render(
+        "a07_auth_failures/mfa_forgot_password.html", session_row, error=error, success=success
+    )
