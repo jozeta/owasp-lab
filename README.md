@@ -15,22 +15,31 @@ is, why it matters, how it's exploited, real-world impact) plus multiple graduat
 examples (Easy → Medium → Hard) that are genuinely exploitable, not simulated.
 
 Currently implemented: **A01 Broken Access Control** (IDOR, missing function-level
-authorization, mass assignment / role escalation), **A02 Cryptographic Failures**
-(leaked credential dump, weak ECB encryption, predictable password-reset token),
+authorization, mass assignment / role escalation, IDOR on a password-change API,
+CSRF-based email-address takeover), **A02 Cryptographic Failures**
+(leaked credential dump, weak ECB encryption, predictable password-reset token,
+reset token leaked via the Referer header, reset token leaked in an API response),
 **A03 Injection** (SQL injection auth bypass, UNION-based exfiltration, reflected XSS,
 blind time-based SQLi, error-based SQLi, OS command injection, SQL injection escalating
 to remote code execution, stored XSS, XXE file disclosure, XXE SSRF),
 **A04 Insecure Design** (unlimited coupon reuse, negative-quantity price manipulation,
-multi-step checkout bypass), **A05 Security Misconfiguration** (exposed database backup,
+multi-step checkout bypass, password-reset poisoning via the Host header),
+**A05 Security Misconfiguration** (exposed database backup,
 directory listing, verbose error disclosure, permissive CORS with credentials, exposed
-debug console, forgotten admin panel with default credentials), **A06 Vulnerable
+debug console, forgotten admin panel with default credentials, clickjacking on a
+sensitive action page), **A06 Vulnerable
 and Outdated Components** (component version disclosure, outdated JS library detection,
 jQuery DOM XSS via a real CVE, jQuery XSS chained to session-token theft, Lodash
 prototype pollution via a real CVE, prototype pollution bypassing a client-side access
 check), **A07 Identification and Authentication Failures** (no rate limiting
 enables brute force, credential stuffing across multiple accounts, session
 identifier exposed in a URL, session not invalidated on logout, full
-session fixation, bypassable multi-factor authentication), **A08
+session fixation, bypassable multi-factor authentication, an MFA
+backdoor magic value, an MFA code leaked through a debug API field, MFA
+code reuse, MFA code not bound to its session, MFA brute force with no
+rate limiting, password reset via username-whitespace collision,
+account takeover via Unicode normalization, password reset silently
+disabling 2FA, CSRF on disabling 2FA), **A08
 Software and Data Integrity Failures** (pickle cart tampering, pickle
 deserialization RCE, unsigned plugin content trust, unsigned plugin
 installation leading to RCE, unchecked signature on a preferences cookie,
@@ -101,13 +110,13 @@ provided) or by clearing your browser's cookies for this site.
 
 | Category | Status | Examples |
 | --- | --- | --- |
-| A01 Broken Access Control | Implemented | IDOR (Easy), Hidden Admin Panel (Medium), Mass Assignment Role Escalation (Hard) |
-| A02 Cryptographic Failures | Implemented | Leaked Credential Dump (Easy), Weak Encryption / ECB Mode (Medium), Predictable Password Reset Token (Hard) |
+| A01 Broken Access Control | Implemented | IDOR (Easy), IDOR on Password-Change API (Medium), Hidden Admin Panel (Medium), Mass Assignment Role Escalation (Hard), Account Takeover via CSRF (Email Change) (Medium) |
+| A02 Cryptographic Failures | Implemented | Leaked Credential Dump (Easy), Weak Encryption / ECB Mode (Medium), Predictable Password Reset Token (Hard), Reset Token Leaked in API Response (Easy), Reset Token Leaked via Referrer Header (Medium) |
 | A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Error-Based SQLi (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), SQLi to RCE (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard) |
-| A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Negative Quantity Price Manipulation (Medium), Multi-Step Checkout Bypass (Hard) |
-| A05 Security Misconfiguration | Implemented | Exposed Database Backup File (Easy), Directory Listing Exposed (Easy), Verbose Error Message Disclosure (Medium), Permissive CORS with Credentials (Medium), Exposed Debug Console (Hard), Forgotten Admin Panel with Default Credentials (Hard) |
+| A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Negative Quantity Price Manipulation (Medium), Multi-Step Checkout Bypass (Hard), Password Reset Poisoning via Host Header (Hard) |
+| A05 Security Misconfiguration | Implemented | Exposed Database Backup File (Easy), Directory Listing Exposed (Easy), Verbose Error Message Disclosure (Medium), Permissive CORS with Credentials (Medium), Exposed Debug Console (Hard), Forgotten Admin Panel with Default Credentials (Hard), Clickjacking on a Sensitive Action Page (Easy) |
 | A06 Vulnerable and Outdated Components | Implemented | Component Version Disclosure (Easy), Outdated Vulnerable JS Library Detection (Easy), jQuery DOM XSS via Vulnerable htmlPrefilter (Medium), Lodash Prototype Pollution via _.defaultsDeep() (Medium), jQuery DOM XSS Chained to Session Token Theft (Hard), Prototype Pollution Bypasses a Client-Side Access Check (Hard) |
-| A07 Identification and Authentication Failures | Implemented | No Rate Limiting Enables Brute Force (Easy), Credential Stuffing Across Multiple Accounts (Medium), Session Identifier Exposed in URL (Easy), Session Not Invalidated on Logout (Medium), Session Fixation (Hard), Bypassable Multi-Factor Authentication (Hard) |
+| A07 Identification and Authentication Failures | Implemented | No Rate Limiting Enables Brute Force (Easy), Credential Stuffing Across Multiple Accounts (Medium), Session Identifier Exposed in URL (Easy), Session Not Invalidated on Logout (Medium), Session Fixation (Hard), MFA Bypass via Magic/Null Value (Easy), MFA Code Leaked to Client (Easy), MFA Code Reusability (Medium), MFA Brute-Force (Medium), Bypassable Multi-Factor Authentication (Hard), MFA Code Not Bound to Session (Hard), Password Reset Silently Disables 2FA (Medium), Password Reset via Username Collision (Hard), Account Takeover via Unicode Normalization (Hard), CSRF on Disabling 2FA (Medium) |
 | A08 Software and Data Integrity Failures | Implemented | Pickle Cart Tampering (Easy), Unsigned Plugin Content Trust (Medium), Unchecked Signature on Preferences Cookie (Easy), JWT alg:none Signature Bypass (Medium), Pickle Deserialization RCE (Hard), Unsigned Plugin Installation Leads to RCE (Hard) |
 | A09 Security Logging and Monitoring Failures | Implemented | Failed Login Attempts Never Logged (Easy), High-Value Admin Action With No Audit Trail (Medium), Sensitive Data Leaked Into Log Files (Easy), Unauthenticated Log File Exposure (Hard), No Alert Threshold for Repeated Failures (Medium), Attack Signature Logged But Never Flagged (Hard) |
 | A10 Server-Side Request Forgery | Implemented | Webhook Tester Reaches Internal Metadata Endpoint (Easy), Same Fetcher Enables Internal Port Scanning (Medium), PDF Generator Reads Local Files via file:// URL (Easy), Alternate IP Representation Bypasses a Naive Blocklist (Medium), Open Redirect Bypasses a Trusted-Domain Allowlist (Hard) |
