@@ -2052,6 +2052,17 @@ def test_a_completely_unrelated_origin_is_still_rejected(client):
     )
     assert response.status_code == 200
     assert "Access-Control-Allow-Origin" not in response.headers
+
+
+def test_explanation_page_renders_html(client):
+    # Proves ExampleNav.endpoint (cors_origin_regex_bypass) genuinely
+    # renders the HTML explanation page, not the raw JSON API -- the
+    # exact convention a Task 6 fix-round established after a reviewer
+    # caught an endpoint wired directly to a JSON route.
+    response = client.get("/a05/cors-origin-regex-bypass")
+    assert response.status_code == 200
+    assert response.content_type.startswith("text/html")
+    assert b"Origin Allowlist Regex Bypass" in response.data
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -2238,7 +2249,7 @@ Insert immediately after it (before `debug-console-rce`):
 - [ ] **Step 6: Run tests to verify they pass**
 
 Run: `.venv/bin/pytest tests/test_a05_cors_origin_regex_bypass.py -v`
-Expected: PASS (4 passed)
+Expected: PASS (5 passed)
 
 - [ ] **Step 7: Run the full test suite**
 
