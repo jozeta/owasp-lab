@@ -18,3 +18,12 @@ def test_client_supplied_zero_shipping_cost_is_trusted_under_threshold(client):
     assert response.status_code == 200
     assert b"$29.99" in response.data
     assert b"Free shipping applied" in response.data
+
+
+def test_button_label_matches_what_it_submits(client):
+    response = client.get("/a04/shipping-select")
+    assert response.status_code == 200
+    # Initial state: shipping_cost_cents=599 will be submitted, so the button
+    # should invite the user toward the free-shipping exploit, not claim to
+    # already be selecting it.
+    assert b"Select Standard Shipping" in response.data

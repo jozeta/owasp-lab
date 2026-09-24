@@ -295,3 +295,9 @@ def loyalty_convert():
         balance_display=_format_cents(balance_cents),
         error=error,
     )
+
+
+@a04_bp.route("/loyalty-convert/reset", methods=["POST"])
+def loyalty_convert_reset():
+    session.pop("a04_store_credit_cents", None)
+    return redirect(url_for("a04_insecure_design.loyalty_convert"))

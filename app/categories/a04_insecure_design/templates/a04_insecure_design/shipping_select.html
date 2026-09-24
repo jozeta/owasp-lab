@@ -68,7 +68,7 @@ total_cents = DEMO_PRODUCT_PRICE_CENTS + shipping_cost_cents
 <form method="post" class="d-flex gap-2">
   <input type="hidden" name="shipping_cost_cents" value="{{ '0' if free_shipping_applied else '599' }}">
   <button type="submit" class="btn btn-primary">
-    {{ "Select Standard Shipping ($5.99)" if free_shipping_applied else "Select Free Shipping" }}
+    {{ "Select Free Shipping" if free_shipping_applied else "Select Standard Shipping ($5.99)" }}
   </button>
 </form>
 {% endblock %}

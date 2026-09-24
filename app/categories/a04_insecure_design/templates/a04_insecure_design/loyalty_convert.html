@@ -65,8 +65,11 @@ balance_cents += credited_cents
 {% block live_example %}
 <p>Store credit balance: {{ balance_display }}</p>
 {% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
-<form method="post" class="d-flex gap-2">
+<form method="post" class="d-flex gap-2 mb-2">
   <input type="number" class="form-control" name="points" value="1" min="1">
   <button type="submit" class="btn btn-primary">Convert points to store credit</button>
+</form>
+<form method="post" action="{{ url_for('a04_insecure_design.loyalty_convert_reset') }}">
+  <button type="submit" class="btn btn-outline-secondary btn-sm">Start over</button>
 </form>
 {% endblock %}
