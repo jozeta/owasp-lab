@@ -1,4 +1,5 @@
 import os
+import re
 import secrets
 import traceback
 
@@ -253,3 +254,34 @@ def cors_wildcard_internal_pivot():
     # page, never directly at a raw JSON route, so the app's standard
     # explanation UI and "mark as done" flow both work.
     return render_template("a05_security_misconfiguration/cors_wildcard_internal_pivot.html")
+
+
+PARTNER_PORTAL_ORIGIN_PATTERN = re.compile(r"https://.*example\.com")
+
+
+@a05_bp.route("/api/partner-portal")
+def partner_portal_api():
+    resp = jsonify({"partner_deals": ["Q4 volume discount", "Priority support tier"]})
+    origin = request.headers.get("Origin")
+    # VULNERABLE: this regex has no end-anchor ($), so re.match only
+    # requires the STRING TO START WITH "https://" followed by anything,
+    # then contain "example.com" anywhere after that -- it never confirms
+    # the origin actually ENDS at example.com. "https://evilexample.com"
+    # satisfies "https://" + ".*" + "example.com" just as validly as the
+    # real "https://partner.example.com" does.
+    if origin and PARTNER_PORTAL_ORIGIN_PATTERN.match(origin):
+        resp.headers["Access-Control-Allow-Origin"] = origin
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+    return resp
+
+
+@a05_bp.route("/cors-origin-regex-bypass")
+def cors_origin_regex_bypass():
+    # This is the example's own explanation/exploitation page -- separate
+    # from the vulnerable JSON API above (partner_portal_api), matching
+    # the established convention this app already uses for cors-credentials
+    # (its own HTML page) vs. loyalty_status_api (the vulnerable JSON API
+    # it demonstrates). ExampleNav.endpoint always points at the HTML
+    # page, never directly at a raw JSON route, so the app's standard
+    # explanation UI and "mark as done" flow both work.
+    return render_template("a05_security_misconfiguration/cors_origin_regex_bypass.html")

@@ -92,6 +92,19 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="cors-origin-regex-bypass",
+                title="CORS: Origin Allowlist Regex Bypass",
+                group="Insecure Response Configuration",
+                difficulty="Hard",
+                endpoint="a05_security_misconfiguration.cors_origin_regex_bypass",
+                hints=[
+                    "This API is meant to trust only real partner.example.com-style origins. Try an origin that CONTAINS the trusted domain as a substring but isn't actually a subdomain of it — e.g. https://evilexample.com.",
+                    "The origin-validation regex has no end-anchor — it only checks that the origin starts with https:// and contains example.com somewhere after that, never that it actually ENDS there.",
+                    "curl -s http://127.0.0.1:5000/a05/api/partner-portal -H 'Origin: https://evilexample.com' — the response reflects that origin with credentials enabled, even though evilexample.com was never a real partner domain.",
+                    "This is the 'Expanding the Origin' technique: a badly implemented regular expression intended to validate an origin allowlist accepts substrings or prefixes it shouldn't, because the pattern was never anchored to the full string. A real attacker just needs to register any domain containing the trusted substring.",
+                ],
+            ),
+            ExampleNav(
                 id="debug-console-rce",
                 title="Exposed Debug Console",
                 group="Exposed Debug & Admin Interfaces",
