@@ -22,3 +22,13 @@ def test_no_authentication_required_at_all(client):
     response = client.get("/a05/api/internal-metrics")
     assert response.status_code == 200
     assert b"active_connections" in response.data
+
+
+def test_explanation_page_renders_html(client):
+    # Proves ExampleNav.endpoint (cors_wildcard_internal_pivot) genuinely
+    # renders the HTML explanation page, not the raw JSON API -- the
+    # exact convention this task's own fix-round is reinforcing.
+    response = client.get("/a05/cors-wildcard-internal-pivot")
+    assert response.status_code == 200
+    assert response.content_type.startswith("text/html")
+    assert b"CORS: Wildcard Origin, Internal Network Pivot" in response.data
