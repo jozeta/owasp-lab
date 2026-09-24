@@ -1,4 +1,4 @@
-def test_cors_null_origin_page_renders(client):
+def test_partner_directory_api_responds_200(client):
     response = client.get("/a05/api/partner-directory")
     assert response.status_code == 200
 

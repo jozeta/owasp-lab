@@ -1,4 +1,4 @@
-def test_internal_metrics_page_renders(client):
+def test_internal_metrics_api_responds_200(client):
     response = client.get("/a05/api/internal-metrics")
     assert response.status_code == 200
 

@@ -1,4 +1,4 @@
-def test_partner_portal_page_renders(client):
+def test_partner_portal_api_responds_200(client):
     response = client.get("/a05/api/partner-portal")
     assert response.status_code == 200
 
