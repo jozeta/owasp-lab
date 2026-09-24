@@ -1,0 +1,71 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "CORS: Origin Allowlist Regex Bypass" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  This "partner portal" API is meant to allow only genuine
+  <code>https://partner.example.com</code>-style origins, checked with
+  the regular expression <code>https://.*example\.com</code>. The
+  pattern has no end-anchor (<code>$</code>), so it only requires the
+  origin to start with <code>https://</code> and contain
+  <code>example.com</code> <em>somewhere</em> after that — it never
+  confirms the origin actually <em>ends</em> at <code>example.com</code>.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Try an origin that contains the trusted domain as a substring but
+  isn't actually that domain — e.g. <code>https://evilexample.com</code>
+  (no dot between "evil" and "example"). If it's accepted, the allowlist
+  regex isn't properly anchored.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<pre><code class="language-bash">curl -s http://127.0.0.1:5001/a05/api/partner-portal -H "Origin: https://evilexample.com"</code></pre>
+<p>
+  The response reflects
+  <code>Access-Control-Allow-Origin: https://evilexample.com</code> with
+  <code>Access-Control-Allow-Credentials: true</code>, even though
+  <code>evilexample.com</code> is not a real partner domain — a regex
+  meant to match only <code>example.com</code> matches anything
+  <em>containing</em> that substring after the scheme, with nothing
+  requiring the string to actually end there. An attacker who registers
+  any domain ending in <code>example.com</code> as a substring (or, with
+  a different unescaped-dot variant of this same bug, a domain like
+  <code>apiXexample.com</code> where the dot in the pattern was never
+  escaped) gains a fully credentialed cross-origin channel to this API.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}PARTNER_PORTAL_ORIGIN_PATTERN = re.compile(r"https://.*example\.com")
+
+origin = request.headers.get("Origin")
+# VULNERABLE: no end-anchor ($) -- matches "https://evilexample.com" just
+# as validly as "https://partner.example.com"
+if origin and PARTNER_PORTAL_ORIGIN_PATTERN.match(origin):
+    resp.headers["Access-Control-Allow-Origin"] = origin
+    resp.headers["Access-Control-Allow-Credentials"] = "true"
+{% endblock %}
+
+{% block secure_code %}PARTNER_PORTAL_ORIGIN_PATTERN = re.compile(r"^https://([a-z0-9-]+\.)?example\.com$")
+
+origin = request.headers.get("Origin")
+# Anchored at both ends, and the subdomain segment can't contain a
+# literal dot itself -- "evilexample.com" and "apiXexample.com" both fail
+if origin and PARTNER_PORTAL_ORIGIN_PATTERN.match(origin):
+    resp.headers["Access-Control-Allow-Origin"] = origin
+    resp.headers["Access-Control-Allow-Credentials"] = "true"
+{% endblock %}
+
+{% block live_example %}
+<p class="text-muted">
+  This is a JSON API endpoint with no HTML form — use curl as shown in
+  the Exploitation section above:
+  <code>GET /a05/api/partner-portal</code> with a forged
+  <code>Origin</code> header.
+</p>
+{% endblock %}

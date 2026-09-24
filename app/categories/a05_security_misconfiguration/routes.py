@@ -1,4 +1,5 @@
 import os
+import re
 import secrets
 import traceback
 
@@ -188,3 +189,99 @@ def delete_account():
 @a05_bp.route("/delete-account-clickjack-demo")
 def delete_account_clickjack_demo():
     return render_template("a05_security_misconfiguration/delete_account_clickjack_demo.html")
+
+
+PARTNER_DIRECTORY = [
+    {"name": "Acme Logistics", "contact": "ops@acme-logistics.example"},
+    {"name": "Nimbus Freight", "contact": "dispatch@nimbus-freight.example"},
+]
+
+
+@a05_bp.route("/api/partner-directory")
+def partner_directory_api():
+    resp = jsonify({"partners": PARTNER_DIRECTORY})
+    origin = request.headers.get("Origin")
+    # VULNERABLE: explicitly whitelists the literal "null" origin -- a
+    # leftover from testing this endpoint via a sandboxed iframe or a
+    # local file during development that was never removed. A normal,
+    # specific attacker origin gets no CORS headers at all; only "null"
+    # does, which is exactly what makes this a distinct, narrower flaw
+    # than the existing origin-reflection example.
+    if origin == "null":
+        resp.headers["Access-Control-Allow-Origin"] = "null"
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+    return resp
+
+
+@a05_bp.route("/cors-null-origin-demo")
+def cors_null_origin_demo():
+    return render_template("a05_security_misconfiguration/cors_null_origin_demo.html")
+
+
+@a05_bp.route("/cors-null-origin")
+def cors_null_origin():
+    return render_template("a05_security_misconfiguration/cors_null_origin.html")
+
+
+@a05_bp.route("/api/internal-metrics")
+def internal_metrics_api():
+    # VULNERABLE: no authentication of any kind (no session check, no API
+    # key) AND a wildcard CORS header, on an endpoint that returns
+    # sensitive-looking internal data. The wildcard itself doesn't leak
+    # cookies (browsers never attach credentials to a wildcard-CORS
+    # request) -- the real vulnerability is the missing auth check, and
+    # the permissive CORS header is what lets an external attacker's page
+    # make this request at all instead of the browser blocking it
+    # outright as cross-origin.
+    resp = jsonify(
+        {
+            "active_connections": 1842,
+            "internal_hostname": "metrics-collector-03.internal.owasp-lab.local",
+            "queue_depth": 57,
+        }
+    )
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp
+
+
+@a05_bp.route("/cors-wildcard-internal-pivot")
+def cors_wildcard_internal_pivot():
+    # This is the example's own explanation/exploitation page -- separate
+    # from the vulnerable JSON API above (internal_metrics_api), matching
+    # the established convention this app already uses for cors-credentials
+    # (its own HTML page) vs. loyalty_status_api (the vulnerable JSON API
+    # it demonstrates). ExampleNav.endpoint always points at the HTML
+    # page, never directly at a raw JSON route, so the app's standard
+    # explanation UI and "mark as done" flow both work.
+    return render_template("a05_security_misconfiguration/cors_wildcard_internal_pivot.html")
+
+
+PARTNER_PORTAL_ORIGIN_PATTERN = re.compile(r"https://.*example\.com")
+
+
+@a05_bp.route("/api/partner-portal")
+def partner_portal_api():
+    resp = jsonify({"partner_deals": ["Q4 volume discount", "Priority support tier"]})
+    origin = request.headers.get("Origin")
+    # VULNERABLE: this regex has no end-anchor ($), so re.match only
+    # requires the STRING TO START WITH "https://" followed by anything,
+    # then contain "example.com" anywhere after that -- it never confirms
+    # the origin actually ENDS at example.com. "https://evilexample.com"
+    # satisfies "https://" + ".*" + "example.com" just as validly as the
+    # real "https://partner.example.com" does.
+    if origin and PARTNER_PORTAL_ORIGIN_PATTERN.match(origin):
+        resp.headers["Access-Control-Allow-Origin"] = origin
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+    return resp
+
+
+@a05_bp.route("/cors-origin-regex-bypass")
+def cors_origin_regex_bypass():
+    # This is the example's own explanation/exploitation page -- separate
+    # from the vulnerable JSON API above (partner_portal_api), matching
+    # the established convention this app already uses for cors-credentials
+    # (its own HTML page) vs. loyalty_status_api (the vulnerable JSON API
+    # it demonstrates). ExampleNav.endpoint always points at the HTML
+    # page, never directly at a raw JSON route, so the app's standard
+    # explanation UI and "mark as done" flow both work.
+    return render_template("a05_security_misconfiguration/cors_origin_regex_bypass.html")

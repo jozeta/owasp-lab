@@ -1,0 +1,72 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Discount Code Stacking via Parameter Pollution" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A04{% endblock %}
+
+{% block explanation %}
+<p>
+  Two valid, independent coupon codes exist: <code>WELCOME10</code>
+  ($5.00 off) and <code>SAVE20</code> ($10.00 off). The form has a single
+  "code" input, implying only one code applies per order — but the
+  server reads <em>every</em> submitted <code>code</code> value and
+  applies a discount for each one present, instead of validating exactly
+  one. This is different from this category's existing "unlimited coupon
+  reuse" example, which is about resubmitting the <em>same</em> code
+  repeatedly over time — this one is about submitting <em>multiple
+  distinct</em> codes in a single request.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit the form with the code field duplicated — most HTTP clients let
+  you send the same parameter name twice in one request body. If both
+  discounts apply at once, the server is reading a list of values instead
+  of validating a single code.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<pre><code class="language-bash">curl -X POST http://127.0.0.1:5001/a04/coupon-stack -d "code=WELCOME10&amp;code=SAVE20"</code></pre>
+<p>
+  Both the $5.00 and $10.00 discounts apply in one single order — a
+  combination the storefront never intends to offer, since each code is
+  meant to be used on its own.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}submitted_codes = request.form.getlist("code")
+for submitted_code in submitted_codes:
+    # VULNERABLE: applies a discount for EVERY submitted code, not just one
+    if submitted_code == COUPON_CODE:
+        discount_cents += COUPON_DISCOUNT_CENTS
+    elif submitted_code == SAVE20_CODE:
+        discount_cents += SAVE20_DISCOUNT_CENTS
+{% endblock %}
+
+{% block secure_code %}submitted_code = request.form.get("code", "").strip()  # .get(), not .getlist()
+if submitted_code == COUPON_CODE:
+    discount_cents = COUPON_DISCOUNT_CENTS
+elif submitted_code == SAVE20_CODE:
+    discount_cents = SAVE20_DISCOUNT_CENTS
+# only ever one discount applied, no matter how many "code" fields are submitted
+{% endblock %}
+
+{% block live_example %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">{{ product_name }}</h5>
+    <p class="card-text">Price: {{ product_price_display }}</p>
+    {% if applied_codes %}
+    <p class="card-text">Applied codes: {{ applied_codes|join(', ') }}</p>
+    <p class="card-text">Discount: {{ discount_display }}</p>
+    {% endif %}
+    <p class="card-text"><strong>Total: {{ total_display }}</strong></p>
+  </div>
+</div>
+{% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
+<form method="post" class="d-flex gap-2">
+  <input type="text" class="form-control" name="code" placeholder="WELCOME10 or SAVE20">
+  <button type="submit" class="btn btn-primary">Apply code</button>
+</form>
+{% endblock %}

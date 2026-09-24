@@ -1,0 +1,75 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Store-Credit Rounding Exploit" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A04{% endblock %}
+
+{% block explanation %}
+<p>
+  Converting loyalty points to store credit uses a rate of 0.3 cents per
+  point — but the conversion always rounds the credited amount
+  <strong>up</strong> to a minimum of 1 cent, even converting a single
+  point (truly worth 0.3¢). There's no minimum-conversion-amount enforced
+  and no rate limit on repeated conversions. Repeating a 1-point
+  conversion many times credits 1 cent per call regardless of the true
+  0.3¢ value each point should be worth — creating real money that was
+  never actually present in the true fractional value.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Convert 1 point and check the credited amount. If it's a full cent
+  (rather than a fraction that gets truncated toward zero, or a rejected
+  "below minimum" error), the rounding favors the customer with no floor.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  This directly adapts a real HackerOne-reported bug in a cryptocurrency
+  platform's internal transfer system, where a sub-minimum-precision
+  transfer rounded up on the receiving side without deducting anything
+  equivalent from the sender:
+</p>
+<pre><code class="language-bash">for i in $(seq 1 100); do
+  curl -s -X POST http://127.0.0.1:5001/a04/loyalty-convert -b cookies.txt -c cookies.txt -d "points=1" &gt; /dev/null
+done
+curl -s http://127.0.0.1:5001/a04/loyalty-convert -b cookies.txt | grep "Store credit balance"</code></pre>
+<p>
+  100 conversions of a point genuinely worth 0.3¢ each (true total value:
+  30¢) nets a full $1.00 of store credit — 70 cents of pure rounding
+  profit, entirely automatable since nothing limits how many times the
+  conversion can be repeated.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}POINTS_TO_CENTS_RATE = 0.3
+
+true_value_cents = points * POINTS_TO_CENTS_RATE
+# VULNERABLE: always rounds UP to at least 1 cent, no minimum
+# conversion amount, no rate limit on repeated conversions
+credited_cents = max(1, round(true_value_cents))
+balance_cents += credited_cents
+{% endblock %}
+
+{% block secure_code %}POINTS_TO_CENTS_RATE = 0.3
+MINIMUM_CONVERSION_POINTS = 10  # anything smaller truncates to 0, not rounds up
+
+true_value_cents = points * POINTS_TO_CENTS_RATE
+if points &lt; MINIMUM_CONVERSION_POINTS:
+    abort(400)  # reject conversions too small to represent precisely
+credited_cents = int(true_value_cents)  # truncate, never round up
+balance_cents += credited_cents
+{% endblock %}
+
+{% block live_example %}
+<p>Store credit balance: {{ balance_display }}</p>
+{% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
+<form method="post" class="d-flex gap-2 mb-2">
+  <input type="number" class="form-control" name="points" value="1" min="1">
+  <button type="submit" class="btn btn-primary">Convert points to store credit</button>
+</form>
+<form method="post" action="{{ url_for('a04_insecure_design.loyalty_convert_reset') }}">
+  <button type="submit" class="btn btn-outline-secondary btn-sm">Start over</button>
+</form>
+{% endblock %}
