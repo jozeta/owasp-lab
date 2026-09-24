@@ -29,6 +29,19 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="free-shipping-trusted-flag",
+                title="Free Shipping via Client-Trusted Flag",
+                group="Business Logic Abuse",
+                difficulty="Easy",
+                endpoint="a04_insecure_design.shipping_select",
+                hints=[
+                    "This checkout step says free shipping only applies over $50. Look at the form's HTML source — where does the actual shipping cost the server charges come from?",
+                    "The shipping cost is a hidden form field the client submits directly. The server never checks the real order total against the $50 threshold before using whatever cost value you send.",
+                    "Submit the form with the hidden shipping_cost_cents field edited to 0, even though the cart total is nowhere near $50 — e.g. curl -X POST http://127.0.0.1:5000/a04/shipping-select -d 'shipping_cost_cents=0'.",
+                    "The confirmed total reflects free shipping anyway — the 'over $50' rule exists only in the page's displayed copy, never enforced in the code that processes the submission.",
+                ],
+            ),
+            ExampleNav(
                 id="negative-quantity",
                 title="Negative Quantity Price Manipulation",
                 group="Business Logic Abuse",

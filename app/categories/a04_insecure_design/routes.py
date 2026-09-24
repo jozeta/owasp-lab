@@ -143,3 +143,27 @@ def forgot_password():
     return render_template(
         "a04_insecure_design/forgot_password.html", reset_link=reset_link, email=email
     )
+
+
+@a04_bp.route("/shipping-select", methods=["GET", "POST"])
+def shipping_select():
+    shipping_cost_cents = 599
+    if request.method == "POST":
+        # VULNERABLE: the page's own copy says "free shipping on orders
+        # over $50" but the server trusts whatever shipping_cost_cents
+        # value the client submits -- it never checks the real order
+        # total ($29.99, well under $50) against that threshold before
+        # using the submitted cost.
+        try:
+            shipping_cost_cents = int(request.form.get("shipping_cost_cents", "599"))
+        except (ValueError, OverflowError):
+            shipping_cost_cents = 599
+    total_cents = DEMO_PRODUCT_PRICE_CENTS + shipping_cost_cents
+    return render_template(
+        "a04_insecure_design/shipping_select.html",
+        product_name=DEMO_PRODUCT_NAME,
+        product_price_display=_format_cents(DEMO_PRODUCT_PRICE_CENTS),
+        shipping_display=_format_cents(shipping_cost_cents),
+        total_display=_format_cents(total_cents),
+        free_shipping_applied=shipping_cost_cents == 0,
+    )

@@ -1,0 +1,74 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Free Shipping via Client-Trusted Flag" %}
+{% set example_difficulty = "Easy" %}
+{% block title %}{{ example_title }} — A04{% endblock %}
+
+{% block explanation %}
+<p>
+  This checkout step says "Free shipping is only available on orders
+  over $50" — but the shipping cost that actually gets charged comes
+  from a hidden form field the client submits, and the server uses that
+  value directly. Nothing on the server ever checks the real order total
+  ($29.99, well under $50) against the $50 threshold before honoring a
+  submitted cost of $0.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  View this page's HTML source and find the hidden
+  <code>shipping_cost_cents</code> field the form submits alongside your
+  selection. A server that actually enforced the "$50 minimum" rule would
+  compute the shipping cost itself from the real order total, not accept
+  a client-supplied number for it.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Submit the form with the hidden field edited to <code>0</code>, even
+  though the cart total is nowhere near $50:
+</p>
+<pre><code class="language-bash">curl -X POST http://127.0.0.1:5001/a04/shipping-select -d "shipping_cost_cents=0"</code></pre>
+<p>
+  The confirmed total reflects free shipping anyway — the "over $50"
+  rule exists only in the page's displayed copy, never in the code that
+  processes the submission.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}shipping_cost_cents = int(request.form.get("shipping_cost_cents", "599"))
+# VULNERABLE: no check that the real order total actually meets the
+# free-shipping threshold before honoring a submitted cost of 0
+total_cents = DEMO_PRODUCT_PRICE_CENTS + shipping_cost_cents
+{% endblock %}
+
+{% block secure_code %}FREE_SHIPPING_THRESHOLD_CENTS = 5000
+STANDARD_SHIPPING_CENTS = 599
+
+# Shipping cost is computed server-side from the real order total --
+# never trusted from the client
+shipping_cost_cents = 0 if DEMO_PRODUCT_PRICE_CENTS >= FREE_SHIPPING_THRESHOLD_CENTS else STANDARD_SHIPPING_CENTS
+total_cents = DEMO_PRODUCT_PRICE_CENTS + shipping_cost_cents
+{% endblock %}
+
+{% block live_example %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">{{ product_name }}</h5>
+    <p class="card-text">Price: {{ product_price_display }}</p>
+    <p class="card-text text-muted small">Free shipping is only available on orders over $50.</p>
+    <p class="card-text">Shipping: {{ shipping_display }}</p>
+    <p class="card-text"><strong>Total: {{ total_display }}</strong></p>
+    {% if free_shipping_applied %}
+    <p class="text-success">Free shipping applied.</p>
+    {% endif %}
+  </div>
+</div>
+<form method="post" class="d-flex gap-2">
+  <input type="hidden" name="shipping_cost_cents" value="{{ '0' if free_shipping_applied else '599' }}">
+  <button type="submit" class="btn btn-primary">
+    {{ "Select Standard Shipping ($5.99)" if free_shipping_applied else "Select Free Shipping" }}
+  </button>
+</form>
+{% endblock %}
