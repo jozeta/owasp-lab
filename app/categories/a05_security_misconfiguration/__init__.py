@@ -70,7 +70,7 @@ CATEGORIES.append(
                 title="CORS: Null Origin Whitelisted",
                 group="Insecure Response Configuration",
                 difficulty="Medium",
-                endpoint="a05_security_misconfiguration.partner_directory_api",
+                endpoint="a05_security_misconfiguration.cors_null_origin",
                 hints=[
                     "This endpoint's CORS behavior is different from the other CORS example in this app — it doesn't reflect just any origin. Try requesting it with an Origin header of the literal string 'null'.",
                     "The server explicitly whitelists the literal 'null' origin as if it were a real, specific trusted domain — a leftover from testing via a sandboxed iframe or local file during development.",

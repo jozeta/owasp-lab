@@ -25,3 +25,14 @@ def test_null_origin_demo_page_embeds_sandboxed_data_uri_iframe(client):
     assert response.status_code == 200
     assert b'sandbox="allow-scripts"' in response.data
     assert b"data:text/html" in response.data
+
+
+def test_cors_null_origin_explanation_page_renders(client):
+    # Verify that /a05/cors-null-origin renders the HTML explanation page,
+    # not the raw JSON API endpoint
+    response = client.get("/a05/cors-null-origin")
+    assert response.status_code == 200
+    # Check for the explanation page title
+    assert b"Null Origin" in response.data
+    # Ensure it's NOT raw JSON from the API
+    assert b'"partners"' not in response.data

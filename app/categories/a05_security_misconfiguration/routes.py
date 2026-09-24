@@ -215,3 +215,8 @@ def partner_directory_api():
 @a05_bp.route("/cors-null-origin-demo")
 def cors_null_origin_demo():
     return render_template("a05_security_misconfiguration/cors_null_origin_demo.html")
+
+
+@a05_bp.route("/cors-null-origin")
+def cors_null_origin():
+    return render_template("a05_security_misconfiguration/cors_null_origin.html")
