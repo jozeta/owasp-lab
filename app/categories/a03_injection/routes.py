@@ -14,6 +14,8 @@ from app.extensions import db
 
 XXE_SECRET_PATH = os.path.join(os.path.dirname(__file__), "xxe_secret.txt")
 CMD_SECRET_PATH = os.path.join(os.path.dirname(__file__), "cmd_secret.txt")
+ACCOUNT_RECOVERY_PIN = "7429"
+CSS_EXFIL_SESSION_KEY = "a03_css_exfil_log"
 
 
 class _HttpFetchingResolver(etree.Resolver):
@@ -500,3 +502,42 @@ def inventory_lookup():
         count=count,
         error=error,
     )
+
+
+@a03_bp.route("/theme-preview", methods=["GET", "POST"])
+def theme_preview():
+    custom_css = ""
+    if request.method == "POST":
+        # VULNERABLE: the submitted CSS is rendered verbatim with no
+        # sanitization, no disallowed-property filter, and no CSP header
+        # anywhere in this app to fall back on.
+        custom_css = request.form.get("custom_css", "")
+    return render_template(
+        "a03_injection/theme_preview.html",
+        custom_css=custom_css,
+        account_recovery_pin=ACCOUNT_RECOVERY_PIN,
+    )
+
+
+@a03_bp.route("/css-exfil-demo")
+def css_exfil_demo():
+    leaked = session.get(CSS_EXFIL_SESSION_KEY, [])
+    return render_template(
+        "a03_injection/css_exfil_demo.html",
+        account_recovery_pin=ACCOUNT_RECOVERY_PIN,
+        leaked=leaked,
+    )
+
+
+@a03_bp.route("/css-exfil-collector")
+def css_exfil_collector():
+    # VULNERABLE: accepts and stores whatever "leak" value arrives with
+    # zero validation that it corresponds to any real, correct guess and
+    # zero authentication -- proving the exfiltration channel itself is
+    # wide open, not just one lucky guess.
+    leak_value = request.args.get("leak", "")
+    if leak_value:
+        leaked = session.get(CSS_EXFIL_SESSION_KEY, [])
+        leaked.append(leak_value)
+        session[CSS_EXFIL_SESSION_KEY] = leaked
+    return Response(status=204)

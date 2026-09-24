@@ -1,0 +1,97 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "CSS Attribute-Selector Data Exfiltration via Profile Theme" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "customize your profile theme" feature accepts raw CSS and renders
+  it straight into a <code>&lt;style&gt;</code> block with no
+  sanitization at all -- no disallowed-property filter, no CSP header
+  anywhere in this app to fall back on. The same preview also happens to
+  render a hidden <code>account_recovery_pin</code> field. CSS isn't
+  usually thought of as an "interpreter" the way SQL or a shell is, but a
+  browser's CSS engine genuinely evaluates selectors and can trigger real
+  network requests when one matches -- and CSS is often allowed through a
+  Content-Security-Policy that blocks JavaScript outright, which is
+  exactly what makes this technique dangerous in practice.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit an attribute selector targeting the hidden PIN field's value,
+  paired with a <code>background-image</code> pointing at a URL you
+  control -- <a href="{{ url_for('a03_injection.css_exfil_demo') }}">see the live exfiltration demo</a>
+  to watch a real background-image request fire the instant the selector
+  matches.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  The theme preview below accepts any CSS you submit and injects it
+  verbatim. A CSS attribute selector like
+  <code>input[value^="7"]</code> matches any element whose
+  <code>value</code> attribute starts with <code>7</code> -- and pairing
+  that selector with a <code>background-image</code> rule makes the
+  browser issue a real HTTP request the instant it matches:
+</p>
+<pre>input[name="account_recovery_pin"][value^="7"] {
+  background-image: url(/a03/css-exfil-collector?leak=7);
+}</pre>
+<p>
+  <a href="{{ url_for('a03_injection.css_exfil_demo') }}">Open the live exfiltration demo</a>
+  to see this fire for real: a sandboxed iframe renders the real hidden
+  PIN alongside this exact rule, with JavaScript entirely disabled inside
+  the iframe (proving this needs no script execution at all) -- the
+  matching background-image request still fires, and the leaked digit
+  shows up in the "Exfiltrated so far" list below once you reload.
+</p>
+<p>
+  A real attacker doesn't know the PIN in advance. They inject one rule
+  per candidate digit (<code>value^="0"</code> through
+  <code>value^="9"</code>), each pointing at a differently-labeled
+  collector URL; whichever request actually arrives reveals the correct
+  first digit. Repeating this, extending the confirmed prefix by one more
+  digit each round, recovers the entire PIN -- the same character-by-character
+  oracle pattern as this lab's blind SQL and LDAP injection examples,
+  just driven by the CSS engine's selector matching instead of a database
+  boolean or a timing delay.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@a03_bp.route("/theme-preview", methods=["GET", "POST"])
+def theme_preview():
+    custom_css = request.form.get("custom_css", "") if request.method == "POST" else ""
+    return render_template("theme_preview.html", custom_css=custom_css, ...)
+# template: &lt;style&gt;{{ custom_css|safe }}&lt;/style&gt;  -- |safe disables
+# Jinja's escaping entirely, and no CSS sanitizer runs on custom_css at all
+{% endblock %}
+
+{% block secure_code %}# Don't render arbitrary user-supplied CSS at all -- offer a fixed set of
+# preset themes instead, or run genuinely untrusted CSS through a strict
+# allowlist parser that rejects any url(...) value outright, and serve
+# the page with a Content-Security-Policy that blocks style-src network
+# loads:
+# Content-Security-Policy: style-src 'self'
+{% endblock %}
+
+{% block live_example %}
+<form method="post" class="mb-3">
+  <div class="mb-2">
+    <label class="form-label">Custom theme CSS</label>
+    <textarea class="form-control" name="custom_css" rows="4" placeholder='input[value^="7"] { background: red; }'>{{ custom_css }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Save theme</button>
+</form>
+<style>{{ custom_css | safe }}</style>
+<div class="border rounded p-2">
+  <p class="mb-1">Profile preview:</p>
+  <input type="hidden" name="account_recovery_pin" value="{{ account_recovery_pin }}">
+  <p class="text-muted small mb-0">(the recovery PIN field above is hidden, matching a real profile page -- inspect the page source to confirm it's genuinely present)</p>
+</div>
+<p class="mt-3">
+  <a href="{{ url_for('a03_injection.css_exfil_demo') }}">Open the live exfiltration demo →</a>
+</p>
+{% endblock %}

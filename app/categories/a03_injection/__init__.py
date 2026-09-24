@@ -263,6 +263,20 @@ CATEGORIES.append(
                     "Repeating this character-by-character process recovers the entire hidden description value (a secret recovery code) purely from found/not-found responses, without the server ever showing you the value directly — slower than a direct leak, but fully automatable exactly like the blind SQLi technique elsewhere in this lab.",
                 ],
             ),
+            ExampleNav(
+                id="css-attribute-exfil",
+                title="CSS Attribute-Selector Data Exfiltration via Profile Theme",
+                group="CSS Injection",
+                difficulty="Hard",
+                endpoint="a03_injection.theme_preview",
+                hints=[
+                    "This 'customize your profile theme' feature renders whatever CSS you submit straight into the page, and the same page happens to contain a hidden account_recovery_pin field. CSS isn't usually thought of as something an attacker can 'inject' the way SQL or JavaScript can -- but a browser's CSS engine genuinely evaluates the rules you give it, including rules that can trigger a real network request.",
+                    "CSS has attribute selectors like input[value^=\"7\"], which match any element whose value attribute STARTS WITH \"7\". Pair a matching selector with a background-image rule, and the browser fetches that image URL the instant the selector matches -- turning a CSS rule into a signal an attacker-controlled server can observe.",
+                    "Open the live exfiltration demo linked from this page's Exploitation section: a sandboxed iframe (with JavaScript entirely disabled) renders the real hidden PIN alongside a CSS rule targeting the digit 7. Reload the demo page after the iframe loads -- the leaked digit shows up in the 'Exfiltrated so far' list, proving the request fired for real, with zero script execution involved.",
+                    "The collector endpoint (/a03/css-exfil-collector) that receives the leaked value has no authentication and never checks whether the value it's handed actually matches anything real -- it accepts and stores whatever arrives. That's the whole vulnerability: the channel itself is wide open, not just one specific CSS rule.",
+                    "A real attacker doesn't know the PIN in advance. They inject ten rules at once -- one per candidate digit 0 through 9, each pointing at a differently-labeled collector URL -- and whichever request actually arrives reveals the correct first digit. Repeating this, extending the confirmed prefix by one digit each round, recovers the entire PIN purely from which background-image requests fire, exactly the same character-by-character oracle pattern as this lab's blind SQL and LDAP injection examples.",
+                ],
+            ),
         ],
         seed_fn=seed_injection_data,
     )

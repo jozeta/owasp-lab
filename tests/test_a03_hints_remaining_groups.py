@@ -13,6 +13,7 @@ REMAINING_GROUP_IDS = [
     "ssti-blacklist-bypass",
     "ldap-directory-login",
     "ldap-directory-search",
+    "css-attribute-exfil",
 ]
 
 
