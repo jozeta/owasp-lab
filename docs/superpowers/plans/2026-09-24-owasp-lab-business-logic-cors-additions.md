@@ -725,7 +725,7 @@ Create `app/categories/a04_insecure_design/templates/a04_insecure_design/coupon_
 {% endblock %}
 
 {% block exploitation %}
-<pre><code class="language-bash">curl -X POST http://127.0.0.1:5001/a04/coupon-stack -d "code=WELCOME10&code=SAVE20"</code></pre>
+<pre><code class="language-bash">curl -X POST http://127.0.0.1:5001/a04/coupon-stack -d "code=WELCOME10&amp;code=SAVE20"</code></pre>
 <p>
   Both the $5.00 and $10.00 discounts apply in one single order — a
   combination the storefront never intends to offer, since each code is
@@ -1256,7 +1256,7 @@ Create `app/categories/a04_insecure_design/templates/a04_insecure_design/loyalty
   equivalent from the sender:
 </p>
 <pre><code class="language-bash">for i in $(seq 1 100); do
-  curl -s -X POST http://127.0.0.1:5001/a04/loyalty-convert -b cookies.txt -c cookies.txt -d "points=1" > /dev/null
+  curl -s -X POST http://127.0.0.1:5001/a04/loyalty-convert -b cookies.txt -c cookies.txt -d "points=1" &gt; /dev/null
 done
 curl -s http://127.0.0.1:5001/a04/loyalty-convert -b cookies.txt | grep "Store credit balance"</code></pre>
 <p>
