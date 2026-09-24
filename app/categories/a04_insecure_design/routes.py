@@ -10,6 +10,8 @@ DEMO_PRODUCT_NAME = "Wireless Mouse"
 DEMO_PRODUCT_PRICE_CENTS = 2999
 COUPON_CODE = "WELCOME10"
 COUPON_DISCOUNT_CENTS = 500
+SAVE20_CODE = "SAVE20"
+SAVE20_DISCOUNT_CENTS = 1000
 STOCK_COUNT = 3
 
 
@@ -192,4 +194,41 @@ def limited_stock_cart():
         stock_count=STOCK_COUNT,
         ordered_quantity=ordered_quantity,
         total_display=_format_cents(total_cents) if total_cents is not None else None,
+    )
+
+
+@a04_bp.route("/coupon-stack", methods=["GET", "POST"])
+def coupon_stack():
+    applied_codes = []
+    discount_cents = 0
+    error = None
+    if request.method == "POST":
+        # VULNERABLE: the form has a single "code" input, implying one
+        # code per order -- but this reads EVERY submitted "code" value
+        # (request.form.getlist, not request.form.get) and applies a
+        # discount for each one present, instead of validating exactly
+        # one. Submitting both codes as duplicate form fields in one
+        # request (HTTP parameter pollution) stacks both discounts.
+        submitted_codes = request.form.getlist("code")
+        if not submitted_codes:
+            error = "Enter a coupon code."
+        for submitted_code in submitted_codes:
+            submitted_code = submitted_code.strip()
+            if submitted_code == COUPON_CODE:
+                applied_codes.append(COUPON_CODE)
+                discount_cents += COUPON_DISCOUNT_CENTS
+            elif submitted_code == SAVE20_CODE:
+                applied_codes.append(SAVE20_CODE)
+                discount_cents += SAVE20_DISCOUNT_CENTS
+        if submitted_codes and not applied_codes:
+            error = "Invalid coupon code."
+    total_cents = max(0, DEMO_PRODUCT_PRICE_CENTS - discount_cents)
+    return render_template(
+        "a04_insecure_design/coupon_stack.html",
+        product_name=DEMO_PRODUCT_NAME,
+        product_price_display=_format_cents(DEMO_PRODUCT_PRICE_CENTS),
+        applied_codes=applied_codes,
+        discount_display=_format_cents(discount_cents),
+        total_display=_format_cents(total_cents),
+        error=error,
     )

@@ -66,6 +66,18 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="discount-stacking",
+                title="Discount Code Stacking via Parameter Pollution",
+                group="Business Logic Abuse",
+                difficulty="Medium",
+                endpoint="a04_insecure_design.coupon_stack",
+                hints=[
+                    "This form has a single coupon-code field, implying one code per order. What happens if you submit the SAME field name twice in one request, with two different valid codes?",
+                    "The server reads every submitted 'code' value (not just the first) and applies a discount for each one present — it never validates that exactly one code was submitted.",
+                    "Send both valid codes as duplicate form fields in one POST: curl -X POST http://127.0.0.1:5000/a04/coupon-stack -d 'code=WELCOME10&code=SAVE20' — both the $5.00 and $10.00 discounts apply at once, a combination the storefront never intends to offer.",
+                ],
+            ),
+            ExampleNav(
                 id="checkout-bypass",
                 title="Multi-Step Checkout Bypass",
                 group="Workflow Bypass",
