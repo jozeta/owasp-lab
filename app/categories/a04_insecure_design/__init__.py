@@ -116,6 +116,19 @@ CATEGORIES.append(
                     "This models a real class of bug: trusting unsigned client-side state as the sole proof of an active subscription, with the cancellation flow never reconciling that same piece of state.",
                 ],
             ),
+            ExampleNav(
+                id="rounding-exploit",
+                title="Store-Credit Rounding Exploit",
+                group="Rounding & Arithmetic Errors",
+                difficulty="Hard",
+                endpoint="a04_insecure_design.loyalty_convert",
+                hints=[
+                    "Convert 1 loyalty point to store credit and check the exact amount credited. This point is worth a fraction of a cent — does it round toward zero, or up to a full cent?",
+                    "Points convert at 0.3 cents each, but the credited amount always rounds UP to at least 1 cent, with no minimum conversion size enforced and no rate limit on repeating the conversion.",
+                    "Repeat the same 1-point conversion many times in a row (e.g. a loop of 100 requests) — each one credits 1 full cent regardless of the true 0.3-cent value, netting real money that was never actually present.",
+                    "This adapts a real HackerOne-reported bug in a cryptocurrency platform: automate 100 conversions of 1 point each and check the resulting balance — it reaches $1.00, not the true value of $0.30, purely from rounding favoring the customer with nothing throttling repetition.",
+                ],
+            ),
         ],
     )
 )

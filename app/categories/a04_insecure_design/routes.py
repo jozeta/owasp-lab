@@ -14,6 +14,7 @@ SAVE20_CODE = "SAVE20"
 SAVE20_DISCOUNT_CENTS = 1000
 STOCK_COUNT = 3
 PREMIUM_TIER_COOKIE = "a04_premium_tier"
+POINTS_TO_CENTS_RATE = 0.3
 
 
 def _format_cents(cents):
@@ -264,4 +265,33 @@ def premium_content():
     cancelled = session.get("a04_premium_cancelled", False)
     return render_template(
         "a04_insecure_design/premium_content.html", has_access=has_access, cancelled=cancelled
+    )
+
+
+@a04_bp.route("/loyalty-convert", methods=["GET", "POST"])
+def loyalty_convert():
+    error = None
+    if request.method == "POST":
+        try:
+            points = int(request.form.get("points", "0"))
+        except (ValueError, OverflowError):
+            points = 0
+        if points > 0:
+            true_value_cents = points * POINTS_TO_CENTS_RATE
+            # VULNERABLE: rounds UP to a minimum of 1 cent whenever the
+            # true fractional value is positive, with no minimum
+            # conversion amount enforced and no rate limit on repeated
+            # conversions -- a customer's balance never actually loses
+            # anything on the sending side of this "conversion", so
+            # repeating a tiny conversion many times mints real cents
+            # from a fractional value that should have rounded to zero.
+            credited_cents = max(1, round(true_value_cents))
+            session["a04_store_credit_cents"] = session.get("a04_store_credit_cents", 0) + credited_cents
+        else:
+            error = "Enter a positive number of points."
+    balance_cents = session.get("a04_store_credit_cents", 0)
+    return render_template(
+        "a04_insecure_design/loyalty_convert.html",
+        balance_display=_format_cents(balance_cents),
+        error=error,
     )

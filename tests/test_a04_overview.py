@@ -11,7 +11,7 @@ def test_a04_registered_in_nav(app):
 
     a04 = next(c for c in CATEGORIES if c.id == "a04_insecure_design")
     assert a04.short_id == "A04"
-    assert [e.difficulty for e in a04.examples] == ["Easy", "Easy", "Medium", "Medium", "Medium", "Hard", "Hard", "Medium"]
+    assert [e.difficulty for e in a04.examples] == ["Easy", "Easy", "Medium", "Medium", "Medium", "Hard", "Hard", "Medium", "Hard"]
 
 
 def test_a04_examples_grouped_by_vulnerability_subtype(app):
@@ -24,11 +24,13 @@ def test_a04_examples_grouped_by_vulnerability_subtype(app):
         "Workflow Bypass",
         "Password Reset Design Flaws",
         "Premium Access Design Flaws",
+        "Rounding & Arithmetic Errors",
     ]
     assert [e.id for e in grouped[0][1]] == ["unlimited-coupon", "free-shipping-trusted-flag", "negative-quantity", "overselling-no-stock-check", "discount-stacking"]
     assert [e.id for e in grouped[1][1]] == ["checkout-bypass"]
     assert [e.id for e in grouped[2][1]] == ["host-header-reset-poisoning"]
     assert [e.id for e in grouped[3][1]] == ["premium-access-after-cancel"]
+    assert [e.id for e in grouped[4][1]] == ["rounding-exploit"]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
@@ -42,3 +44,4 @@ def test_a04_overview_shows_vulnerability_subtype_group_headings(client):
     assert "Workflow Bypass" in body
     assert "Password Reset Design Flaws" in body
     assert "Premium Access Design Flaws" in body
+    assert "Rounding &amp; Arithmetic Errors" in body

@@ -15,4 +15,4 @@ def test_every_example_across_every_category_has_a_well_formed_hint_sequence():
             assert len(set(example.hints)) == len(example.hints), (
                 f"{category.short_id}/{example.id} has duplicate hints"
             )
-    assert total == 82
+    assert total == 83
