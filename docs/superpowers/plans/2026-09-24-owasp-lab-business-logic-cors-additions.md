@@ -1437,9 +1437,17 @@ in the real current file, and inserts its own new entry between them.
 **Interfaces:**
 - Consumes: nothing from earlier tasks.
 - Produces: routes `a05_security_misconfiguration.partner_directory_api`
-  (`GET /a05/api/partner-directory`) and
+  (`GET /a05/api/partner-directory`, the vulnerable JSON API),
   `a05_security_misconfiguration.cors_null_origin_demo` (`GET
-  /a05/cors-null-origin-demo`). Nothing later depends on these.
+  /a05/cors-null-origin-demo`, the sandboxed-iframe attacker demo page),
+  and `a05_security_misconfiguration.cors_null_origin` (`GET
+  /a05/cors-null-origin`, the example's HTML explanation page — this is
+  what `ExampleNav.endpoint` must point at, NOT the raw API route,
+  matching the app's universal convention that every example's endpoint
+  renders its explanation page with the "mark as done" UI; the existing
+  `cors-credentials` example already follows this split between
+  `cors_credentials` (HTML) and `loyalty_status_api` (JSON)). Nothing
+  later depends on these.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1513,6 +1521,18 @@ def partner_directory_api():
 @a05_bp.route("/cors-null-origin-demo")
 def cors_null_origin_demo():
     return render_template("a05_security_misconfiguration/cors_null_origin_demo.html")
+
+
+@a05_bp.route("/cors-null-origin")
+def cors_null_origin():
+    # This is the example's own explanation/exploitation page -- separate
+    # from the vulnerable JSON API above (partner_directory_api), matching
+    # the established convention this app already uses for cors-credentials
+    # (its own HTML page) vs. loyalty_status_api (the vulnerable JSON API
+    # it demonstrates). ExampleNav.endpoint always points at the HTML
+    # page, never directly at a raw JSON route, so the app's standard
+    # explanation UI and "mark as done" flow both work.
+    return render_template("a05_security_misconfiguration/cors_null_origin.html")
 ```
 
 - [ ] **Step 4: Create `cors_null_origin.html`**
@@ -1677,7 +1697,7 @@ Insert immediately after it (before `debug-console-rce`):
                 title="CORS: Null Origin Whitelisted",
                 group="Insecure Response Configuration",
                 difficulty="Medium",
-                endpoint="a05_security_misconfiguration.partner_directory_api",
+                endpoint="a05_security_misconfiguration.cors_null_origin",
                 hints=[
                     "This endpoint's CORS behavior is different from the other CORS example in this app — it doesn't reflect just any origin. Try requesting it with an Origin header of the literal string 'null'.",
                     "The server explicitly whitelists the literal 'null' origin as if it were a real, specific trusted domain — a leftover from testing via a sandboxed iframe or local file during development.",
@@ -1722,8 +1742,16 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: nothing from earlier tasks.
-- Produces: route `a05_security_misconfiguration.internal_metrics_api`
-  (`GET /a05/api/internal-metrics`). Nothing later depends on this.
+- Produces: routes `a05_security_misconfiguration.internal_metrics_api`
+  (`GET /a05/api/internal-metrics`, the vulnerable JSON API) and
+  `a05_security_misconfiguration.cors_wildcard_internal_pivot` (`GET
+  /a05/cors-wildcard-internal-pivot`, the example's HTML explanation
+  page — this is what `ExampleNav.endpoint` must point at, NOT the raw
+  API route, matching the app's universal convention that every
+  example's endpoint renders its explanation page with the "mark as
+  done" UI; the existing `cors-credentials` example already follows this
+  split between `cors_credentials` (HTML) and `loyalty_status_api`
+  (JSON)). Nothing later depends on these.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1788,6 +1816,18 @@ def internal_metrics_api():
     )
     resp.headers["Access-Control-Allow-Origin"] = "*"
     return resp
+
+
+@a05_bp.route("/cors-wildcard-internal-pivot")
+def cors_wildcard_internal_pivot():
+    # This is the example's own explanation/exploitation page -- separate
+    # from the vulnerable JSON API above (internal_metrics_api), matching
+    # the established convention this app already uses for cors-credentials
+    # (its own HTML page) vs. loyalty_status_api (the vulnerable JSON API
+    # it demonstrates). ExampleNav.endpoint always points at the HTML
+    # page, never directly at a raw JSON route, so the app's standard
+    # explanation UI and "mark as done" flow both work.
+    return render_template("a05_security_misconfiguration/cors_wildcard_internal_pivot.html")
 ```
 
 - [ ] **Step 4: Create `cors_wildcard_internal_pivot.html`**
@@ -1884,7 +1924,7 @@ re-read the real current file):
                 title="CORS: Null Origin Whitelisted",
                 group="Insecure Response Configuration",
                 difficulty="Medium",
-                endpoint="a05_security_misconfiguration.partner_directory_api",
+                endpoint="a05_security_misconfiguration.cors_null_origin",
                 hints=[
                     "This endpoint's CORS behavior is different from the other CORS example in this app — it doesn't reflect just any origin. Try requesting it with an Origin header of the literal string 'null'.",
                     "The server explicitly whitelists the literal 'null' origin as if it were a real, specific trusted domain — a leftover from testing via a sandboxed iframe or local file during development.",
@@ -1904,7 +1944,7 @@ Insert immediately after it (before `debug-console-rce`):
                 title="CORS: Null Origin Whitelisted",
                 group="Insecure Response Configuration",
                 difficulty="Medium",
-                endpoint="a05_security_misconfiguration.partner_directory_api",
+                endpoint="a05_security_misconfiguration.cors_null_origin",
                 hints=[
                     "This endpoint's CORS behavior is different from the other CORS example in this app — it doesn't reflect just any origin. Try requesting it with an Origin header of the literal string 'null'.",
                     "The server explicitly whitelists the literal 'null' origin as if it were a real, specific trusted domain — a leftover from testing via a sandboxed iframe or local file during development.",
@@ -1917,7 +1957,7 @@ Insert immediately after it (before `debug-console-rce`):
                 title="CORS: Wildcard Origin, Internal Network Pivot",
                 group="Insecure Response Configuration",
                 difficulty="Medium",
-                endpoint="a05_security_misconfiguration.internal_metrics_api",
+                endpoint="a05_security_misconfiguration.cors_wildcard_internal_pivot",
                 hints=[
                     "This 'internal metrics' endpoint has a wildcard CORS header. A wildcard blocks cookies from being attached — so what OTHER protection would need to be missing for that to still matter?",
                     "The endpoint requires no authentication at all — no session, no API key. A wildcard CORS header combined with zero auth means any external page's JavaScript can read this response directly.",
@@ -1962,8 +2002,16 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: nothing from earlier tasks.
-- Produces: route `a05_security_misconfiguration.partner_portal_api`
-  (`GET /a05/api/partner-portal`). Nothing later depends on this. This
+- Produces: routes `a05_security_misconfiguration.partner_portal_api`
+  (`GET /a05/api/partner-portal`, the vulnerable JSON API) and
+  `a05_security_misconfiguration.cors_origin_regex_bypass` (`GET
+  /a05/cors-origin-regex-bypass`, the example's HTML explanation page —
+  this is what `ExampleNav.endpoint` must point at, NOT the raw API
+  route, matching the app's universal convention that every example's
+  endpoint renders its explanation page with the "mark as done" UI; the
+  existing `cors-credentials` example already follows this split between
+  `cors_credentials` (HTML) and `loyalty_status_api` (JSON)). Nothing
+  later depends on these. This
   is the last A05 task — after this lands, A05 has 10 examples across 4
   groups.
 
@@ -2037,6 +2085,18 @@ def partner_portal_api():
         resp.headers["Access-Control-Allow-Origin"] = origin
         resp.headers["Access-Control-Allow-Credentials"] = "true"
     return resp
+
+
+@a05_bp.route("/cors-origin-regex-bypass")
+def cors_origin_regex_bypass():
+    # This is the example's own explanation/exploitation page -- separate
+    # from the vulnerable JSON API above (partner_portal_api), matching
+    # the established convention this app already uses for cors-credentials
+    # (its own HTML page) vs. loyalty_status_api (the vulnerable JSON API
+    # it demonstrates). ExampleNav.endpoint always points at the HTML
+    # page, never directly at a raw JSON route, so the app's standard
+    # explanation UI and "mark as done" flow both work.
+    return render_template("a05_security_misconfiguration/cors_origin_regex_bypass.html")
 ```
 
 - [ ] **Step 4: Create `cors_origin_regex_bypass.html`**
@@ -2130,7 +2190,7 @@ differently — re-read the real current file):
                 title="CORS: Wildcard Origin, Internal Network Pivot",
                 group="Insecure Response Configuration",
                 difficulty="Medium",
-                endpoint="a05_security_misconfiguration.internal_metrics_api",
+                endpoint="a05_security_misconfiguration.cors_wildcard_internal_pivot",
                 hints=[
                     "This 'internal metrics' endpoint has a wildcard CORS header. A wildcard blocks cookies from being attached — so what OTHER protection would need to be missing for that to still matter?",
                     "The endpoint requires no authentication at all — no session, no API key. A wildcard CORS header combined with zero auth means any external page's JavaScript can read this response directly.",
@@ -2150,7 +2210,7 @@ Insert immediately after it (before `debug-console-rce`):
                 title="CORS: Wildcard Origin, Internal Network Pivot",
                 group="Insecure Response Configuration",
                 difficulty="Medium",
-                endpoint="a05_security_misconfiguration.internal_metrics_api",
+                endpoint="a05_security_misconfiguration.cors_wildcard_internal_pivot",
                 hints=[
                     "This 'internal metrics' endpoint has a wildcard CORS header. A wildcard blocks cookies from being attached — so what OTHER protection would need to be missing for that to still matter?",
                     "The endpoint requires no authentication at all — no session, no API key. A wildcard CORS header combined with zero auth means any external page's JavaScript can read this response directly.",
@@ -2163,7 +2223,7 @@ Insert immediately after it (before `debug-console-rce`):
                 title="CORS: Origin Allowlist Regex Bypass",
                 group="Insecure Response Configuration",
                 difficulty="Hard",
-                endpoint="a05_security_misconfiguration.partner_portal_api",
+                endpoint="a05_security_misconfiguration.cors_origin_regex_bypass",
                 hints=[
                     "This API is meant to trust only real partner.example.com-style origins. Try an origin that CONTAINS the trusted domain as a substring but isn't actually a subdomain of it — e.g. https://evilexample.com.",
                     "The origin-validation regex has no end-anchor — it only checks that the origin starts with https:// and contains example.com somewhere after that, never that it actually ENDS there.",
