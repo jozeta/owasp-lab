@@ -1,0 +1,88 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Premium Access Persists After Cancellation" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A04{% endblock %}
+
+{% block explanation %}
+<p>
+  Subscribing sets a raw, unsigned cookie (<code>a04_premium_tier=gold</code>)
+  with no server-side subscription record backing it at all. Cancelling
+  records the cancellation in your session — but never clears, expires,
+  or otherwise invalidates that same cookie. The premium-content page
+  checks only the cookie, never the cancellation state, so the two pieces
+  of state are never reconciled.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Subscribe, then cancel, then revisit the premium content page. A
+  correctly implemented flow would deny access immediately after
+  cancellation — check whether it actually does.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>POST to <code>/a04/premium/subscribe</code> — this sets the
+      <code>a04_premium_tier</code> cookie.</li>
+  <li>POST to <code>/a04/premium/cancel</code> — the page confirms
+      cancellation.</li>
+  <li>GET <code>/a04/premium/content</code> — the premium content still
+      renders, because the cookie that actually gates access was never
+      cleared by cancellation.</li>
+</ol>
+<p>
+  This directly models a real class of bug: trusting unsigned
+  client-side state as the sole proof of an active subscription, with
+  the cancellation flow never touching that same piece of state. In a
+  real system, this means a customer keeps paid-tier access indefinitely
+  after cancelling, simply by never clearing that one cookie.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/premium/cancel", methods=["POST"])
+def premium_cancel():
+    # VULNERABLE: never clears the cookie that /premium/content checks
+    session["premium_cancelled"] = True
+    return redirect(url_for("premium_content"))
+
+@app.route("/premium/content")
+def premium_content():
+    # VULNERABLE: only checks the cookie, never the cancellation state
+    has_access = request.cookies.get("premium_tier") == "gold"
+    ...
+{% endblock %}
+
+{% block secure_code %}@app.route("/premium/cancel", methods=["POST"])
+def premium_cancel():
+    resp = redirect(url_for("premium_content"))
+    resp.delete_cookie("premium_tier")  # actually revoke access
+    session["premium_cancelled"] = True
+    return resp
+
+@app.route("/premium/content")
+def premium_content():
+    # Checks real, authoritative subscription state -- never a
+    # client-controllable cookie alone
+    has_access = get_active_subscription(current_user) is not None
+    ...
+{% endblock %}
+
+{% block live_example %}
+<form method="post" action="{{ url_for('a04_insecure_design.premium_subscribe') }}" class="d-inline">
+  <button type="submit" class="btn btn-primary">Subscribe</button>
+</form>
+<form method="post" action="{{ url_for('a04_insecure_design.premium_cancel') }}" class="d-inline">
+  <button type="submit" class="btn btn-outline-secondary">Cancel subscription</button>
+</form>
+<hr>
+{% if cancelled %}
+<p class="text-muted">Your subscription is cancelled.</p>
+{% endif %}
+{% if has_access %}
+<div class="alert alert-success">Premium content unlocked: exclusive members-only article.</div>
+{% else %}
+<div class="alert alert-secondary">Subscribe to see premium content.</div>
+{% endif %}
+{% endblock %}

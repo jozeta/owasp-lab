@@ -13,6 +13,7 @@ COUPON_DISCOUNT_CENTS = 500
 SAVE20_CODE = "SAVE20"
 SAVE20_DISCOUNT_CENTS = 1000
 STOCK_COUNT = 3
+PREMIUM_TIER_COOKIE = "a04_premium_tier"
 
 
 def _format_cents(cents):
@@ -231,4 +232,36 @@ def coupon_stack():
         discount_display=_format_cents(discount_cents),
         total_display=_format_cents(total_cents),
         error=error,
+    )
+
+
+@a04_bp.route("/premium/subscribe", methods=["POST"])
+def premium_subscribe():
+    resp = redirect(url_for("a04_insecure_design.premium_content"))
+    # VULNERABLE: a raw, unsigned, client-visible cookie is the ONLY
+    # record of an active subscription -- there's no server-side
+    # subscription record anywhere.
+    resp.set_cookie(PREMIUM_TIER_COOKIE, "gold")
+    session["a04_premium_cancelled"] = False
+    return resp
+
+
+@a04_bp.route("/premium/cancel", methods=["POST"])
+def premium_cancel():
+    # VULNERABLE: records the cancellation in the session, but never
+    # clears or expires the PREMIUM_TIER_COOKIE that actually gates
+    # access -- the two pieces of state are never reconciled.
+    session["a04_premium_cancelled"] = True
+    return redirect(url_for("a04_insecure_design.premium_content"))
+
+
+@a04_bp.route("/premium/content")
+def premium_content():
+    # VULNERABLE: access is gated purely by the presence of the client
+    # cookie -- the cancellation flag recorded in the session is never
+    # even read here.
+    has_access = request.cookies.get(PREMIUM_TIER_COOKIE) == "gold"
+    cancelled = session.get("a04_premium_cancelled", False)
+    return render_template(
+        "a04_insecure_design/premium_content.html", has_access=has_access, cancelled=cancelled
     )

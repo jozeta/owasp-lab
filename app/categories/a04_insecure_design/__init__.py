@@ -103,6 +103,19 @@ CATEGORIES.append(
                     "In a real deployment behind a reverse proxy, X-Forwarded-Host is often trusted the same way and is even easier to forge — try -H 'X-Forwarded-Host: attacker.evil.test' too. If a victim's real password-reset email had been built this way and they clicked the poisoned link, their reset token would be sent straight to the attacker's server instead of the real one.",
                 ],
             ),
+            ExampleNav(
+                id="premium-access-after-cancel",
+                title="Premium Access Persists After Cancellation",
+                group="Premium Access Design Flaws",
+                difficulty="Medium",
+                endpoint="a04_insecure_design.premium_content",
+                hints=[
+                    "Subscribe, then cancel, then revisit the premium content page. Does cancelling actually revoke your access?",
+                    "Subscribing sets a raw cookie with no server-side subscription record. Cancelling only updates your session — check whether it ever touches that same cookie.",
+                    "POST to /a04/premium/subscribe, then POST to /a04/premium/cancel (the page confirms cancellation), then GET /a04/premium/content — the premium content still renders, because the cookie gating access was never cleared.",
+                    "This models a real class of bug: trusting unsigned client-side state as the sole proof of an active subscription, with the cancellation flow never reconciling that same piece of state.",
+                ],
+            ),
         ],
     )
 )
