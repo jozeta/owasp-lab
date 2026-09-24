@@ -92,6 +92,19 @@ CATEGORIES.append(
                     "Search for ' OR '1'='1' -- (a classic SQL injection probe) or ../../../../etc/passwd (path traversal) at /a09/product-search?q=... — the exact string gets logged faithfully, but nothing in this app ever pattern-matches logged queries against known attack signatures, so 'Active Alerts' stays at 0 no matter how obvious the signal already sitting in the log is.",
                 ],
             ),
+            ExampleNav(
+                id="log-injection-display-name",
+                title="Audit Log Forged via Unescaped Display Name",
+                group="Log Injection / Forging",
+                difficulty="Medium",
+                endpoint="a09_logging_monitoring_failures.update_display_name",
+                hints=[
+                    "This 'change your display name' feature writes a line to the application's log file every time you save. Look at exactly how that log line gets built -- is your input treated as one opaque value, or just spliced into a line of text?",
+                    "The log line is built as a literal f-string: f\"display name updated to '{display_name}'\", then appended to the log file. A log line is only a 'line' because it ends in a newline character -- what happens if your OWN input already contains one?",
+                    "Submit a display name that spans two lines -- the field below is a text area, so you can type a real newline directly -- then check /a09/download-log. Does your input still read as ONE entry, or has it split into two independent-looking lines?",
+                    "Craft the second line to look like a genuine, unrelated event: submit a display name shaped like Johan, then a real newline, then [2026-01-01 00:00:00] ADMIN: granted superuser role to attacker. The forged second line now sits in the log file indistinguishable from a real, separately-logged admin action, visible to anyone who reads /a09/download-log or the Security Events dashboard.",
+                ],
+            ),
         ],
     )
 )

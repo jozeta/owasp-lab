@@ -1,0 +1,82 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Audit Log Forged via Unescaped Display Name" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A09{% endblock %}
+
+{% block explanation %}
+<p>
+  Updating your display name here writes a line to the application's log
+  file every time you save: <code>f"display name updated to
+  '{display_name}'"</code>, appended verbatim with no newline stripping,
+  no structured logging, and no escaping of any kind. A log line is only
+  a "line" because it ends in a newline character -- and nothing here
+  stops your own input from containing one.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit a display name that spans two lines (the field below is a text
+  area, so you can type a real newline directly) and then check
+  <a href="{{ url_for('a09_logging_monitoring_failures.download_log') }}">/a09/download-log</a>
+  -- does your input still read as ONE entry, or has it split into two?
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  A newline inside your display name doesn't just get logged -- it
+  terminates the current log line and starts a brand-new one, exactly as
+  if two separate events had been logged back to back. Submit a display
+  name shaped like:
+</p>
+<pre>Johan
+[2026-01-01 00:00:00] ADMIN: granted superuser role to attacker</pre>
+<p>
+  (a real newline between the two lines, not the literal characters
+  backslash-n). Check
+  <a href="{{ url_for('a09_logging_monitoring_failures.download_log') }}">/a09/download-log</a>
+  or the
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">Security Events dashboard</a>
+  afterward -- the forged second line sits there as its own, independent
+  entry, indistinguishable from a genuine admin-action log line to any
+  human reader or any downstream tool that parses one event per line.
+  The same technique works in reverse: an attacker can forge a
+  convincing "all clear" line to bury or disguise their own real attack
+  elsewhere in the same log.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}display_name = request.form.get("display_name", "")
+session["a09_display_name"] = display_name
+append_to_app_log(f"display name updated to '{display_name}'")
+{% endblock %}
+
+{% block secure_code %}display_name = request.form.get("display_name", "")
+session["a09_display_name"] = display_name
+# Reject or strip embedded newlines (and any other control character)
+# before a value ever reaches a plain-text, one-event-per-line log --
+# or better, use structured (e.g. JSON) logging, where a field value
+# can never be mistaken for a line boundary.
+safe_display_name = display_name.replace("\r", "").replace("\n", "")
+append_to_app_log(f"display name updated to '{safe_display_name}'")
+{% endblock %}
+
+{% block live_example %}
+<form method="post" class="mb-3">
+  <div class="mb-2">
+    <label class="form-label">Display name</label>
+    <textarea class="form-control" name="display_name" rows="3" placeholder="e.g. Johan">{{ display_name }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Save</button>
+</form>
+{% if display_name %}
+<p class="mb-1">Current display name (as stored in your session):</p>
+<pre>{{ display_name }}</pre>
+{% endif %}
+<p class="mt-3">
+  <a href="{{ url_for('a09_logging_monitoring_failures.download_log') }}">View raw application log</a>
+  &middot;
+  <a href="{{ url_for('a09_logging_monitoring_failures.security_events') }}">View Security Events dashboard</a>
+</p>
+{% endblock %}

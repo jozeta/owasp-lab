@@ -18,6 +18,7 @@ def test_a09_registered_in_nav(app):
         "Hard",
         "Medium",
         "Hard",
+        "Medium",
     ]
 
 
@@ -30,6 +31,7 @@ def test_a09_examples_grouped_by_vulnerability_subtype(app):
         "Missing Audit Logging",
         "Insecure Log Storage",
         "No Detection & Alerting for Active Attacks",
+        "Log Injection / Forging",
     ]
     assert [e.id for e in grouped[0][1]] == [
         "failed-logins-not-logged",
@@ -43,6 +45,7 @@ def test_a09_examples_grouped_by_vulnerability_subtype(app):
         "no-alert-threshold",
         "attack-signature-not-flagged",
     ]
+    assert [e.id for e in grouped[3][1]] == ["log-injection-display-name"]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
@@ -55,3 +58,4 @@ def test_a09_overview_shows_vulnerability_subtype_group_headings(client):
     assert "Missing Audit Logging" in body
     assert "Insecure Log Storage" in body
     assert "No Detection &amp; Alerting for Active Attacks" in body
+    assert "Log Injection / Forging" in body

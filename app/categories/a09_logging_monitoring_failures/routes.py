@@ -156,3 +156,24 @@ def product_search():
     return render_template(
         "a09_logging_monitoring_failures/product_search.html", query=query
     )
+
+
+DISPLAY_NAME_SESSION_KEY = "a09_display_name"
+
+
+@a09_bp.route("/update-display-name", methods=["GET", "POST"])
+def update_display_name():
+    display_name = session.get(DISPLAY_NAME_SESSION_KEY, "")
+    if request.method == "POST":
+        display_name = request.form.get("display_name", "")
+        session[DISPLAY_NAME_SESSION_KEY] = display_name
+        # VULNERABLE: the submitted display name is spliced straight into
+        # a log line with no newline stripping at all -- an embedded \n
+        # splits it into a brand-new, independent-looking log entry that
+        # a reader (or downstream tooling parsing one-event-per-line)
+        # can't distinguish from a genuine, separately-logged event.
+        append_to_app_log(f"display name updated to '{display_name}'")
+    return render_template(
+        "a09_logging_monitoring_failures/update_display_name.html",
+        display_name=display_name,
+    )
