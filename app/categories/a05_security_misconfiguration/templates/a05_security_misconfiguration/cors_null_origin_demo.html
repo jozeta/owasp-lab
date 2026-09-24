@@ -14,7 +14,7 @@
 <iframe sandbox="allow-scripts" style="display:none"
   src="data:text/html,
   &lt;script&gt;
-    fetch(&quot;http://127.0.0.1:5001/a05/api/partner-directory&quot;, {credentials: &quot;include&quot;})
+    fetch(&quot;{{ url_for('a05_security_misconfiguration.partner_directory_api', _external=True) }}&quot;, {credentials: &quot;include&quot;})
       .then(r =&gt; r.json())
       .then(j =&gt; parent.postMessage(JSON.stringify(j), &quot;*&quot;))
       .catch(e =&gt; parent.postMessage(&quot;blocked: &quot; + e, &quot;*&quot;));
