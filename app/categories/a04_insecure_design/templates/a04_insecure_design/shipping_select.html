@@ -48,7 +48,7 @@ STANDARD_SHIPPING_CENTS = 599
 
 # Shipping cost is computed server-side from the real order total --
 # never trusted from the client
-shipping_cost_cents = 0 if DEMO_PRODUCT_PRICE_CENTS >= FREE_SHIPPING_THRESHOLD_CENTS else STANDARD_SHIPPING_CENTS
+shipping_cost_cents = 0 if DEMO_PRODUCT_PRICE_CENTS &gt;= FREE_SHIPPING_THRESHOLD_CENTS else STANDARD_SHIPPING_CENTS
 total_cents = DEMO_PRODUCT_PRICE_CENTS + shipping_cost_cents
 {% endblock %}
 
