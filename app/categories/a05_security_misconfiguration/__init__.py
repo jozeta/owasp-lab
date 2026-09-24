@@ -66,6 +66,19 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="cors-null-origin",
+                title="CORS: Null Origin Whitelisted",
+                group="Insecure Response Configuration",
+                difficulty="Medium",
+                endpoint="a05_security_misconfiguration.partner_directory_api",
+                hints=[
+                    "This endpoint's CORS behavior is different from the other CORS example in this app — it doesn't reflect just any origin. Try requesting it with an Origin header of the literal string 'null'.",
+                    "The server explicitly whitelists the literal 'null' origin as if it were a real, specific trusted domain — a leftover from testing via a sandboxed iframe or local file during development.",
+                    "Browsers send a literal null Origin header when a sandboxed iframe with no allow-same-origin uses a data: URI. Visit /a05/cors-null-origin-demo to see this exact technique running live against /a05/api/partner-directory.",
+                    "curl -s http://127.0.0.1:5000/a05/api/partner-directory -H 'Origin: null' — the response includes Access-Control-Allow-Origin: null and Access-Control-Allow-Credentials: true, letting a null-origin context read this response with credentials attached.",
+                ],
+            ),
+            ExampleNav(
                 id="debug-console-rce",
                 title="Exposed Debug Console",
                 group="Exposed Debug & Admin Interfaces",

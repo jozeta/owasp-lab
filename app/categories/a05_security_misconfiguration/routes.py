@@ -188,3 +188,30 @@ def delete_account():
 @a05_bp.route("/delete-account-clickjack-demo")
 def delete_account_clickjack_demo():
     return render_template("a05_security_misconfiguration/delete_account_clickjack_demo.html")
+
+
+PARTNER_DIRECTORY = [
+    {"name": "Acme Logistics", "contact": "ops@acme-logistics.example"},
+    {"name": "Nimbus Freight", "contact": "dispatch@nimbus-freight.example"},
+]
+
+
+@a05_bp.route("/api/partner-directory")
+def partner_directory_api():
+    resp = jsonify({"partners": PARTNER_DIRECTORY})
+    origin = request.headers.get("Origin")
+    # VULNERABLE: explicitly whitelists the literal "null" origin -- a
+    # leftover from testing this endpoint via a sandboxed iframe or a
+    # local file during development that was never removed. A normal,
+    # specific attacker origin gets no CORS headers at all; only "null"
+    # does, which is exactly what makes this a distinct, narrower flaw
+    # than the existing origin-reflection example.
+    if origin == "null":
+        resp.headers["Access-Control-Allow-Origin"] = "null"
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+    return resp
+
+
+@a05_bp.route("/cors-null-origin-demo")
+def cors_null_origin_demo():
+    return render_template("a05_security_misconfiguration/cors_null_origin_demo.html")

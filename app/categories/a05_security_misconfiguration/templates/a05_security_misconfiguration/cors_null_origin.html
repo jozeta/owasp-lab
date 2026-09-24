@@ -1,0 +1,74 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "CORS: Null Origin Whitelisted" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  <code>/a05/api/partner-directory</code> explicitly trusts requests
+  whose <code>Origin</code> header is the literal string
+  <code>null</code>, responding with
+  <code>Access-Control-Allow-Origin: null</code> and
+  <code>Access-Control-Allow-Credentials: true</code>. This is a common
+  leftover from testing an endpoint via a sandboxed iframe or a local
+  file during development — browsers send a literal <code>null</code>
+  Origin in exactly those situations, and an attacker can deliberately
+  trigger one on demand.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Request the endpoint with an <code>Origin: null</code> header and check
+  whether the response reflects it back — a properly configured
+  allowlist should never treat <code>null</code> as a real, trusted
+  origin.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  A sandboxed iframe using a <code>data:</code> URI causes the browser to
+  send a literal <code>null</code> Origin header on any request that
+  iframe makes:
+</p>
+<pre><code class="language-html">&lt;iframe sandbox="allow-scripts" src="data:text/html,
+  &lt;script&gt;
+    fetch('http://127.0.0.1:5001/a05/api/partner-directory', {credentials: 'include'})
+      .then(r =&gt; r.json())
+      .then(j =&gt; parent.postMessage(JSON.stringify(j), '*'));
+  &lt;/script&gt;
+"&gt;&lt;/iframe&gt;</code></pre>
+<p>
+  Visit <a href="{{ url_for('a05_security_misconfiguration.cors_null_origin_demo') }}">the
+  demo page</a> to see this exact technique running live — the
+  sandboxed, data-URI iframe's requests carry a <code>null</code> Origin,
+  which this endpoint explicitly trusts, letting the fetch succeed
+  cross-origin with credentials attached.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}origin = request.headers.get("Origin")
+if origin == "null":
+    # VULNERABLE: trusts the literal "null" origin as if it were a real,
+    # specific trusted domain
+    resp.headers["Access-Control-Allow-Origin"] = "null"
+    resp.headers["Access-Control-Allow-Credentials"] = "true"
+{% endblock %}
+
+{% block secure_code %}ALLOWED_ORIGINS = {"https://partners.example.com"}
+
+origin = request.headers.get("Origin")
+if origin in ALLOWED_ORIGINS:  # "null" is never a member of a real allowlist
+    resp.headers["Access-Control-Allow-Origin"] = origin
+    resp.headers["Access-Control-Allow-Credentials"] = "true"
+{% endblock %}
+
+{% block live_example %}
+<p class="text-muted">
+  This is a JSON API endpoint — use curl as shown in the Exploitation
+  section above, or visit
+  <a href="{{ url_for('a05_security_misconfiguration.cors_null_origin_demo') }}">the
+  live demo page</a> to see the sandboxed-iframe exploit in action.
+</p>
+{% endblock %}

@@ -16,6 +16,7 @@ def test_a05_registered_in_nav(app):
         "Easy",
         "Medium",
         "Medium",
+        "Medium",
         "Hard",
         "Hard",
         "Easy",
@@ -34,7 +35,7 @@ def test_a05_examples_grouped_by_vulnerability_subtype(app):
         "Missing Security Headers",
     ]
     assert [e.id for e in grouped[0][1]] == ["exposed-backup", "directory-listing"]
-    assert [e.id for e in grouped[1][1]] == ["verbose-errors", "cors-credentials"]
+    assert [e.id for e in grouped[1][1]] == ["verbose-errors", "cors-credentials", "cors-null-origin"]
     assert [e.id for e in grouped[2][1]] == ["debug-console-rce", "default-admin-creds"]
     assert [e.id for e in grouped[3][1]] == ["clickjacking-delete-account"]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}

@@ -154,7 +154,7 @@ def test_home_page_shows_score_totals_when_scoring_enabled(app, client):
 
     response = client.get("/")
     body = response.data.decode()
-    assert "Score: 10 / 1710 points" in body
+    assert "Score: 10 / 1730 points" in body
 
 
 def test_nav_bar_shows_running_score_on_any_page_when_scoring_enabled(app, client):
@@ -166,7 +166,7 @@ def test_nav_bar_shows_running_score_on_any_page_when_scoring_enabled(app, clien
     with app.test_request_context():
         path = url_for("a10_ssrf.overview")
     response = client.get(path)
-    assert b"Score: 10 / 1710" in response.data
+    assert b"Score: 10 / 1730" in response.data
 
 
 def test_score_ui_absent_when_scoring_disabled(client):
