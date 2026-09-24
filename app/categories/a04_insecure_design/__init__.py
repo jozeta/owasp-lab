@@ -54,6 +54,18 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="overselling-no-stock-check",
+                title="Overselling — No Stock-Limit Check",
+                group="Business Logic Abuse",
+                difficulty="Medium",
+                endpoint="a04_insecure_design.limited_stock_cart",
+                hints=[
+                    "This page advertises a very limited stock count. Submit an order for far more units than that — does the server reject it?",
+                    "The order handler never compares your submitted quantity against the displayed stock count, or against any real inventory at all — it's a display-only decoration, not an enforced rule.",
+                    "Submit quantity=500 to /a04/limited-stock-cart — the order confirms for 500 units of an item the page itself says only 3 of exist, with no rejection or capped total.",
+                ],
+            ),
+            ExampleNav(
                 id="checkout-bypass",
                 title="Multi-Step Checkout Bypass",
                 group="Workflow Bypass",

@@ -10,6 +10,7 @@ DEMO_PRODUCT_NAME = "Wireless Mouse"
 DEMO_PRODUCT_PRICE_CENTS = 2999
 COUPON_CODE = "WELCOME10"
 COUPON_DISCOUNT_CENTS = 500
+STOCK_COUNT = 3
 
 
 def _format_cents(cents):
@@ -166,4 +167,29 @@ def shipping_select():
         shipping_display=_format_cents(shipping_cost_cents),
         total_display=_format_cents(total_cents),
         free_shipping_applied=shipping_cost_cents == 0,
+    )
+
+
+@a04_bp.route("/limited-stock-cart", methods=["GET", "POST"])
+def limited_stock_cart():
+    ordered_quantity = None
+    total_cents = None
+    if request.method == "POST":
+        try:
+            quantity = int(request.form.get("quantity", "1"))
+        except (ValueError, OverflowError):
+            quantity = 1
+        # VULNERABLE: the page displays a fixed "Only 3 left!" stock
+        # count, but this handler never validates the submitted quantity
+        # against STOCK_COUNT (or against any real inventory at all) --
+        # any positive quantity is accepted and priced normally.
+        ordered_quantity = quantity
+        total_cents = DEMO_PRODUCT_PRICE_CENTS * quantity
+    return render_template(
+        "a04_insecure_design/limited_stock_cart.html",
+        product_name=DEMO_PRODUCT_NAME,
+        product_price_display=_format_cents(DEMO_PRODUCT_PRICE_CENTS),
+        stock_count=STOCK_COUNT,
+        ordered_quantity=ordered_quantity,
+        total_display=_format_cents(total_cents) if total_cents is not None else None,
     )

@@ -1,0 +1,70 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Overselling — No Stock-Limit Check" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A04{% endblock %}
+
+{% block explanation %}
+<p>
+  This product page shows "Only {{ stock_count }} left in stock!" — but
+  the order-submission handler never validates the submitted quantity
+  against that count, or against any real inventory tracking at all. The
+  "in stock" number shown to customers is a display-only decoration, not
+  an enforced business rule.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit a quantity larger than the displayed stock count — e.g. 10 units
+  of an item advertised as having only {{ stock_count }} left. If the
+  order confirms without any rejection or warning, the stock count is
+  never actually checked server-side.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<pre><code class="language-bash">curl -X POST http://127.0.0.1:5001/a04/limited-stock-cart -d "quantity=500"</code></pre>
+<p>
+  The order confirms for 500 units of an item the page itself says only
+  {{ stock_count }} of exist, with no rejection, no warning, and no
+  capped total. In a real system, this means shipping promises the
+  business cannot keep — or, in a flash-sale scenario, a race to buy out
+  limited inventory at a price the seller never intended to honor at that
+  volume.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}STOCK_COUNT = 3
+
+quantity = int(request.form.get("quantity", "1"))
+# VULNERABLE: quantity is never compared against STOCK_COUNT (or any
+# real inventory) before confirming the order
+total_cents = DEMO_PRODUCT_PRICE_CENTS * quantity
+{% endblock %}
+
+{% block secure_code %}STOCK_COUNT = 3
+
+quantity = int(request.form.get("quantity", "1"))
+if quantity &gt; STOCK_COUNT:
+    abort(409)  # Conflict -- not enough stock to fulfill this order
+total_cents = DEMO_PRODUCT_PRICE_CENTS * quantity
+{% endblock %}
+
+{% block live_example %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">{{ product_name }}</h5>
+    <p class="card-text">Price: {{ product_price_display }}</p>
+    <p class="card-text text-danger">Only {{ stock_count }} left in stock!</p>
+  </div>
+</div>
+<form method="post" class="d-flex gap-2 mb-2">
+  <input type="number" class="form-control" name="quantity" value="1">
+  <button type="submit" class="btn btn-primary">Order</button>
+</form>
+{% if ordered_quantity is not none %}
+<div class="alert alert-success">
+  Order confirmed: {{ ordered_quantity }} units. Total: {{ total_display }}
+</div>
+{% endif %}
+{% endblock %}
