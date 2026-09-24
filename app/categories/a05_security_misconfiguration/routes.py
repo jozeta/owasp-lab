@@ -220,3 +220,36 @@ def cors_null_origin_demo():
 @a05_bp.route("/cors-null-origin")
 def cors_null_origin():
     return render_template("a05_security_misconfiguration/cors_null_origin.html")
+
+
+@a05_bp.route("/api/internal-metrics")
+def internal_metrics_api():
+    # VULNERABLE: no authentication of any kind (no session check, no API
+    # key) AND a wildcard CORS header, on an endpoint that returns
+    # sensitive-looking internal data. The wildcard itself doesn't leak
+    # cookies (browsers never attach credentials to a wildcard-CORS
+    # request) -- the real vulnerability is the missing auth check, and
+    # the permissive CORS header is what lets an external attacker's page
+    # make this request at all instead of the browser blocking it
+    # outright as cross-origin.
+    resp = jsonify(
+        {
+            "active_connections": 1842,
+            "internal_hostname": "metrics-collector-03.internal.owasp-lab.local",
+            "queue_depth": 57,
+        }
+    )
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp
+
+
+@a05_bp.route("/cors-wildcard-internal-pivot")
+def cors_wildcard_internal_pivot():
+    # This is the example's own explanation/exploitation page -- separate
+    # from the vulnerable JSON API above (internal_metrics_api), matching
+    # the established convention this app already uses for cors-credentials
+    # (its own HTML page) vs. loyalty_status_api (the vulnerable JSON API
+    # it demonstrates). ExampleNav.endpoint always points at the HTML
+    # page, never directly at a raw JSON route, so the app's standard
+    # explanation UI and "mark as done" flow both work.
+    return render_template("a05_security_misconfiguration/cors_wildcard_internal_pivot.html")

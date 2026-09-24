@@ -79,6 +79,19 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="cors-wildcard-internal-pivot",
+                title="CORS: Wildcard Origin, Internal Network Pivot",
+                group="Insecure Response Configuration",
+                difficulty="Medium",
+                endpoint="a05_security_misconfiguration.cors_wildcard_internal_pivot",
+                hints=[
+                    "This 'internal metrics' endpoint has a wildcard CORS header. A wildcard blocks cookies from being attached — so what OTHER protection would need to be missing for that to still matter?",
+                    "The endpoint requires no authentication at all — no session, no API key. A wildcard CORS header combined with zero auth means any external page's JavaScript can read this response directly.",
+                    "curl -s http://127.0.0.1:5000/a05/api/internal-metrics -H 'Origin: https://evil.com' — the response includes Access-Control-Allow-Origin: * and real internal metrics data, with no authentication required at all.",
+                    "This is the 'internal network pivot' variant: in a real deployment this endpoint would sit on a network segment unreachable from the internet, but a victim's browser inside that network can be made to fetch() it on an attacker's behalf via a page the victim merely visits — the missing auth check is the real bug, and the wildcard CORS header is what lets the cross-origin request through.",
+                ],
+            ),
+            ExampleNav(
                 id="debug-console-rce",
                 title="Exposed Debug Console",
                 group="Exposed Debug & Admin Interfaces",

@@ -1,0 +1,74 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "CORS: Wildcard Origin, Internal Network Pivot" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A05{% endblock %}
+
+{% block explanation %}
+<p>
+  This "internal metrics" endpoint sets
+  <code>Access-Control-Allow-Origin: *</code> unconditionally and
+  requires no authentication of any kind — no session, no API key. A
+  wildcard origin means browsers never attach cookies to the request, so
+  credential theft isn't the risk here — but since the endpoint itself
+  never checks who's asking either, any external page can still read the
+  sensitive response data through a victim's browser.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Request the endpoint with no authentication at all and check two
+  things: does it respond with real data anyway, and does its
+  <code>Access-Control-Allow-Origin</code> header say <code>*</code>?
+  Either alone is a misconfiguration; together, they mean any page on the
+  internet can read this response through a victim's browser.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<pre><code class="language-bash">curl -s http://127.0.0.1:5001/a05/api/internal-metrics -H "Origin: https://evil.com"</code></pre>
+<p>
+  The response includes <code>Access-Control-Allow-Origin: *</code> and
+  the full metrics payload — internal hostnames, connection counts, queue
+  depth — with zero authentication required. Any external page's
+  JavaScript can <code>fetch()</code> this endpoint directly:
+</p>
+<pre><code class="language-js">fetch('http://127.0.0.1:5001/a05/api/internal-metrics')
+  .then(r =&gt; r.json())
+  .then(console.log);</code></pre>
+<p>
+  In a real deployment, this endpoint would live on a network segment
+  not directly reachable from the internet — but if a victim inside that
+  network loads the attacker's page (e.g. a phishing link opened on a
+  work laptop), their browser makes the request on the attacker's
+  behalf, pivoting the read straight into an otherwise-unreachable
+  internal service.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}@app.route("/api/internal-metrics")
+def internal_metrics_api():
+    # VULNERABLE: no authentication check at all, on data that should be
+    # internal-only
+    resp = jsonify({"active_connections": ..., "internal_hostname": ...})
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp
+{% endblock %}
+
+{% block secure_code %}@app.route("/api/internal-metrics")
+def internal_metrics_api():
+    if not is_internal_network_request(request) and not valid_api_key(request):
+        abort(403)
+    resp = jsonify({"active_connections": ..., "internal_hostname": ...})
+    # No CORS header at all — this endpoint is never meant to be called
+    # from a browser context outside the internal network
+    return resp
+{% endblock %}
+
+{% block live_example %}
+<p class="text-muted">
+  This is a JSON API endpoint with no HTML form — use curl or your
+  browser's JavaScript console as shown in the Exploitation section
+  above: <code>GET /a05/api/internal-metrics</code>.
+</p>
+{% endblock %}
