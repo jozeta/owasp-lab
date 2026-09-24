@@ -8,6 +8,7 @@ from ldap3 import SUBTREE
 from lxml import etree
 from sqlalchemy import text
 
+from app import BASE_DIR
 from app.categories.a03_injection import a03_bp, ldap_client
 from app.categories.a03_injection.models import Comment, Employee, InjectionAccount
 from app.extensions import db
@@ -15,7 +16,28 @@ from app.extensions import db
 XXE_SECRET_PATH = os.path.join(os.path.dirname(__file__), "xxe_secret.txt")
 CMD_SECRET_PATH = os.path.join(os.path.dirname(__file__), "cmd_secret.txt")
 ACCOUNT_RECOVERY_PIN = "7429"
-CSS_EXFIL_SESSION_KEY = "a03_css_exfil_log"
+
+# File-backed, not session-backed: the leak request originates from a
+# sandboxed data: URI iframe with an opaque origin, so the browser never
+# sends the app's session cookie with it -- a session write there is a
+# throwaway nobody reads back. A plain shared log file needs no cookie at
+# all, avoids the lost-update race of concurrent session read-modify-writes,
+# and (like A09's LOG_FILE_PATH) is visible across all gunicorn worker
+# processes, unlike an in-memory list.
+CSS_EXFIL_LOG_PATH = os.path.join(BASE_DIR, "instance", "a03_css_exfil.log")
+
+
+def _append_css_exfil_leak(value):
+    os.makedirs(os.path.dirname(CSS_EXFIL_LOG_PATH), exist_ok=True)
+    with open(CSS_EXFIL_LOG_PATH, "a") as f:
+        f.write(value + "\n")
+
+
+def _read_css_exfil_leaks():
+    if not os.path.exists(CSS_EXFIL_LOG_PATH):
+        return []
+    with open(CSS_EXFIL_LOG_PATH) as f:
+        return [line.rstrip("\n") for line in f if line.strip()]
 
 
 class _HttpFetchingResolver(etree.Resolver):
@@ -521,7 +543,7 @@ def theme_preview():
 
 @a03_bp.route("/css-exfil-demo")
 def css_exfil_demo():
-    leaked = session.get(CSS_EXFIL_SESSION_KEY, [])
+    leaked = _read_css_exfil_leaks()
     return render_template(
         "a03_injection/css_exfil_demo.html",
         account_recovery_pin=ACCOUNT_RECOVERY_PIN,
@@ -537,7 +559,5 @@ def css_exfil_collector():
     # wide open, not just one lucky guess.
     leak_value = request.args.get("leak", "")
     if leak_value:
-        leaked = session.get(CSS_EXFIL_SESSION_KEY, [])
-        leaked.append(leak_value)
-        session[CSS_EXFIL_SESSION_KEY] = leaked
+        _append_css_exfil_leak(leak_value)
     return Response(status=204)
