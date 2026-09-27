@@ -1,0 +1,13 @@
+{% extends "core/base.html" %}
+{% block title %}Render Snippet Result{% endblock %}
+{% block content %}
+<h1>Render Snippet Result</h1>
+<p>Snippet name: <strong>{{ name }}</strong></p>
+{% if result %}
+<pre>{{ result }}</pre>
+{% endif %}
+{% if error %}
+<p class="text-danger">{{ error }}</p>
+{% endif %}
+<p><a href="{{ url_for('a03_injection.file_inclusion') }}">&larr; Back</a></p>
+{% endblock %}

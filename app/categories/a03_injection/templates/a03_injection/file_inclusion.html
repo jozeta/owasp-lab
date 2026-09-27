@@ -1,0 +1,104 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "LFI-to-SSTI via Unsanitized Snippet Include" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "custom snippet" feature lets you save a small piece of text
+  under a name of your choosing — a stand-in for a mundane real feature
+  like a saved email signature — and a separate "render snippet"
+  feature reads that saved text back and displays it. The read happens
+  via <code>open(os.path.join(SNIPPETS_DIR, name))</code>, with zero
+  validation of <code>name</code>, and whatever comes back is passed
+  through <code>render_template_string()</code> — executed as a live
+  Jinja template, not displayed as inert text. Path Traversal lets an
+  attacker READ an unintended file; File Inclusion, as demonstrated
+  here, lets them EXECUTE one.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Save a snippet named <code>test</code> with content
+  <code>{% raw %}{{ 7*7 }}{% endraw %}</code>, then render it back by
+  name. If the result shows <code>49</code> instead of the literal text
+  <code>{% raw %}{{ 7*7 }}{% endraw %}</code>, the included file's
+  content is being evaluated as a template, not displayed as data.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Save a snippet named <code>pwn</code> with this content:
+      <pre><code class="language-python">{% raw %}{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}{% endraw %}</code></pre>
+  </li>
+  <li>Render it back by name: <code>?name=pwn</code>. The result shows
+      the real output of the <code>id</code> command, run on the server
+      itself — the exact same SSTI payload chain used elsewhere in this
+      category, just reached by planting a file and including it by
+      path instead of typing the payload directly into a template-string
+      field.</li>
+  <li>The include path also reaches files that were never saved through
+      this feature at all. Try
+      <code>?name={{ secret_path }}</code> — a bare absolute path,
+      exactly like the technique demonstrated in this app's Path
+      Traversal examples — and its real contents come back, proving
+      arbitrary file disclosure works independently of the code-execution
+      angle above.</li>
+</ol>
+<p>
+  This is the Flask-native shape of classic PHP Local File Inclusion
+  (<code>include($_GET['page'])</code>): the vulnerable feature is
+  rarely the "obviously dangerous" one — it's usually a mundane
+  content-include mechanism that happens to feed a file's contents into
+  something that executes template or script syntax, with the actual
+  attacker-controlled file planted through a completely unrelated,
+  innocent-looking upload or save feature elsewhere in the app.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}snippet_path = os.path.join(SNIPPETS_DIR, name)
+with open(snippet_path) as f:
+    content = f.read()
+result = render_template_string(content)
+{% endblock %}
+
+{% block secure_code %}# Confirm the resolved path is genuinely inside SNIPPETS_DIR, and never
+# execute included content as a template -- treat it as plain data:
+candidate = os.path.realpath(os.path.join(SNIPPETS_DIR, name))
+if not candidate.startswith(os.path.realpath(SNIPPETS_DIR) + os.sep):
+    abort(403)
+with open(candidate) as f:
+    content = f.read()
+result = content  # displayed as plain text, never passed to render_template_string()
+{% endblock %}
+
+{% block live_example %}
+{% if saved_name %}
+<div class="alert alert-success">Saved snippet: {{ saved_name }}</div>
+{% endif %}
+<h5>Save a snippet</h5>
+<form method="post" action="{{ url_for('a03_injection.save_snippet') }}" class="mb-4">
+  <div class="mb-2">
+    <label class="form-label">Snippet name</label>
+    <input type="text" class="form-control" name="name" placeholder="pwn">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Snippet content</label>
+    <textarea class="form-control" name="content" rows="3"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Save snippet</button>
+</form>
+<h5>Render a snippet by name</h5>
+<form method="get" action="{{ url_for('a03_injection.render_snippet') }}">
+  <div class="mb-2">
+    <input type="text" class="form-control" name="name" placeholder="pwn">
+  </div>
+  <button type="submit" class="btn btn-primary">Render snippet</button>
+</form>
+<p class="mt-3 text-muted small">
+  This lab's own secret file for this example lives at
+  <code>{{ secret_path }}</code>, for use in the traversal step above.
+</p>
+{% endblock %}

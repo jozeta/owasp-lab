@@ -17,6 +17,7 @@ REMAINING_GROUP_IDS = [
     "ldap-directory-search",
     "css-attribute-exfil",
     "csv-formula-injection",
+    "file-inclusion-lfi-ssti",
 ]
 
 

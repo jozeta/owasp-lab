@@ -32,6 +32,9 @@ CSS_EXFIL_LOG_PATH = os.path.join(BASE_DIR, "instance", "a03_css_exfil.log")
 ARCHIVE_EXPORT_DIR = os.path.join(BASE_DIR, "instance", "a03_archive_export")
 ARGUMENT_INJECTION_PROOF_PATH = "/tmp/a03_argument_injection_proof.txt"
 
+FILE_INCLUSION_SECRET_PATH = os.path.join(os.path.dirname(__file__), "file_inclusion_secret.txt")
+SNIPPETS_DIR = os.path.join(BASE_DIR, "instance", "a03_snippets")
+
 
 def _append_css_exfil_leak(value):
     os.makedirs(os.path.dirname(CSS_EXFIL_LOG_PATH), exist_ok=True)
@@ -665,4 +668,52 @@ def feedback():
         raw_feedback=raw_feedback,
         blocked=blocked,
         normalized=normalized,
+    )
+
+
+@a03_bp.route("/file-inclusion")
+def file_inclusion():
+    saved_name = request.args.get("saved")
+    return render_template(
+        "a03_injection/file_inclusion.html",
+        saved_name=saved_name,
+        secret_path=FILE_INCLUSION_SECRET_PATH,
+    )
+
+
+@a03_bp.route("/save-snippet", methods=["POST"])
+def save_snippet():
+    name = request.form.get("name", "")
+    content = request.form.get("content", "")
+    os.makedirs(SNIPPETS_DIR, exist_ok=True)
+    snippet_path = os.path.join(SNIPPETS_DIR, name)
+    with open(snippet_path, "w") as f:
+        f.write(content)
+    return redirect(url_for("a03_injection.file_inclusion", saved=name))
+
+
+@a03_bp.route("/render-snippet")
+def render_snippet():
+    name = request.args.get("name", "")
+    result = None
+    error = None
+    if name:
+        # VULNERABLE: `name` is joined directly onto SNIPPETS_DIR with no
+        # validation at all -- a relative "../" climbs out of the
+        # snippets directory entirely, and an absolute path discards it
+        # outright (the same os.path.join() behavior demonstrated in
+        # A01's Path Traversal examples). Whatever text comes back is
+        # then rendered as a LIVE Jinja template via
+        # render_template_string(), not displayed as inert data -- this
+        # is this app's other SSTI examples' exact vulnerability, just
+        # reached through a file path instead of a text field.
+        snippet_path = os.path.join(SNIPPETS_DIR, name)
+        try:
+            with open(snippet_path) as f:
+                content = f.read()
+            result = render_template_string(content)
+        except Exception as e:
+            error = str(e)
+    return render_template(
+        "a03_injection/render_snippet.html", name=name, result=result, error=error
     )

