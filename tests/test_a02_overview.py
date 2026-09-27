@@ -11,7 +11,7 @@ def test_a02_registered_in_nav(app):
 
     a02 = next(c for c in CATEGORIES if c.id == "a02_crypto_failures")
     assert a02.short_id == "A02"
-    assert [e.difficulty for e in a02.examples] == ["Easy", "Medium", "Hard", "Easy", "Medium"]
+    assert [e.difficulty for e in a02.examples] == ["Easy", "Medium", "Hard", "Easy", "Medium", "Hard"]
 
 
 def test_a02_examples_grouped_by_vulnerability_subtype(app):
@@ -24,6 +24,7 @@ def test_a02_examples_grouped_by_vulnerability_subtype(app):
         "Weak Encryption",
         "Predictable Tokens",
         "Token Leakage",
+        "Weak Random Number Generation",
     ]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
@@ -38,3 +39,4 @@ def test_a02_overview_shows_vulnerability_subtype_group_headings(client):
     assert '<h3 class="h6 mt-3">Weak Encryption</h3>' in body
     assert '<h3 class="h6 mt-3">Predictable Tokens</h3>' in body
     assert '<h3 class="h6 mt-3">Token Leakage</h3>' in body
+    assert '<h3 class="h6 mt-3">Weak Random Number Generation</h3>' in body

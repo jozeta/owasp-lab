@@ -1,0 +1,67 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Predictable API Key via Time-Seeded PRNG" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A02{% endblock %}
+
+{% block explanation %}
+<p>
+  This "generate an API key" feature seeds Python's <code>random</code>
+  module with the current Unix timestamp
+  (<code>random.seed(int(time.time()))</code>) before generating a
+  32-character hex key. Seeding a PRNG with a value an attacker can
+  observe or estimate makes its ENTIRE subsequent output sequence
+  reproducible -- <code>random</code> is a Mersenne Twister, fully
+  deterministic given the same seed.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Generate a key, noting roughly when you did so (to the second).
+  Locally, re-seed Python's <code>random</code> with that same integer
+  timestamp and generate a key the same way -- does it match?
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Generate a key via the form below and note the current time (to the
+  second) as precisely as you can -- in a real deployment, the HTTP
+  response's own <code>Date</code> header gives an attacker this exact
+  information for free, since it reflects the server's clock at the
+  moment of response, moments after the key was generated in the same
+  request.
+</p>
+<pre><code class="language-python">import random
+
+candidate_time = 1731239837  # your best estimate of the generation second
+for t in range(candidate_time - 3, candidate_time + 4):
+    random.seed(t)
+    guess = "".join(random.choices("0123456789abcdef", k=32))
+    print(t, guess)</code></pre>
+<p>
+  One of the guesses in that small window -- typically within a second
+  or two of the real generation time -- will match the real key
+  exactly. No brute-force search over the 32-character key space
+  itself is ever needed; the entire attack reduces to searching a
+  handful of candidate timestamps.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}random.seed(int(time.time()))
+api_key = "".join(random.choices("0123456789abcdef", k=32))
+{% endblock %}
+
+{% block secure_code %}import secrets
+
+api_key = secrets.token_hex(16)  # cryptographically secure randomness, no seed involved
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <button type="submit" class="btn btn-primary">Generate API key</button>
+</form>
+{% if api_key %}
+<p class="mt-3">Your new API key: <code>{{ api_key }}</code></p>
+{% endif %}
+{% endblock %}

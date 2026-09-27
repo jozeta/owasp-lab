@@ -1,4 +1,6 @@
 import hashlib
+import random
+import time
 
 from flask import jsonify, render_template, request
 
@@ -155,3 +157,19 @@ def forgot_password_api():
     # that user's inbox required at all.
     token = generate_reset_token(username)
     return jsonify({"status": "ok", "resetToken": token})
+
+
+@a02_bp.route("/generate-api-key", methods=["GET", "POST"])
+def generate_api_key():
+    api_key = None
+    if request.method == "POST":
+        # VULNERABLE: seeds Python's RNG with the current Unix
+        # timestamp before generating the key -- anyone who knows (or
+        # can narrow down) the second this happened can re-seed with
+        # that same integer and reproduce the exact same "random" key.
+        # random is a Mersenne Twister: fully deterministic given the
+        # same seed. No brute-force over the key space itself is ever
+        # needed, only over a small window of candidate timestamps.
+        random.seed(int(time.time()))
+        api_key = "".join(random.choices("0123456789abcdef", k=32))
+    return render_template("a02_crypto_failures/generate_api_key.html", api_key=api_key)

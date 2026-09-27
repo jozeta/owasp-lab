@@ -82,6 +82,19 @@ CATEGORIES.append(
                     "Exact reproduction: curl -s http://127.0.0.1:5000/a02/external-referrer-sink -H \"Referer: http://127.0.0.1:5000/a02/reset-password-referrer?token=<any token>\" — the response echoes the captured Referer header back, token and all.",
                 ],
             ),
+            ExampleNav(
+                id="predictable-api-key",
+                title="Predictable API Key via Time-Seeded PRNG",
+                group="Weak Random Number Generation",
+                difficulty="Hard",
+                endpoint="a02_crypto_failures.generate_api_key",
+                hints=[
+                    "This 'generate an API key' feature uses Python's random module. Look at exactly how that module is seeded before it generates the key -- is the seed something an attacker could ever guess or observe?",
+                    "The seed is random.seed(int(time.time())) -- the current Unix timestamp, to the second. random is a Mersenne Twister PRNG: given the same seed, it always produces the exact same output sequence, every time.",
+                    "Note the approximate second a key was generated (in a real deployment, the HTTP response's own Date header gives an attacker this for free). Locally, re-seed random with that same integer and generate a key the same way -- try a small window of nearby seconds if you're not sure of the exact one.",
+                    "One of those nearby-second guesses will reproduce the real key exactly -- no brute-force over the 32-character key space itself is needed, only over a handful of candidate timestamps, the same 'small search window' oracle pattern used elsewhere in this lab's blind-injection examples.",
+                ],
+            ),
         ],
         seed_fn=seed_legacy_credentials,
     )
