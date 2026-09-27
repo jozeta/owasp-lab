@@ -28,6 +28,9 @@ ACCOUNT_RECOVERY_PIN = "7429"
 # processes, unlike an in-memory list.
 CSS_EXFIL_LOG_PATH = os.path.join(BASE_DIR, "instance", "a03_css_exfil.log")
 
+ARCHIVE_EXPORT_DIR = os.path.join(BASE_DIR, "instance", "a03_archive_export")
+ARGUMENT_INJECTION_PROOF_PATH = "/tmp/a03_argument_injection_proof.txt"
+
 
 def _append_css_exfil_leak(value):
     os.makedirs(os.path.dirname(CSS_EXFIL_LOG_PATH), exist_ok=True)
@@ -587,4 +590,52 @@ def export_comments_csv():
         output.getvalue(),
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=comments_export.csv"},
+    )
+
+
+@a03_bp.route("/export-archive", methods=["GET", "POST"])
+def export_archive():
+    filename = ""
+    output = None
+    error = None
+    proof = None
+    if request.method == "POST":
+        filename = request.form.get("filename", "")
+        os.makedirs(ARCHIVE_EXPORT_DIR, exist_ok=True)
+        sample_path = os.path.join(ARCHIVE_EXPORT_DIR, "notes.txt")
+        with open(sample_path, "w") as f:
+            f.write("export placeholder\n")
+        archive_path = os.path.join(ARCHIVE_EXPORT_DIR, "export.tar")
+        try:
+            # VULNERABLE: shell=False and the list-argument form genuinely
+            # block every shell-metacharacter technique this lab's other
+            # command-injection examples rely on -- but `filename` is still
+            # passed straight through as a single, unvalidated argv element.
+            # GNU tar treats any value starting with "--" as a long option,
+            # not a filename, no matter how it arrived in argv. "notes.txt"
+            # is included as a second, fixed operand so tar always has a
+            # real archive member to work with -- without it, a malicious
+            # `filename` alone leaves tar with zero real members and it
+            # refuses to create an "empty archive" before ever spawning the
+            # injected compress-program, masking the vulnerability entirely.
+            result = subprocess.run(
+                ["tar", "-cf", archive_path, "notes.txt", filename],
+                shell=False,
+                cwd=ARCHIVE_EXPORT_DIR,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            output = result.stdout + result.stderr
+        except Exception as e:
+            error = str(e)
+        if os.path.exists(ARGUMENT_INJECTION_PROOF_PATH):
+            with open(ARGUMENT_INJECTION_PROOF_PATH) as f:
+                proof = f.read()
+    return render_template(
+        "a03_injection/export_archive.html",
+        filename=filename,
+        output=output,
+        error=error,
+        proof=proof,
     )

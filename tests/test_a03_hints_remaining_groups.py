@@ -7,6 +7,7 @@ REMAINING_GROUP_IDS = [
     "filtered-host-lookup",
     "command-injection",
     "blind-report-injection",
+    "argument-injection-tar-export",
     "xml-import",
     "xxe-ssrf",
     "ssti-email-preview",

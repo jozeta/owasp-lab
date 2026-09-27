@@ -35,6 +35,7 @@ def test_a03_registered_in_nav(app):
         "Medium",
         "Hard",
         "Hard",
+        "Hard",  # argument-injection-tar-export
         "Easy",
         "Hard",
         "Easy",
@@ -75,6 +76,7 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "filtered-host-lookup",
         "command-injection",
         "blind-report-injection",
+        "argument-injection-tar-export",
     ]
     assert [e.id for e in grouped[3][1]] == ["xml-import", "xxe-ssrf"]
     assert [e.id for e in grouped[4][1]] == ["ssti-email-preview", "ssti-blacklist-bypass"]

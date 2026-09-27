@@ -1,0 +1,106 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Argument Injection via Unsanitized tar Archive Export" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "back up your files" feature invokes <code>tar</code> using Python's
+  list-argument form of <code>subprocess.run()</code> with
+  <code>shell=False</code> -- the fix this lab's OTHER command-injection
+  examples all point to as the correct defense. It genuinely works as
+  advertised: no semicolon, pipe, backtick, or newline in the
+  <code>filename</code> field reaches a shell, because there IS no shell in
+  this call path. But <code>shell=False</code> only stops shell
+  metacharacters from being interpreted -- it does nothing to stop the raw
+  value itself from being interpreted as something other than a filename by
+  the program it's handed to.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit a filename starting with two dashes, like <code>--help</code>.
+  GNU <code>tar</code> parses any argument beginning with <code>--</code>
+  as a long option, not a file to archive -- regardless of whether that
+  value arrived via a shell command line or, as here, directly as one
+  element of a Python list passed to <code>subprocess.run()</code>.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  GNU tar has a long-documented option, <code>--use-compress-program</code>,
+  that lets you specify an arbitrary external program to pipe the archive
+  through as a "compressor" -- and tar genuinely executes whatever program
+  string you give it. Submit this exact filename:
+</p>
+<pre>--use-compress-program=sh -c "id > /tmp/a03_argument_injection_proof.txt"</pre>
+<p>
+  Tar parses this as a single option (everything after the first
+  <code>=</code> is the option's value, spaces included, since it all
+  arrived as one argv element) and, when it tries to create the archive,
+  runs that entire string as its compressor program -- which spawns a real
+  shell that executes <code>id</code> and redirects its output to a fixed
+  file. Reload this page and the proof file's contents appear below,
+  showing the actual output of a command that was never supposed to be
+  reachable through this "filename" field at all.
+</p>
+<p>
+  This is a real, cataloged technique -- GNU tar's
+  <code>--use-compress-program</code> is one of dozens of argument-injection
+  vectors documented across common CLI tools (curl's <code>-o</code>,
+  ssh's <code>-oProxyCommand</code>, psql's <code>-o</code>, and many
+  others), all sharing the same root cause this example demonstrates:
+  avoiding <code>shell=True</code> stops shell-metacharacter injection, but
+  it is not, by itself, input validation.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}filename = request.form.get("filename", "")
+result = subprocess.run(
+    ["tar", "-cf", archive_path, "notes.txt", filename],
+    shell=False,
+    cwd=ARCHIVE_EXPORT_DIR,
+    capture_output=True,
+    text=True,
+    timeout=10,
+)
+{% endblock %}
+
+{% block secure_code %}filename = request.form.get("filename", "")
+# Reject any value tar could interpret as an option instead of a filename --
+# a leading "-" is exactly what triggers option-parsing in GNU tar (and
+# in most other CLI tools' argument parsers):
+if filename.startswith("-"):
+    abort(400, "Invalid filename")
+result = subprocess.run(
+    ["tar", "-cf", archive_path, "--", "notes.txt", filename],  # "--" also ends option parsing
+    shell=False,
+    cwd=ARCHIVE_EXPORT_DIR,
+    capture_output=True,
+    text=True,
+    timeout=10,
+)
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Filename to back up</label>
+    <input type="text" class="form-control" name="filename" value="{{ filename }}" placeholder="notes.txt">
+  </div>
+  <button type="submit" class="btn btn-primary">Create backup archive</button>
+</form>
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
+{% if output %}
+<p class="mt-3 mb-1">tar output:</p>
+<pre>{{ output }}</pre>
+{% endif %}
+{% if proof %}
+<p class="mt-3 mb-1">Proof-of-execution file (<code>/tmp/a03_argument_injection_proof.txt</code>):</p>
+<pre>{{ proof }}</pre>
+{% endif %}
+{% endblock %}
