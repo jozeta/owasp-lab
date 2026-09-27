@@ -142,7 +142,7 @@ def download_document():
     try:
         with open(path) as f:
             content = f.read()
-    except OSError as e:
+    except Exception as e:
         error = str(e)
     return render_template(
         "a01_access_control/download_document.html", name=name, content=content, error=error
@@ -166,7 +166,7 @@ def download_document_filtered():
         try:
             with open(path) as f:
                 content = f.read()
-        except OSError as e:
+        except Exception as e:
             error = str(e)
     return render_template(
         "a01_access_control/download_document_filtered.html",

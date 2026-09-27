@@ -678,6 +678,7 @@ def file_inclusion():
         "a03_injection/file_inclusion.html",
         saved_name=saved_name,
         secret_path=FILE_INCLUSION_SECRET_PATH,
+        error=None,
     )
 
 
@@ -686,9 +687,25 @@ def save_snippet():
     name = request.form.get("name", "")
     content = request.form.get("content", "")
     os.makedirs(SNIPPETS_DIR, exist_ok=True)
+    # NOTE: `name` is still joined onto SNIPPETS_DIR with zero validation --
+    # this try/except only turns a write failure (e.g. an empty name, or a
+    # name containing an intermediate path segment that isn't a real
+    # directory) into a graceful error display instead of an unhandled
+    # crash. It does not restrict what `name` may be in any way.
     snippet_path = os.path.join(SNIPPETS_DIR, name)
-    with open(snippet_path, "w") as f:
-        f.write(content)
+    error = None
+    try:
+        with open(snippet_path, "w") as f:
+            f.write(content)
+    except Exception as e:
+        error = str(e)
+    if error:
+        return render_template(
+            "a03_injection/file_inclusion.html",
+            saved_name=None,
+            secret_path=FILE_INCLUSION_SECRET_PATH,
+            error=error,
+        )
     return redirect(url_for("a03_injection.file_inclusion", saved=name))
 
 

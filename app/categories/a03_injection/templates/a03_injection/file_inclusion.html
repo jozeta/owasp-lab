@@ -78,6 +78,9 @@ result = content  # displayed as plain text, never passed to render_template_str
 {% if saved_name %}
 <div class="alert alert-success">Saved snippet: {{ saved_name }}</div>
 {% endif %}
+{% if error %}
+<p class="text-danger">{{ error }}</p>
+{% endif %}
 <h5>Save a snippet</h5>
 <form method="post" action="{{ url_for('a03_injection.save_snippet') }}" class="mb-4">
   <div class="mb-2">
