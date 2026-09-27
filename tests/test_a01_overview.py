@@ -21,6 +21,8 @@ def test_a01_registered_in_nav(app):
         "Medium",
         "Medium",
         "Hard",
+        "Medium",
+        "Hard",
     ]
 
 
@@ -35,6 +37,7 @@ def test_a01_examples_grouped_by_vulnerability_subtype(app):
         "Mass Assignment",
         "Cross-Site Request Forgery",
         "Path Traversal",
+        "Open Redirect",
     ]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
@@ -50,3 +53,4 @@ def test_a01_overview_shows_vulnerability_subtype_group_headings(client):
     assert "Mass Assignment" in body
     assert "Cross-Site Request Forgery" in body
     assert "Path Traversal" in body
+    assert "Open Redirect" in body

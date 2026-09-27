@@ -1,0 +1,71 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Open Redirect Allowlist Bypass via Domain Suffix" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This version of the "continue" feature adds a check: the destination
+  URL must contain <code>trusted-partner.example</code>, this app's one
+  approved external redirect target. This genuinely blocks an
+  unrelated external URL.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Confirm the filter works: try <code>?next=https://evil.example.com/</code>
+  -- rejected. Now think about what "contains the substring" actually
+  checks, versus what it was meant to check.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  The check only tests whether <code>trusted-partner.example</code>
+  appears ANYWHERE in the URL string -- not that it's genuinely the
+  URL's host. Submit:
+</p>
+<pre>?next=https://trusted-partner.example.evil.example.com/phish</pre>
+<p>
+  This string contains <code>trusted-partner.example</code> as a literal
+  substring (right where the filter looks for it), so the check passes
+  -- but the URL's REAL host is <code>trusted-partner.example.evil.example.com</code>,
+  a domain entirely under the attacker's control (<code>trusted-partner.example</code>
+  is merely a subdomain label they chose to include). The redirect goes
+  to the attacker's server, not the real trusted partner.
+</p>
+<p>
+  This is the classic "substring allowlist" mistake: checking
+  <code>if trusted_domain in url</code> instead of genuinely parsing the
+  URL and comparing its actual host. The same bug family affects
+  <code>startswith()</code> checks bypassed by a matching subdomain
+  prefix, and any check that doesn't parse the URL structure before
+  comparing.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}next_url = request.args.get("next", "/")
+if "trusted-partner.example" in next_url:
+    return redirect(next_url)
+return "Invalid redirect target", 400
+{% endblock %}
+
+{% block secure_code %}import urllib.parse
+
+next_url = request.args.get("next", "/")
+host = urllib.parse.urlparse(next_url).hostname
+if host == "trusted-partner.example":
+    return redirect(next_url)
+return "Invalid redirect target", 400
+{% endblock %}
+
+{% block live_example %}
+<form method="get">
+  <div class="mb-2">
+    <label class="form-label">Destination URL</label>
+    <input type="text" class="form-control" name="next" placeholder="https://trusted-partner.example.evil.example.com/phish">
+  </div>
+  <button type="submit" class="btn btn-primary">Continue</button>
+</form>
+{% endblock %}

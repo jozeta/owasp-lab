@@ -129,6 +129,31 @@ CATEGORIES.append(
                     "This is the same class of mistake as this lab's command-injection filter-bypass example: a blacklist that enumerates 'the obvious' attack shape has to anticipate every equivalent way to reach the same outcome, not just the first one its author thought of.",
                 ],
             ),
+            ExampleNav(
+                id="unvalidated-open-redirect",
+                title="Unvalidated Open Redirect",
+                group="Open Redirect",
+                difficulty="Medium",
+                endpoint="a01_access_control.continue_redirect",
+                hints=[
+                    "This 'continue to your destination' feature redirects to whatever URL is in the next parameter. Check whether there's any validation on that URL at all before redirecting.",
+                    "Flask's redirect() sends the exact string it's given as the response's Location header -- it performs no host-checking of its own. Submit ?next=/a01/ first to confirm the basic flow works.",
+                    "Now submit ?next=https://evil.example.com/phish -- the response redirects straight there, no validation stops it. A crafted link using this app's own trusted domain, with this payload as the next parameter, would look far more trustworthy to a victim than a raw link to the attacker's site.",
+                ],
+            ),
+            ExampleNav(
+                id="open-redirect-allowlist-bypass",
+                title="Open Redirect Allowlist Bypass via Domain Suffix",
+                group="Open Redirect",
+                difficulty="Hard",
+                endpoint="a01_access_control.continue_redirect_filtered",
+                hints=[
+                    "This version only allows redirecting to trusted-partner.example -- confirm the filter genuinely blocks an unrelated domain first. Then think about exactly WHAT the check tests: is it really confirming the URL's host, or something weaker?",
+                    "The check is 'trusted-partner.example' in next_url -- a plain substring test, not a real URL-host comparison. Does that substring have to be at the START of the host to pass?",
+                    "Submit ?next=https://trusted-partner.example.evil.example.com/phish -- the substring 'trusted-partner.example' genuinely appears in this string, so the check passes, but the URL's real host is trusted-partner.example.evil.example.com, a domain entirely controlled by whoever registered evil.example.com.",
+                    "This is the classic 'substring allowlist' mistake, the same technique real-world open-redirect filter bypasses use against domains like 'whitelisted-site.com.evil.com' -- checking 'does this string contain the trusted name' is never equivalent to 'is this URL's actual host the trusted one.'",
+                ],
+            ),
         ],
     )
 )

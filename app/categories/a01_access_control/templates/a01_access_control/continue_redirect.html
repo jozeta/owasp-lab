@@ -1,0 +1,59 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Unvalidated Open Redirect" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This "continue to your destination" feature redirects the browser to
+  whatever URL is given in the <code>next</code> parameter, with no
+  validation of any kind. Flask's <code>redirect()</code> helper sends
+  the exact string it's given as the response's <code>Location</code>
+  header -- it performs no host-checking on its own.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit <code>?next=/a01/</code> and confirm you land back on this
+  category's overview page. Then try an external URL instead.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Submit <code>?next=https://evil.example.com/phish</code> -- the
+  response is a real redirect straight to that external address, no
+  validation stops it.
+</p>
+<p>
+  Real-world impact: an attacker crafts a link like
+  <code>https://this-trusted-site.com/continue?next=https://evil.example.com/phish</code>
+  and distributes it via email or social media. Because the visible
+  domain in the link is the trusted site's own, victims are far more
+  likely to click it than a raw link to the attacker's domain --
+  landing them on a convincing phishing page after a brief,
+  legitimate-looking bounce through a site they already trust.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}next_url = request.args.get("next", "/")
+return redirect(next_url)
+{% endblock %}
+
+{% block secure_code %}next_url = request.args.get("next", "/")
+# Only ever redirect to a path on this same site -- never an absolute URL:
+if next_url.startswith("/") and not next_url.startswith("//"):
+    return redirect(next_url)
+return redirect("/")
+{% endblock %}
+
+{% block live_example %}
+<form method="get">
+  <div class="mb-2">
+    <label class="form-label">Destination URL</label>
+    <input type="text" class="form-control" name="next" placeholder="https://evil.example.com/phish">
+  </div>
+  <button type="submit" class="btn btn-primary">Continue</button>
+</form>
+{% endblock %}
