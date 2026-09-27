@@ -22,7 +22,8 @@ reset token leaked via the Referer header, reset token leaked in an API response
 **A03 Injection** (SQL injection auth bypass, UNION-based exfiltration, reflected XSS,
 blind time-based SQLi, error-based SQLi, OS command injection, SQL injection escalating
 to remote code execution, stored XSS, XXE file disclosure, XXE SSRF, CSS
-attribute-selector data exfiltration via a profile theme),
+attribute-selector data exfiltration via a profile theme, argument injection via an
+unsanitized tar export, and CSV formula injection via comment export),
 **A04 Insecure Design** (unlimited coupon reuse, negative-quantity price manipulation,
 multi-step checkout bypass, password-reset poisoning via the Host header,
 free shipping via a client-trusted flag, overselling with no stock-limit
@@ -125,7 +126,7 @@ the app recreate the schema from scratch, then use "Reset lab" as normal afterwa
 | --- | --- | --- |
 | A01 Broken Access Control | Implemented | IDOR (Easy), IDOR on Password-Change API (Medium), Hidden Admin Panel (Medium), Mass Assignment Role Escalation (Hard), Account Takeover via CSRF (Email Change) (Medium) |
 | A02 Cryptographic Failures | Implemented | Leaked Credential Dump (Easy), Weak Encryption / ECB Mode (Medium), Predictable Password Reset Token (Hard), Reset Token Leaked in API Response (Easy), Reset Token Leaked via Referrer Header (Medium) |
-| A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Error-Based SQLi (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), SQLi to RCE (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard), CSS Attribute-Selector Data Exfiltration (Hard) |
+| A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Error-Based SQLi (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), SQLi to RCE (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard), CSS Attribute-Selector Data Exfiltration (Hard), Argument Injection via tar Export (Hard), CSV Formula Injection (Medium) |
 | A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Free Shipping via Client-Trusted Flag (Easy), Negative Quantity Price Manipulation (Medium), Overselling — No Stock-Limit Check (Medium), Discount Code Stacking via Parameter Pollution (Medium), Multi-Step Checkout Bypass (Hard), Password Reset Poisoning via Host Header (Hard), Premium Access Persists After Cancellation (Medium), Store-Credit Rounding Exploit (Hard) |
 | A05 Security Misconfiguration | Implemented | Exposed Database Backup File (Easy), Directory Listing Exposed (Easy), Verbose Error Message Disclosure (Medium), Permissive CORS with Credentials (Medium), CORS: Null Origin Whitelisted (Medium), CORS: Wildcard Origin, Internal Network Pivot (Medium), CORS: Origin Allowlist Regex Bypass (Hard), Exposed Debug Console (Hard), Forgotten Admin Panel with Default Credentials (Hard), Clickjacking on a Sensitive Action Page (Easy) |
 | A06 Vulnerable and Outdated Components | Implemented | Component Version Disclosure (Easy), Outdated Vulnerable JS Library Detection (Easy), jQuery DOM XSS via Vulnerable htmlPrefilter (Medium), Lodash Prototype Pollution via _.defaultsDeep() (Medium), jQuery DOM XSS Chained to Session Token Theft (Hard), Prototype Pollution Bypasses a Client-Side Access Check (Hard) |
