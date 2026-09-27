@@ -1,3 +1,5 @@
+import csv
+import io
 import os
 import re
 import subprocess
@@ -561,3 +563,28 @@ def css_exfil_collector():
     if leak_value:
         _append_css_exfil_leak(leak_value)
     return Response(status=204)
+
+
+@a03_bp.route("/csv-injection")
+def csv_injection():
+    return render_template("a03_injection/csv_injection.html")
+
+
+@a03_bp.route("/export-comments-csv")
+def export_comments_csv():
+    all_comments = Comment.query.order_by(Comment.id.desc()).all()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Author", "Comment"])
+    for c in all_comments:
+        # VULNERABLE: no neutralization of leading formula characters
+        # (=, +, -, @) before writing user-controlled fields into the CSV --
+        # a spreadsheet application that opens this export treats any cell
+        # starting with one of those characters as a formula to evaluate,
+        # not as literal text.
+        writer.writerow([c.author, c.body])
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=comments_export.csv"},
+    )

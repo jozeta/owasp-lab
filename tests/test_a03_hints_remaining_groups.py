@@ -14,6 +14,7 @@ REMAINING_GROUP_IDS = [
     "ldap-directory-login",
     "ldap-directory-search",
     "css-attribute-exfil",
+    "csv-formula-injection",
 ]
 
 
