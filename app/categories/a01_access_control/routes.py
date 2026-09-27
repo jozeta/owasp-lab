@@ -1,12 +1,25 @@
+import os
 import secrets
 
 from flask import flash, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
 
+from app import BASE_DIR
 from app.categories.a01_access_control import a01_bp
 from app.core.auth import get_current_user
 from app.core.models import User
 from app.extensions import db
+
+
+DOCUMENTS_DIR = os.path.join(BASE_DIR, "instance", "a01_documents")
+
+
+def _ensure_seed_document():
+    os.makedirs(DOCUMENTS_DIR, exist_ok=True)
+    welcome_path = os.path.join(DOCUMENTS_DIR, "welcome.txt")
+    if not os.path.exists(welcome_path):
+        with open(welcome_path, "w") as f:
+            f.write("Welcome to the OWASP Lab document center!\n")
 
 
 @a01_bp.route("/")
@@ -112,4 +125,53 @@ def change_display_name():
         viewer=viewer,
         changed=changed,
         csrf_token=session["a01_csrf_token"],
+    )
+
+
+@a01_bp.route("/download-document")
+def download_document():
+    _ensure_seed_document()
+    name = request.args.get("name", "welcome.txt")
+    content = None
+    error = None
+    # VULNERABLE: os.path.join() silently discards DOCUMENTS_DIR entirely
+    # if `name` is an absolute path, and a relative "../../../" climbs
+    # straight out of this directory just as easily -- there is no
+    # check of any kind on `name` here.
+    path = os.path.join(DOCUMENTS_DIR, name)
+    try:
+        with open(path) as f:
+            content = f.read()
+    except OSError as e:
+        error = str(e)
+    return render_template(
+        "a01_access_control/download_document.html", name=name, content=content, error=error
+    )
+
+
+@a01_bp.route("/download-document-filtered")
+def download_document_filtered():
+    _ensure_seed_document()
+    name = request.args.get("name", "welcome.txt")
+    content = None
+    error = None
+    blocked = ".." in name
+    if not blocked:
+        # VULNERABLE: this filter only ever checks for the substring
+        # "..", never considering that os.path.join() discards
+        # DOCUMENTS_DIR entirely when `name` is an absolute path -- an
+        # absolute path contains no ".." at all and sails straight
+        # through this check.
+        path = os.path.join(DOCUMENTS_DIR, name)
+        try:
+            with open(path) as f:
+                content = f.read()
+        except OSError as e:
+            error = str(e)
+    return render_template(
+        "a01_access_control/download_document_filtered.html",
+        name=name,
+        content=content,
+        error=error,
+        blocked=blocked,
     )

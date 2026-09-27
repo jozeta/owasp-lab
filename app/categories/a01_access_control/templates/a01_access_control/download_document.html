@@ -1,0 +1,78 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Arbitrary File Read via Document Download" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This "document center" lets you download a file by name from a
+  shared documents folder. The name you provide is joined directly onto
+  that folder's path with no validation of any kind — Python's
+  <code>os.path.join()</code> is not a safety mechanism: if the second
+  argument is an absolute path, it discards the first argument entirely,
+  and a relative <code>../</code> sequence climbs out of the intended
+  folder just as easily as it would in any other language.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Fetch <code>?name=welcome.txt</code> and note the legitimate content.
+  Then try <code>?name=/etc/passwd</code> — no <code>../</code> at all,
+  just a bare absolute path.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Two independent techniques both work here, since neither the intended
+  folder restriction nor <code>os.path.join()</code>'s own behavior stop
+  either one:
+</p>
+<ol>
+  <li>Classic relative traversal: <code>?name=../../../../../../etc/passwd</code>
+      climbs out of the documents folder one directory at a time.</li>
+  <li><code>os.path.join()</code>'s absolute-path override: <code>?name=/etc/passwd</code> —
+      when the second argument to <code>os.path.join()</code> is an
+      absolute path, Python discards the first argument entirely and
+      returns just the absolute path, no traversal sequence required at
+      all.</li>
+</ol>
+<p>
+  Either payload returns the real contents of <code>/etc/passwd</code> —
+  a file completely outside the intended documents folder, disclosed
+  with no access control of any kind.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}name = request.args.get("name", "welcome.txt")
+path = os.path.join(DOCUMENTS_DIR, name)
+with open(path) as f:
+    content = f.read()
+{% endblock %}
+
+{% block secure_code %}name = request.args.get("name", "welcome.txt")
+# Resolve to a real path and confirm it's genuinely inside DOCUMENTS_DIR
+# before ever opening it -- rejects both absolute paths and "../" climbs
+candidate = os.path.realpath(os.path.join(DOCUMENTS_DIR, name))
+if not candidate.startswith(os.path.realpath(DOCUMENTS_DIR) + os.sep):
+    abort(403)
+with open(candidate) as f:
+    content = f.read()
+{% endblock %}
+
+{% block live_example %}
+<form method="get" class="mb-3">
+  <div class="mb-2">
+    <label class="form-label">Document name</label>
+    <input type="text" class="form-control" name="name" value="{{ name }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Download</button>
+</form>
+{% if content %}
+<pre>{{ content }}</pre>
+{% endif %}
+{% if error %}
+<p class="text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}

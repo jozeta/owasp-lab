@@ -91,6 +91,31 @@ CATEGORIES.append(
                     "This is a common real-world CSRF-protection mistake: implementing 'does a token exist' instead of 'does the submitted token match the one this session was actually issued' -- the presence check makes the form LOOK protected in the page source without providing any actual protection.",
                 ],
             ),
+            ExampleNav(
+                id="arbitrary-file-read",
+                title="Arbitrary File Read via Document Download",
+                group="Path Traversal",
+                difficulty="Medium",
+                endpoint="a01_access_control.download_document",
+                hints=[
+                    "This 'document center' downloads a file by name from a shared folder. Look at how the name you provide gets combined with that folder's path -- is there any check at all on what the name can contain?",
+                    "The server builds the path with os.path.join(DOCUMENTS_DIR, name) and opens it directly. Try a name containing several ../ sequences to climb out of the documents folder -- e.g. ?name=../../../../../../etc/passwd.",
+                    "There's an even simpler technique specific to Python: os.path.join() discards its FIRST argument entirely if the second argument is an absolute path. Try ?name=/etc/passwd -- no ../ needed at all, and the real contents of /etc/passwd come back.",
+                ],
+            ),
+            ExampleNav(
+                id="path-traversal-filter-bypass",
+                title="Path Traversal Filter Bypass via Absolute Path",
+                group="Path Traversal",
+                difficulty="Hard",
+                endpoint="a01_access_control.download_document_filtered",
+                hints=[
+                    "This version blocks any name containing the substring '..' before opening the file. Confirm it: try the same ../../../etc/passwd payload that worked on the sibling 'Arbitrary File Read' example in this group -- it's rejected here.",
+                    "The filter only ever looks for '..'. Think back to the OTHER technique from that sibling example -- does a bare absolute path contain that substring anywhere at all?",
+                    "Submit ?name=/etc/passwd -- zero dots-in-sequence for the filter to catch, so it sails straight through untouched and reaches the exact same unguarded open() call as the unfiltered example.",
+                    "This is the same class of mistake as this lab's command-injection filter-bypass example: a blacklist that enumerates 'the obvious' attack shape has to anticipate every equivalent way to reach the same outcome, not just the first one its author thought of.",
+                ],
+            ),
         ],
     )
 )

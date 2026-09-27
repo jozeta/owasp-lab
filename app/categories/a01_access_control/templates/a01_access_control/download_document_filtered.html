@@ -1,0 +1,78 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Path Traversal Filter Bypass via Absolute Path" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This version of the document download feature adds a filter: any
+  <code>name</code> containing the substring <code>".."</code> is
+  rejected outright before the file is ever opened. This genuinely
+  blocks the classic relative-traversal technique from the sibling
+  "Arbitrary File Read" example in this same group.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Confirm the filter works: try <code>?name=../../../../etc/passwd</code>
+  — blocked. Now think about the OTHER technique from that sibling
+  example — does it contain the substring <code>".."</code> anywhere
+  at all?
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  The filter only ever checks for the literal substring <code>".."</code>.
+  It never considers that <code>os.path.join()</code>'s absolute-path
+  override doesn't involve <code>".."</code> in any form: submit
+  <code>?name=/etc/passwd</code> — a bare absolute path, containing zero
+  dots or slashes-in-sequence that the filter is looking for. It sails
+  through the check untouched and reaches the exact same unguarded
+  <code>open()</code> call as the unfiltered sibling example.
+</p>
+<p>
+  Blacklist filters that enumerate "the obvious" attack shape are a
+  recurring, genuinely dangerous real-world pattern throughout this lab
+  (the newline-bypass in this app's command-injection filter example is
+  the same story) — a filter has to anticipate every equivalent way to
+  achieve the same outcome, not just the first one that comes to mind.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}name = request.args.get("name", "welcome.txt")
+if ".." in name:
+    blocked = True
+else:
+    path = os.path.join(DOCUMENTS_DIR, name)  # still no absolute-path check
+    with open(path) as f:
+        content = f.read()
+{% endblock %}
+
+{% block secure_code %}name = request.args.get("name", "welcome.txt")
+candidate = os.path.realpath(os.path.join(DOCUMENTS_DIR, name))
+if not candidate.startswith(os.path.realpath(DOCUMENTS_DIR) + os.sep):
+    abort(403)
+with open(candidate) as f:
+    content = f.read()
+{% endblock %}
+
+{% block live_example %}
+<form method="get" class="mb-3">
+  <div class="mb-2">
+    <label class="form-label">Document name</label>
+    <input type="text" class="form-control" name="name" value="{{ name }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Download</button>
+</form>
+{% if blocked %}
+<p class="text-danger">Blocked: filename contains a disallowed sequence.</p>
+{% endif %}
+{% if content %}
+<pre>{{ content }}</pre>
+{% endif %}
+{% if error %}
+<p class="text-danger">{{ error }}</p>
+{% endif %}
+{% endblock %}
