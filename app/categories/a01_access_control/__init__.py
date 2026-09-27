@@ -99,7 +99,7 @@ CATEGORIES.append(
                 endpoint="a01_access_control.download_document",
                 hints=[
                     "This 'document center' downloads a file by name from a shared folder. Look at how the name you provide gets combined with that folder's path -- is there any check at all on what the name can contain?",
-                    "The server builds the path with os.path.join(DOCUMENTS_DIR, name) and opens it directly. Try a name containing several ../ sequences to climb out of the documents folder -- e.g. ?name=../../../../../../etc/passwd.",
+                    "The server builds the path with os.path.join(DOCUMENTS_DIR, name) and opens it directly. Try a name containing several ../ sequences to climb out of the documents folder -- e.g. ?name=../../../../../../etc/passwd. (The exact count needed depends on how deep this app is installed on disk -- if that many aren't enough on your setup, add more; extra ../ segments beyond the root are harmless, since climbing above / is a no-op.)",
                     "There's an even simpler technique specific to Python: os.path.join() discards its FIRST argument entirely if the second argument is an absolute path. Try ?name=/etc/passwd -- no ../ needed at all, and the real contents of /etc/passwd come back.",
                 ],
             ),

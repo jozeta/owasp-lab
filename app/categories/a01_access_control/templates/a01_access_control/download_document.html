@@ -41,7 +41,12 @@
 <p>
   Either payload returns the real contents of <code>/etc/passwd</code> —
   a file completely outside the intended documents folder, disclosed
-  with no access control of any kind.
+  with no access control of any kind. The exact number of
+  <code>../</code> segments needed depends on how deep this app is
+  installed on disk, so if six isn't enough where you're running it, add
+  more — submitting extra <code>../</code> segments beyond what's needed
+  is harmless, since climbing above the filesystem root is a no-op that
+  just stays at <code>/</code>.
 </p>
 {% endblock %}
 
