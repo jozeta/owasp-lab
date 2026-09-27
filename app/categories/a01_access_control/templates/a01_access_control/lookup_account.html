@@ -1,0 +1,66 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "IDOR via Wildcard Pattern-Matched Lookup" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This "find my account" feature looks up a user by exact username --
+  or at least, that's the intent. The actual query uses SQLAlchemy's
+  <code>.like()</code> comparison instead of an equality check, which
+  performs SQL pattern matching: <code>%</code> matches any sequence of
+  characters (including none at all), and <code>_</code> matches any
+  single character. Neither is escaped, validated, or rejected.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Look up your own username first -- it returns exactly one account, as
+  expected. Then submit a bare <code>%</code> as the username instead.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Submit <code>%</code> as the username to look up. Since <code>%</code>
+  matches any string at all, EVERY account in the system matches the
+  query simultaneously -- the response discloses every user's username,
+  email, display name, and role in a single request, with no guessing
+  and no iteration required.
+</p>
+<p>
+  This is a different failure mode from a classic IDOR (guessing one
+  specific identifier at a time): the bug here is choosing the wrong
+  comparison operator for what was meant to be an exact match, turning
+  a "look up one account" feature into "dump every account."
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}username = request.form.get("username", "")
+results = User.query.filter(User.username.like(username)).all()
+{% endblock %}
+
+{% block secure_code %}username = request.form.get("username", "")
+results = User.query.filter(User.username == username).all()
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Username to look up</label>
+    <input type="text" class="form-control" name="username" value="{{ username }}" placeholder="alice">
+  </div>
+  <button type="submit" class="btn btn-primary">Look up</button>
+</form>
+{% if results %}
+<table class="table table-sm mt-3">
+  <thead><tr><th>Username</th><th>Email</th><th>Display Name</th><th>Role</th></tr></thead>
+  <tbody>
+    {% for u in results %}
+    <tr><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.display_name }}</td><td>{{ u.role }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

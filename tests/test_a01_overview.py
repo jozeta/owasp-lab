@@ -15,6 +15,7 @@ def test_a01_registered_in_nav(app):
         "Easy",
         "Medium",
         "Medium",
+        "Medium",
         "Hard",
         "Medium",
         "Medium",

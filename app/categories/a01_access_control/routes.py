@@ -175,3 +175,19 @@ def download_document_filtered():
         error=error,
         blocked=blocked,
     )
+
+
+@a01_bp.route("/lookup-account", methods=["GET", "POST"])
+def lookup_account():
+    username = ""
+    results = []
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        # VULNERABLE: uses SQL LIKE-style pattern matching instead of an
+        # exact equality check -- a bare wildcard character matches
+        # every row in the table, not just the one account the caller
+        # claims to be looking up.
+        results = User.query.filter(User.username.like(username)).all()
+    return render_template(
+        "a01_access_control/lookup_account.html", username=username, results=results
+    )

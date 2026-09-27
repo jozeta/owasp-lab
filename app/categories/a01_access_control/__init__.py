@@ -41,6 +41,19 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="idor-wildcard-lookup",
+                title="IDOR via Wildcard Pattern-Matched Lookup",
+                group="Insecure Direct Object References (IDOR)",
+                difficulty="Medium",
+                endpoint="a01_access_control.lookup_account",
+                hints=[
+                    "This 'find my account' feature looks up a user by username. Look at exactly how the comparison is implemented -- is it checking for an EXACT match, or something looser?",
+                    "The query uses SQLAlchemy's .like() instead of == -- that's SQL pattern matching, not equality. In LIKE syntax, % matches any sequence of characters at all, including an empty one.",
+                    "Submit a bare % as the username to look up. Every account in the system matches a pattern that matches everything, so the response discloses every user's data in one request -- no guessing a specific ID required at all.",
+                    "This is a different bug shape from a classic IDOR: instead of guessing one identifier at a time, a single wildcard character exploits the WRONG comparison operator being used for what was supposed to be an exact-match lookup.",
+                ],
+            ),
+            ExampleNav(
                 id="admin-users",
                 title="Hidden Admin Panel",
                 group="Missing Function-Level Access Control",
