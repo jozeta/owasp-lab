@@ -1,0 +1,96 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "HTTP Parameter Pollution — Role Escalation" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This "preferences" form is meant to let you switch between the
+  "user" and "premium" tiers only -- an authorization check rejects
+  anything else. The bug isn't in that check itself: it's that the
+  check and the actual write don't agree on WHICH value a duplicated
+  form field holds. When the same field name is submitted more than
+  once, Werkzeug's <code>request.form.get()</code> always returns the
+  FIRST occurrence, while <code>request.form.getlist()</code> returns
+  every occurrence in order -- and this route's write path deliberately
+  reads the LAST one, to let a later hidden field override an earlier
+  one in a (fictional) multi-step version of this form.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Submit the form normally with role set to "admin" directly -- rejected,
+  the check works as expected. Now think about what happens if the SAME
+  field name is submitted twice, with two different values.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Submit a request with the <code>role</code> field included TWICE, in
+  this order:
+</p>
+<pre>role=user&amp;role=admin</pre>
+<p>
+  The authorization check reads <code>request.form.get("role")</code>,
+  which returns only the FIRST occurrence -- <code>"user"</code> -- so
+  the check passes. The actual write, a few lines later, reads
+  <code>request.form.getlist("role")[-1]</code> -- the LAST occurrence,
+  <code>"admin"</code> -- and applies that instead. The check and the
+  write silently disagreed about which submitted value was "the" role,
+  and the write's choice wins.
+</p>
+<p>
+  This is HTTP Parameter Pollution: exploiting the fact that there is no
+  single, universal rule for how a server handles a repeated parameter
+  name. Different frameworks (and, as demonstrated here, even different
+  LINES of code within the exact same framework and the exact same
+  request) can disagree about which occurrence "counts" -- and an
+  attacker only needs ONE inconsistency between a security check and
+  the code path it's meant to protect.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}submitted_role = request.form.get("role", "user")  # sees the FIRST occurrence
+if submitted_role not in ("user", "premium"):
+    abort(403)
+viewer.role = request.form.getlist("role")[-1]  # applies the LAST occurrence
+db.session.commit()
+{% endblock %}
+
+{% block secure_code %}# Read the role exactly once, from exactly one place, and validate
+# that SAME value before using it -- never mix .get() and .getlist():
+submitted_role = request.form.get("role", "user")
+if submitted_role not in ("user", "premium"):
+    abort(403)
+viewer.role = submitted_role
+db.session.commit()
+{% endblock %}
+
+{% block live_example %}
+{% if viewer %}
+<p>Logged in as <strong>{{ viewer.username }}</strong> — current role: <strong>{{ viewer.role }}</strong></p>
+{% if updated %}
+<div class="alert alert-success">Preferences updated.</div>
+{% endif %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Tier</label>
+    <select class="form-select" name="role">
+      <option value="user">user</option>
+      <option value="premium">premium</option>
+    </select>
+  </div>
+  <p class="text-muted small">
+    This dropdown can only submit "user" or "premium" — to demonstrate
+    the exploit, craft a raw request with the role field repeated, e.g.
+    via curl: <code>curl -X POST -d "role=user&amp;role=admin" ...</code>
+    (with your session cookie).
+  </p>
+  <button type="submit" class="btn btn-primary">Update preferences</button>
+</form>
+{% else %}
+<a href="{{ url_for('core.switch_user', next=request.path) }}">Log in to try this example</a>
+{% endif %}
+{% endblock %}

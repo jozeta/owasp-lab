@@ -154,6 +154,19 @@ CATEGORIES.append(
                     "This is the classic 'substring allowlist' mistake, the same technique real-world open-redirect filter bypasses use against domains like 'whitelisted-site.com.evil.com' -- checking 'does this string contain the trusted name' is never equivalent to 'is this URL's actual host the trusted one.'",
                 ],
             ),
+            ExampleNav(
+                id="hpp-role-escalation",
+                title="HTTP Parameter Pollution — Role Escalation",
+                group="HTTP Parameter Pollution",
+                difficulty="Hard",
+                endpoint="a01_access_control.update_preferences",
+                hints=[
+                    "This 'preferences' form only allows 'user' or 'premium' as a role, and an authorization check enforces that. But look closer: does the check and the actual database write both look at the SAME occurrence of the role field, if it's submitted more than once?",
+                    "When a form field is submitted twice with the same name, Werkzeug's request.form.get() always returns the FIRST occurrence. request.form.getlist() returns every occurrence, in the order submitted.",
+                    "The authorization check uses .get() (sees the first value); the actual write uses .getlist()[-1] (the last value). Submit a raw request with role included TWICE -- role=user&role=admin, in that exact order -- and the check passes on 'user' while the write applies 'admin'.",
+                    "Exact reproduction: curl -X POST -d \"role=user&role=admin\" http://127.0.0.1:5001/a01/update-preferences (with your session cookie) -- your account's role becomes admin, even though the very same request would have been rejected if you'd only submitted role=admin once.",
+                ],
+            ),
         ],
     )
 )

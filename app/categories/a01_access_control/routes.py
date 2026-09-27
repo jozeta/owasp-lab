@@ -1,7 +1,7 @@
 import os
 import secrets
 
-from flask import flash, jsonify, redirect, render_template, request, session, url_for
+from flask import abort, flash, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
 
 from app import BASE_DIR
@@ -216,3 +216,30 @@ def continue_redirect_filtered():
     if "trusted-partner.example" in next_url:
         return redirect(next_url)
     return "Invalid redirect target", 400
+
+
+@a01_bp.route("/update-preferences", methods=["GET", "POST"])
+def update_preferences():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    updated = False
+    if request.method == "POST":
+        # VULNERABLE: the authorization check below reads only the
+        # FIRST occurrence of a duplicated "role" field
+        # (request.form.get()'s documented behavior for repeated keys),
+        # but the actual write a few lines later deliberately reads the
+        # LAST occurrence instead (request.form.getlist()[-1]) -- a
+        # "let a later resubmitted field override an earlier one"
+        # convention meant for a legitimate multi-step form. An
+        # attacker who submits role=user&role=admin passes the check
+        # (which only ever sees "user") while the write applies "admin".
+        submitted_role = request.form.get("role", "user")
+        if submitted_role not in ("user", "premium"):
+            abort(403)
+        viewer.role = request.form.getlist("role")[-1]
+        db.session.commit()
+        updated = True
+    return render_template(
+        "a01_access_control/update_preferences.html", viewer=viewer, updated=updated
+    )

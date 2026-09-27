@@ -23,6 +23,7 @@ def test_a01_registered_in_nav(app):
         "Hard",
         "Medium",
         "Hard",
+        "Hard",
     ]
 
 
@@ -38,6 +39,7 @@ def test_a01_examples_grouped_by_vulnerability_subtype(app):
         "Cross-Site Request Forgery",
         "Path Traversal",
         "Open Redirect",
+        "HTTP Parameter Pollution",
     ]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
@@ -54,3 +56,4 @@ def test_a01_overview_shows_vulnerability_subtype_group_headings(client):
     assert "Cross-Site Request Forgery" in body
     assert "Path Traversal" in body
     assert "Open Redirect" in body
+    assert "HTTP Parameter Pollution" in body
