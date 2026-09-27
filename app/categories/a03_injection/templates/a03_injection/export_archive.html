@@ -35,16 +35,16 @@
   through as a "compressor" -- and tar genuinely executes whatever program
   string you give it. Submit this exact filename:
 </p>
-<pre>--use-compress-program=sh -c "id > /tmp/a03_argument_injection_proof.txt"</pre>
+<pre>--use-compress-program=sh -c "id &gt; /tmp/a03_argument_injection_proof.txt"</pre>
 <p>
   Tar parses this as a single option (everything after the first
   <code>=</code> is the option's value, spaces included, since it all
   arrived as one argv element) and, when it tries to create the archive,
   runs that entire string as its compressor program -- which spawns a real
   shell that executes <code>id</code> and redirects its output to a fixed
-  file. Reload this page and the proof file's contents appear below,
-  showing the actual output of a command that was never supposed to be
-  reachable through this "filename" field at all.
+  file. The proof file's contents appear immediately below, in the response
+  to that same submission, showing the actual output of a command that was
+  never supposed to be reachable through this "filename" field at all.
 </p>
 <p>
   This is a real, cataloged technique -- GNU tar's

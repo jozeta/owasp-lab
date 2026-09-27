@@ -45,6 +45,28 @@ def test_ordinary_filename_creates_archive_without_injection(client):
     assert not os.path.exists(ARGUMENT_INJECTION_PROOF_PATH)
 
 
+def test_shell_metacharacters_do_not_execute_via_filename(client):
+    # No @requires_gnu_tar here on purpose: this test proves something tar
+    # does NOT do (run a shell) regardless of which tar flavor is installed,
+    # so it should pass under bsdtar just as well as GNU tar.
+    marker_path = "/tmp/a03_argument_injection_should_not_exist.txt"
+    if os.path.exists(marker_path):
+        os.remove(marker_path)
+
+    try:
+        payload = f"notes.txt; touch {marker_path}"
+        response = client.post("/a03/export-archive", data={"filename": payload})
+        assert response.status_code == 200
+
+        # shell=False means the semicolon is just a literal character in the
+        # filename tar tries to open -- no shell ever sees it, so the
+        # "touch" command after the semicolon never runs
+        assert not os.path.exists(marker_path)
+    finally:
+        if os.path.exists(marker_path):
+            os.remove(marker_path)
+
+
 @requires_gnu_tar
 def test_argument_injection_via_use_compress_program_executes_real_command(client):
     payload = '--use-compress-program=sh -c "id > /tmp/a03_argument_injection_proof.txt"'

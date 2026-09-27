@@ -626,7 +626,7 @@ def export_archive():
                 text=True,
                 timeout=10,
             )
-            output = result.stdout + result.stderr
+            output = result.stdout or result.stderr or "(no output)"
         except Exception as e:
             error = str(e)
         if os.path.exists(ARGUMENT_INJECTION_PROOF_PATH):
