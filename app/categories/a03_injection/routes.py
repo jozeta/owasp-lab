@@ -734,3 +734,44 @@ def render_snippet():
     return render_template(
         "a03_injection/render_snippet.html", name=name, result=result, error=error
     )
+
+
+@a03_bp.route("/roster/department-report")
+def department_report():
+    departments = [
+        row[0]
+        for row in db.session.execute(text("SELECT DISTINCT department FROM a03_employees")).all()
+    ]
+    report = {}
+    for department in departments:
+        # VULNERABLE: `department` was already sitting safely in the
+        # database -- inserted through add_employee()'s fully
+        # parameterized INSERT below -- but this SEPARATE, later query
+        # re-interpolates that already-stored value into a brand new raw
+        # SQL string with zero parameterization. The safe write earlier
+        # provides no protection at all against this unsafe read: this
+        # is second-order SQL injection.
+        query = f"SELECT name, email, salary FROM a03_employees WHERE department = '{department}'"
+        report[department] = db.session.execute(text(query)).all()
+    return render_template("a03_injection/department_report.html", report=report)
+
+
+@a03_bp.route("/roster/add-employee", methods=["POST"])
+def add_employee():
+    name = request.form.get("name", "")
+    email = request.form.get("email", "")
+    department = request.form.get("department", "")
+    salary = request.form.get("salary", "0")
+    try:
+        salary_value = int(salary)
+    except ValueError:
+        salary_value = 0
+    # Genuinely safe: a real parameterized INSERT via the ORM. The
+    # `department` value is stored VERBATIM, whatever it is -- this
+    # write is not the vulnerability; what happens to this value LATER,
+    # in department_report() above, is.
+    db.session.add(
+        Employee(name=name, email=email, department=department, salary=salary_value)
+    )
+    db.session.commit()
+    return redirect(url_for("a03_injection.department_report"))

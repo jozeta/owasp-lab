@@ -29,6 +29,7 @@ def test_a03_registered_in_nav(app):
         "Hard",
         "Hard",
         "Hard",
+        "Hard",
         "Medium",
         "Hard",
         "Hard",
@@ -73,6 +74,7 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "blind-sqli",
         "roster-lookup",
         "sqli-to-rce",
+        "second-order-sqli-department-report",
     ]
     assert [e.id for e in grouped[1][1]] == [
         "reflected-xss",

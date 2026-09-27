@@ -111,6 +111,20 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="second-order-sqli-department-report",
+                title="Second-Order SQL Injection via Department Report",
+                group="SQL Injection",
+                difficulty="Hard",
+                endpoint="a03_injection.department_report",
+                hints=[
+                    "This form safely adds a new employee to the roster -- the write itself uses the ORM and is fully parameterized. Look instead at what happens to a stored department value LATER, in a completely different feature.",
+                    "The department report loops over every distinct department already in the database and builds a NEW SQL query for each one via plain f-string interpolation -- request.form was never involved in that query at all, only data that already sat safely in the table.",
+                    "Add a new employee with the department field set to: NoSuchDept' UNION SELECT username, password, 0 FROM injection_accounts-- . The write succeeds without any error -- this step is completely safe.",
+                    "Now view the department report. The report route reads your stored department value back and interpolates it into a fresh query -- your payload breaks out of that query's string literal and the UNION SELECT fires, leaking every row of injection_accounts (real usernames and plaintext passwords) disguised as an employee list for a department that doesn't exist.",
+                    "This is second-order SQL injection: parameterizing the WRITE (as this app correctly does here) provides zero protection against an unrelated, later feature that re-interpolates the same stored value into a brand new, unparameterized query.",
+                ],
+            ),
+            ExampleNav(
                 id="reflected-xss",
                 title="Reflected XSS in Greeting Page",
                 group="Cross-Site Scripting (XSS)",

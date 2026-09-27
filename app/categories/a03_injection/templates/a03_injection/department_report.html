@@ -1,0 +1,100 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Second-Order SQL Injection via Department Report" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "add employee to roster" form stores a new employee's department
+  through a completely safe, parameterized database write -- there is no
+  SQL injection risk at the moment of writing. The bug lives somewhere
+  else entirely: a SEPARATE "department report" feature later reads
+  every stored department value back and re-inserts it into a BRAND NEW
+  raw SQL query, built with plain string interpolation instead of bound
+  parameters.
+</p>
+<p>
+  This is <strong>second-order SQL injection</strong>: the malicious
+  payload is stored safely, sits inert in the database, and only fires
+  when a completely different, unrelated feature reads it back and
+  trusts it as if it were already-safe data.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Add a new employee with an ordinary department name like
+  <code>Marketing</code> and confirm it shows up correctly in the report
+  below. Then think about what happens if the department VALUE itself
+  contains SQL syntax.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Add a new employee using the form below with the Department field set
+  to exactly:
+</p>
+<pre>NoSuchDept' UNION SELECT username, password, 0 FROM injection_accounts--</pre>
+<p>
+  The employee is added successfully -- this write is genuinely safe,
+  parameterized, and never touches raw SQL. Now look at the department
+  report further down this page: the report route builds a fresh query
+  for EVERY distinct department already in the table, including the one
+  you just added, by directly interpolating that stored string into
+  <code>SELECT name, email, salary FROM a03_employees WHERE department =
+  '&lt;value&gt;'</code>. Your stored payload breaks out of that new
+  query's string literal and UNION-selects every row of
+  <code>injection_accounts</code> instead -- real usernames and
+  plaintext passwords appear in the report, disguised as one
+  department's employee list.
+</p>
+<p>
+  The lesson: parameterizing the WRITE gives you zero protection if a
+  LATER, unrelated feature re-interpolates the already-stored value into
+  a new query of its own. Every consumer of stored data needs its own
+  parameterization -- safety doesn't travel with the data.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}# Safe write -- this is NOT the bug:
+db.session.add(Employee(name=name, email=email, department=department, salary=salary))
+db.session.commit()
+
+# Unsafe read, in a completely different route, run later:
+for department in distinct_departments:
+    query = f"SELECT name, email, salary FROM a03_employees WHERE department = '{department}'"
+    report[department] = db.session.execute(text(query)).all()
+{% endblock %}
+
+{% block secure_code %}# Parameterize the READ too, not just the write:
+for department in distinct_departments:
+    query = text("SELECT name, email, salary FROM a03_employees WHERE department = :department")
+    report[department] = db.session.execute(query, {"department": department}).all()
+{% endblock %}
+
+{% block live_example %}
+<h3 class="h6 mt-3">Add an employee</h3>
+<form method="post" action="{{ url_for('a03_injection.add_employee') }}" class="mb-4">
+  <div class="row g-2">
+    <div class="col"><input type="text" class="form-control" name="name" placeholder="Name" required></div>
+    <div class="col"><input type="email" class="form-control" name="email" placeholder="Email" required></div>
+    <div class="col"><input type="text" class="form-control" name="department" placeholder="Department" required></div>
+    <div class="col"><input type="number" class="form-control" name="salary" placeholder="Salary" required></div>
+    <div class="col-auto"><button type="submit" class="btn btn-primary">Add employee</button></div>
+  </div>
+</form>
+
+<h3 class="h6 mt-3">Department report</h3>
+{% for department, rows in report.items() %}
+<h4 class="h6 mt-2">{{ department }}</h4>
+<table class="table table-sm">
+  <thead><tr><th>Name</th><th>Email</th><th>Salary</th></tr></thead>
+  <tbody>
+    {% for row in rows %}
+    <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+{% endblock %}

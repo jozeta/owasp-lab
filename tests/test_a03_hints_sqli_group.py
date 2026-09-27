@@ -8,6 +8,7 @@ SQLI_GROUP_IDS = [
     "blind-sqli",
     "roster-lookup",
     "sqli-to-rce",
+    "second-order-sqli-department-report",
 ]
 
 
