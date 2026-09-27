@@ -195,7 +195,9 @@ def lookup_account():
 
 @a01_bp.route("/continue")
 def continue_redirect():
-    next_url = request.args.get("next", "/")
+    next_url = request.args.get("next")
+    if next_url is None:
+        return render_template("a01_access_control/continue_redirect.html")
     # VULNERABLE: redirects to any URL at all, with zero validation --
     # Flask's redirect() sends whatever string it's given as the
     # Location header, external URLs included.
@@ -204,7 +206,9 @@ def continue_redirect():
 
 @a01_bp.route("/continue-filtered")
 def continue_redirect_filtered():
-    next_url = request.args.get("next", "/")
+    next_url = request.args.get("next")
+    if next_url is None:
+        return render_template("a01_access_control/continue_redirect_filtered.html")
     # VULNERABLE: only checks whether the trusted hostname appears
     # ANYWHERE in the string, never that it's genuinely the URL's host --
     # a URL whose real host is entirely different can still contain this
