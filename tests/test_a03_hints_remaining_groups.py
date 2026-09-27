@@ -18,6 +18,7 @@ REMAINING_GROUP_IDS = [
     "css-attribute-exfil",
     "csv-formula-injection",
     "file-inclusion-lfi-ssti",
+    "svg-upload-stored-xss",
 ]
 
 

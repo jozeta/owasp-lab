@@ -344,6 +344,20 @@ CATEGORIES.append(
                     "The include path also has zero validation on the name parameter itself -- exactly like this app's Path Traversal examples. Try rendering a snippet 'name' that's actually a bare absolute path to a file that was never saved through this feature at all -- its real contents come back too, proving arbitrary file disclosure works completely independently of the code-execution angle above.",
                 ],
             ),
+            ExampleNav(
+                id="svg-upload-stored-xss",
+                title="Stored XSS via Untrusted SVG Upload",
+                group="Insecure File Upload",
+                difficulty="Hard",
+                endpoint="a03_injection.upload_attachment",
+                hints=[
+                    "This 'upload an attachment' feature accepts any file at all -- check whether there's any restriction on file extension or content before it's saved.",
+                    "Uploaded files are served back later via Flask's send_from_directory() with no override at all -- the file's own extension decides its Content-Type, exactly like any static file on the web.",
+                    "Upload a file named poc.svg containing <svg onload=\"alert(document.cookie)\"></svg>. It's accepted with zero validation.",
+                    "Open the uploaded file's link directly (as its own page, not embedded in an <img> tag). The server serves it as image/svg+xml with no forced download -- your browser renders it as a real SVG document and the onload handler fires immediately.",
+                    "This is persistent stored XSS with no template-escaping bug anywhere in sight: the vulnerability is entirely in trusting an uploaded file's own extension to decide how the browser interprets it, rather than in any HTML-rendering code path.",
+                ],
+            ),
         ],
         seed_fn=seed_injection_data,
     )

@@ -1,0 +1,79 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Stored XSS via Untrusted SVG Upload" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This "upload an attachment" feature saves whatever file you submit
+  with no restriction on extension or content, and later serves it back
+  by filename with no override of Flask's default behavior: the file's
+  own extension decides its Content-Type, and it's served
+  <code>inline</code>, not forced to download.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Upload a plain text file first and open it back -- it's served as
+  <code>text/plain</code>, harmless. Now think about what happens if the
+  uploaded file's extension is one a browser knows how to RENDER, not
+  just display as text.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Upload a file named <code>poc.svg</code> containing:
+</p>
+<pre>&lt;svg xmlns="http://www.w3.org/2000/svg" onload="alert(document.cookie)"&gt;&lt;/svg&gt;</pre>
+<p>
+  Then click the uploaded file's link, opening it as a top-level page
+  (not embedded in an <code>&lt;img&gt;</code> tag -- browsers don't
+  execute scripts inside image-context SVGs, but a direct navigation
+  renders the SVG as its own document). The server serves this file with
+  <code>Content-Type: image/svg+xml</code> and no forced attachment
+  disposition, so the browser renders it as a real SVG document and the
+  <code>onload</code> handler fires -- genuine, persistent stored XSS:
+  this exact file executes for every visitor who opens the link, for as
+  long as it stays uploaded.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}path = os.path.join(ATTACHMENTS_DIR, attachment.filename)
+attachment.save(path)
+...
+return send_from_directory(ATTACHMENTS_DIR, filename)
+{% endblock %}
+
+{% block secure_code %}ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "pdf", "txt"}
+
+ext = attachment.filename.rsplit(".", 1)[-1].lower()
+if ext not in ALLOWED_EXTENSIONS:
+    abort(400)
+path = os.path.join(ATTACHMENTS_DIR, secure_filename(attachment.filename))
+attachment.save(path)
+...
+return send_from_directory(
+    ATTACHMENTS_DIR, filename, as_attachment=True, mimetype="application/octet-stream"
+)
+{% endblock %}
+
+{% block live_example %}
+<form method="post" enctype="multipart/form-data" class="mb-3">
+  <div class="mb-2">
+    <label class="form-label">Attachment file</label>
+    <input type="file" class="form-control" name="attachment" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Upload attachment</button>
+</form>
+{% if uploaded_files %}
+<ul>
+  {% for name in uploaded_files %}
+  <li><a href="{{ url_for('a03_injection.view_attachment', filename=name) }}" target="_blank">{{ name }}</a></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="text-muted">No attachments uploaded yet.</p>
+{% endif %}
+{% endblock %}

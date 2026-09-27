@@ -6,7 +6,16 @@ import subprocess
 import unicodedata
 import urllib.request
 
-from flask import Response, redirect, render_template, render_template_string, request, session, url_for
+from flask import (
+    Response,
+    redirect,
+    render_template,
+    render_template_string,
+    request,
+    send_from_directory,
+    session,
+    url_for,
+)
 from ldap3 import SUBTREE
 from lxml import etree
 from sqlalchemy import text
@@ -34,6 +43,7 @@ ARGUMENT_INJECTION_PROOF_PATH = "/tmp/a03_argument_injection_proof.txt"
 
 FILE_INCLUSION_SECRET_PATH = os.path.join(os.path.dirname(__file__), "file_inclusion_secret.txt")
 SNIPPETS_DIR = os.path.join(BASE_DIR, "instance", "a03_snippets")
+ATTACHMENTS_DIR = os.path.join(BASE_DIR, "instance", "a03_attachments")
 
 
 def _append_css_exfil_leak(value):
@@ -775,3 +785,33 @@ def add_employee():
     )
     db.session.commit()
     return redirect(url_for("a03_injection.department_report"))
+
+
+@a03_bp.route("/upload-attachment", methods=["GET", "POST"])
+def upload_attachment():
+    if request.method == "POST":
+        os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
+        attachment = request.files.get("attachment")
+        if attachment and attachment.filename:
+            # VULNERABLE: no extension allowlist, no content-type check,
+            # no content verification of any kind -- whatever the client
+            # uploads is saved and later served back with no override of
+            # Flask's default extension-based MIME-type guessing.
+            path = os.path.join(ATTACHMENTS_DIR, attachment.filename)
+            attachment.save(path)
+        return redirect(url_for("a03_injection.upload_attachment"))
+    uploaded_files = []
+    if os.path.isdir(ATTACHMENTS_DIR):
+        uploaded_files = sorted(os.listdir(ATTACHMENTS_DIR))
+    return render_template("a03_injection/upload_attachment.html", uploaded_files=uploaded_files)
+
+
+@a03_bp.route("/attachments/<path:filename>")
+def view_attachment(filename):
+    # VULNERABLE: serves the uploaded file back via Flask's default
+    # extension-based MIME-type guessing, with no forced
+    # Content-Disposition: attachment -- an uploaded .svg is served as
+    # image/svg+xml, inline, and a direct navigation to this URL renders
+    # it as a top-level document, executing any embedded script/onload
+    # handler.
+    return send_from_directory(ATTACHMENTS_DIR, filename)
