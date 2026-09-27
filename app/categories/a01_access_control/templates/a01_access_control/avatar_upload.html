@@ -1,0 +1,67 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Path Traversal via Unsanitized Avatar-Upload Filename" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This "upload an avatar" feature saves whatever file you submit using
+  the filename YOU supplied in the upload, exactly as given -- no
+  <code>secure_filename()</code>, no check that the resolved path stays
+  inside the avatars folder, nothing at all.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Upload a normal image with an ordinary filename first and confirm it's
+  accepted. Then think about what a filename containing <code>../</code>
+  would do once it's joined onto the avatars folder's path.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Upload any file, but set its filename to
+  <code>../a01_documents/pwned_by_avatar_upload.txt</code> with whatever
+  content you like. The upload succeeds -- but the file doesn't land in
+  the avatars folder at all. It lands in this lab's own document-center
+  folder instead, one directory up and back down into
+  <code>a01_documents/</code>.
+</p>
+<p>
+  Prove it: visit
+  <code>/a01/download-document?name=pwned_by_avatar_upload.txt</code>
+  (this lab's EXISTING document-download feature, completely unrelated
+  to avatar upload) -- it serves back exactly the content you just
+  uploaded as an "avatar," proving a write in one feature reached a
+  completely different feature's storage.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}path = os.path.join(AVATARS_DIR, avatar.filename)
+avatar.save(path)
+{% endblock %}
+
+{% block secure_code %}from werkzeug.utils import secure_filename
+
+safe_name = secure_filename(avatar.filename)
+path = os.path.join(AVATARS_DIR, safe_name)
+avatar.save(path)
+{% endblock %}
+
+{% block live_example %}
+<form method="post" enctype="multipart/form-data">
+  <div class="mb-2">
+    <label class="form-label">Avatar file</label>
+    <input type="file" class="form-control" name="avatar" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Upload avatar</button>
+</form>
+{% if uploaded_name %}
+<div class="alert alert-success mt-3">Uploaded as: {{ uploaded_name }}</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-danger mt-3">{{ error }}</div>
+{% endif %}
+{% endblock %}

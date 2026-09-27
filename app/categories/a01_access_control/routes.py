@@ -12,6 +12,7 @@ from app.extensions import db
 
 
 DOCUMENTS_DIR = os.path.join(BASE_DIR, "instance", "a01_documents")
+AVATARS_DIR = os.path.join(BASE_DIR, "instance", "a01_avatars")
 
 
 def _ensure_seed_document():
@@ -242,4 +243,36 @@ def update_preferences():
         updated = True
     return render_template(
         "a01_access_control/update_preferences.html", viewer=viewer, updated=updated
+    )
+
+
+@a01_bp.route("/avatar-upload", methods=["GET", "POST"])
+def avatar_upload():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    uploaded_name = None
+    error = None
+    if request.method == "POST":
+        os.makedirs(AVATARS_DIR, exist_ok=True)
+        avatar = request.files.get("avatar")
+        if avatar and avatar.filename:
+            # VULNERABLE: the client-supplied filename is used exactly as
+            # submitted -- no secure_filename(), no traversal check, no
+            # restriction to AVATARS_DIR at all. A filename containing
+            # "../" climbs straight out of this directory, the same
+            # os.path.join() behavior this lab's other Path Traversal
+            # examples already demonstrate on the READ side -- here it's
+            # a WRITE.
+            path = os.path.join(AVATARS_DIR, avatar.filename)
+            try:
+                avatar.save(path)
+                uploaded_name = avatar.filename
+            except Exception as e:
+                error = str(e)
+    return render_template(
+        "a01_access_control/avatar_upload.html",
+        viewer=viewer,
+        uploaded_name=uploaded_name,
+        error=error,
     )

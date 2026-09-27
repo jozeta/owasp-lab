@@ -117,6 +117,19 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="avatar-upload-path-traversal",
+                title="Path Traversal via Unsanitized Avatar-Upload Filename",
+                group="Path Traversal",
+                difficulty="Medium",
+                endpoint="a01_access_control.avatar_upload",
+                hints=[
+                    "This 'upload an avatar' feature saves your file using the filename YOU provide in the upload -- not a server-generated one. Check whether there's any validation on what that filename can contain.",
+                    "The server builds the save path with os.path.join(AVATARS_DIR, avatar.filename) and saves directly there -- the exact same unguarded os.path.join() pattern this lab's Path Traversal READ examples use, just on the WRITE side this time.",
+                    "Upload any file, but set its filename to ../a01_documents/pwned_by_avatar_upload.txt -- the upload is accepted with no error, but the file writes one directory up and back into this lab's document-center folder instead of the avatars folder.",
+                    "Prove the write landed somewhere else entirely: visit /a01/download-document?name=pwned_by_avatar_upload.txt (a completely different, already-existing feature) -- it serves back exactly the content you uploaded as an 'avatar,' proving arbitrary file write reached outside the intended directory.",
+                ],
+            ),
+            ExampleNav(
                 id="path-traversal-filter-bypass",
                 title="Path Traversal Filter Bypass via Absolute Path",
                 group="Path Traversal",
