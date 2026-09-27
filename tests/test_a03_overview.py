@@ -32,6 +32,7 @@ def test_a03_registered_in_nav(app):
         "Medium",
         "Hard",
         "Hard",
+        "Hard",
         "Medium",
         "Hard",
         "Hard",
@@ -71,7 +72,12 @@ def test_a03_examples_grouped_by_vulnerability_subtype(app):
         "roster-lookup",
         "sqli-to-rce",
     ]
-    assert [e.id for e in grouped[1][1]] == ["reflected-xss", "stored-xss", "filter-challenge"]
+    assert [e.id for e in grouped[1][1]] == [
+        "reflected-xss",
+        "stored-xss",
+        "filter-challenge",
+        "unicode-normalization-xss-bypass",
+    ]
     assert [e.id for e in grouped[2][1]] == [
         "filtered-host-lookup",
         "command-injection",

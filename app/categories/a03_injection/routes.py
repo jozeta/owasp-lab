@@ -3,6 +3,7 @@ import io
 import os
 import re
 import subprocess
+import unicodedata
 import urllib.request
 
 from flask import Response, redirect, render_template, render_template_string, request, session, url_for
@@ -638,4 +639,30 @@ def export_archive():
         output=output,
         error=error,
         proof=proof,
+    )
+
+
+@a03_bp.route("/feedback", methods=["GET", "POST"])
+def feedback():
+    raw_feedback = ""
+    blocked = False
+    normalized = None
+    if request.method == "POST":
+        raw_feedback = request.form.get("feedback", "")
+        if "<script" in raw_feedback.lower():
+            blocked = True
+        else:
+            # VULNERABLE: this normalization step exists to make display
+            # text consistent (e.g. collapsing fullwidth punctuation a
+            # user might paste in from a CJK input method) -- but it
+            # runs AFTER the filter above already approved the raw
+            # string, and NFKC normalization converts fullwidth
+            # lookalike characters into their literal ASCII equivalents,
+            # resurrecting exactly what the filter tried to block.
+            normalized = unicodedata.normalize("NFKC", raw_feedback)
+    return render_template(
+        "a03_injection/feedback.html",
+        raw_feedback=raw_feedback,
+        blocked=blocked,
+        normalized=normalized,
     )

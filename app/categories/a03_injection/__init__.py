@@ -149,6 +149,19 @@ CATEGORIES.append(
                 ],
             ),
             ExampleNav(
+                id="unicode-normalization-xss-bypass",
+                title="Unicode Normalization Filter Bypass (XSS)",
+                group="Cross-Site Scripting (XSS)",
+                difficulty="Hard",
+                endpoint="a03_injection.feedback",
+                hints=[
+                    "This feedback form genuinely blocks the literal substring '<script' before doing anything else. Confirm that first, then think about what happens to your text AFTER the filter approves it -- is it rendered exactly as submitted, or does something transform it first?",
+                    "The app calls Python's unicodedata.normalize(\"NFKC\", ...) on approved text before rendering it, meant to tidy up fullwidth punctuation someone might paste in. NFKC normalization converts many 'compatibility' Unicode characters into their ordinary ASCII equivalents -- including fullwidth angle brackets.",
+                    "Submit your feedback using the FULLWIDTH Unicode angle brackets U+FF1C (＜) and U+FF1E (＞) instead of ordinary '<'/'>': ＜script＞alert(document.domain)＜/script＞. The literal-substring filter finds no ordinary '<script' anywhere in this text and lets it straight through.",
+                    "The normalization step that runs afterward converts each fullwidth character into its literal ASCII equivalent -- ＜ becomes < and ＞ becomes > -- reconstructing a real <script> tag from text the filter never recognized as dangerous, and it executes exactly as if you'd typed it in plain ASCII.",
+                ],
+            ),
+            ExampleNav(
                 id="filtered-host-lookup",
                 title="Hostname Lookup Filter Bypass",
                 group="OS Command Injection",

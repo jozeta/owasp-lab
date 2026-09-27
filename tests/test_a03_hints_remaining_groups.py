@@ -4,6 +4,7 @@ REMAINING_GROUP_IDS = [
     "reflected-xss",
     "stored-xss",
     "filter-challenge",
+    "unicode-normalization-xss-bypass",
     "filtered-host-lookup",
     "command-injection",
     "blind-report-injection",

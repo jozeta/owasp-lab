@@ -1,0 +1,87 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "Unicode Normalization Filter Bypass (XSS)" %}
+{% set example_difficulty = "Hard" %}
+{% block title %}{{ example_title }} — A03{% endblock %}
+
+{% block explanation %}
+<p>
+  This feedback form blocks any submission containing the literal
+  substring <code>&lt;script</code> before doing anything else with it —
+  a real, working filter against the obvious payload. But once a
+  submission passes that check, the app calls Python's
+  <code>unicodedata.normalize("NFKC", ...)</code> on the text before
+  rendering it, framed as a display-consistency step (collapsing
+  fullwidth punctuation someone might paste in from a CJK input method).
+  That normalization step runs entirely AFTER the filter has already
+  approved the raw string.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  Confirm the filter works: submit the literal text
+  <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> — blocked. Then try
+  the exact same tag, but typed using Unicode FULLWIDTH angle brackets
+  (U+FF1C <code>＜</code> and U+FF1E <code>＞</code>) instead of the
+  ordinary ASCII ones.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  Submit this as your feedback (using fullwidth angle brackets, not
+  ordinary ones):
+</p>
+<pre>＜script＞alert(document.domain)＜/script＞</pre>
+<p>
+  The literal-substring filter finds no <code>&lt;script</code> anywhere
+  in this raw input — there isn't a single ordinary <code>&lt;</code>
+  character in it — so it passes straight through. The app then runs the
+  approved text through <code>unicodedata.normalize("NFKC", ...)</code>,
+  which converts each fullwidth lookalike character into its literal
+  ASCII equivalent: <code>＜</code> becomes <code>&lt;</code> and
+  <code>＞</code> becomes <code>&gt;</code>. What gets rendered — and
+  executed — is a real, ordinary <code>&lt;script&gt;</code> tag, entirely
+  reconstructed by a step the filter never knew was coming.
+</p>
+<p>
+  This is exactly why filtering untrusted input and normalizing it are
+  two operations that must happen in a fixed, deliberate order — any
+  normalization, decoding, or unescaping step performed AFTER a security
+  check can resurrect whatever that check was trying to block, no matter
+  how thorough the check itself is against the input it actually saw.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}raw_feedback = request.form.get("feedback", "")
+if "&lt;script" in raw_feedback.lower():
+    blocked = True
+else:
+    normalized = unicodedata.normalize("NFKC", raw_feedback)
+# template: {% raw %}{{ normalized|safe }}{% endraw %}
+{% endblock %}
+
+{% block secure_code %}raw_feedback = request.form.get("feedback", "")
+# Normalize FIRST, then filter the normalized result -- so the filter
+# always sees the same text that will actually be rendered:
+normalized = unicodedata.normalize("NFKC", raw_feedback)
+if "&lt;script" in normalized.lower():
+    blocked = True
+{% endblock %}
+
+{% block live_example %}
+<form method="post">
+  <div class="mb-2">
+    <label class="form-label">Your feedback</label>
+    <textarea class="form-control" name="feedback" rows="3">{{ raw_feedback }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Submit feedback</button>
+</form>
+{% if blocked %}
+<p class="text-danger mt-3">Blocked: feedback contains a disallowed tag.</p>
+{% endif %}
+{% if normalized %}
+<p class="mt-3 mb-1">Rendered feedback:</p>
+<div class="border rounded p-2">{{ normalized | safe }}</div>
+{% endif %}
+{% endblock %}
