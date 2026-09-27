@@ -1,0 +1,84 @@
+{% extends "core/example_page_base.html" %}
+{% set example_title = "CSRF via Token Presence-Only Validation" %}
+{% set example_difficulty = "Medium" %}
+{% block title %}{{ example_title }} — A01{% endblock %}
+
+{% block explanation %}
+<p>
+  This "change your display name" form includes a hidden CSRF token
+  field, generated fresh per session — it looks properly protected, and
+  it IS checked on every submission. The problem is what "checked" means
+  here: the server only verifies that a <code>csrf_token</code> value was
+  submitted at all, never that it matches the real token issued to this
+  session. Any non-empty string satisfies the check.
+</p>
+{% endblock %}
+
+{% block detect %}
+<p>
+  View this page's source and note the hidden <code>csrf_token</code>
+  field IS present, unlike the email-change example elsewhere in this
+  category. Submit the form once normally to confirm it works, then try
+  submitting with the token field present but set to an obviously wrong
+  value.
+</p>
+{% endblock %}
+
+{% block exploitation %}
+<p>
+  An attacker hosting a page on a completely different site has no way to
+  read this session's real token — but they don't need to. Any
+  non-empty string in the <code>csrf_token</code> field passes the
+  server's check:
+</p>
+<pre><code class="language-html">&lt;form action="http://127.0.0.1:5001/a01/change-display-name" method="POST" id="f"&gt;
+  &lt;input type="hidden" name="display_name" value="Pwned"&gt;
+  &lt;input type="hidden" name="csrf_token" value="anything-at-all"&gt;
+&lt;/form&gt;
+&lt;script&gt;document.getElementById('f').submit();&lt;/script&gt;</code></pre>
+<p>
+  A logged-in victim who merely visits that attacker page has their
+  display name changed, exactly as if this were the completely
+  unprotected email-change form elsewhere in this category — the extra
+  token field bought nothing, because "a token exists" and "the token is
+  correct" are two entirely different checks, and this route only ever
+  implements the first one.
+</p>
+{% endblock %}
+
+{% block vulnerable_code %}if "a01_csrf_token" not in session:
+    session["a01_csrf_token"] = secrets.token_hex(16)
+if request.method == "POST":
+    submitted_token = request.form.get("csrf_token", "")
+    if submitted_token:  # only checks PRESENCE, never compares to session value
+        viewer.display_name = request.form.get("display_name", "")
+        db.session.commit()
+{% endblock %}
+
+{% block secure_code %}if "a01_csrf_token" not in session:
+    session["a01_csrf_token"] = secrets.token_hex(16)
+if request.method == "POST":
+    submitted_token = request.form.get("csrf_token", "")
+    if submitted_token == session["a01_csrf_token"]:  # compares the VALUE
+        viewer.display_name = request.form.get("display_name", "")
+        db.session.commit()
+{% endblock %}
+
+{% block live_example %}
+{% if viewer %}
+<p>Logged in as <strong>{{ viewer.username }}</strong> — current display name: <strong>{{ viewer.display_name }}</strong></p>
+{% if changed %}
+<div class="alert alert-success">Display name updated.</div>
+{% endif %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="mb-2">
+    <label class="form-label">New display name</label>
+    <input type="text" class="form-control" name="display_name" placeholder="New Name">
+  </div>
+  <button type="submit" class="btn btn-primary">Update display name</button>
+</form>
+{% else %}
+<a href="{{ url_for('core.switch_user', next=request.path) }}">Log in to try this example</a>
+{% endif %}
+{% endblock %}

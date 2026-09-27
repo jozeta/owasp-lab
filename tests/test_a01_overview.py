@@ -11,7 +11,7 @@ def test_a01_registered_in_nav(app):
 
     a01 = next(c for c in CATEGORIES if c.id == "a01_access_control")
     assert a01.short_id == "A01"
-    assert [e.difficulty for e in a01.examples] == ["Easy", "Medium", "Medium", "Hard", "Medium"]
+    assert [e.difficulty for e in a01.examples] == ["Easy", "Medium", "Medium", "Hard", "Medium", "Medium"]
 
 
 def test_a01_examples_grouped_by_vulnerability_subtype(app):

@@ -1,4 +1,6 @@
-from flask import flash, jsonify, redirect, render_template, request, url_for
+import secrets
+
+from flask import flash, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
 
 from app.categories.a01_access_control import a01_bp
@@ -84,3 +86,30 @@ def password_change_api():
     target.password_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
     db.session.commit()
     return jsonify({"status": "password updated"})
+
+
+@a01_bp.route("/change-display-name", methods=["GET", "POST"])
+def change_display_name():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
+    if "a01_csrf_token" not in session:
+        session["a01_csrf_token"] = secrets.token_hex(16)
+    changed = False
+    if request.method == "POST":
+        # VULNERABLE: a CSRF token IS required to be present in the
+        # submitted form, but its VALUE is never compared against the
+        # real per-session token stored above -- any non-empty string
+        # satisfies this check, including one an attacker's cross-site
+        # page could never actually know.
+        submitted_token = request.form.get("csrf_token", "")
+        if submitted_token:
+            viewer.display_name = request.form.get("display_name", "")
+            db.session.commit()
+            changed = True
+    return render_template(
+        "a01_access_control/change_display_name.html",
+        viewer=viewer,
+        changed=changed,
+        csrf_token=session["a01_csrf_token"],
+    )

@@ -78,6 +78,19 @@ CATEGORIES.append(
                     "Why this matters beyond just changing an email: whoever controls the email on file controls every future password-reset flow for that account, making an email-change CSRF just as dangerous as a direct password-change CSRF.",
                 ],
             ),
+            ExampleNav(
+                id="csrf-token-presence-only",
+                title="CSRF via Token Presence-Only Validation",
+                group="Cross-Site Request Forgery",
+                difficulty="Medium",
+                endpoint="a01_access_control.change_display_name",
+                hints=[
+                    "This form includes a hidden csrf_token field, unlike the email-change example elsewhere in this category. Before assuming it's safe, check exactly WHAT the server does with that field's value once submitted.",
+                    "The route confirms a csrf_token value was submitted at all, but never compares it against the real per-session token this page issued. Submit the form with the token field present but set to an obviously wrong value, like 'wrong' -- does it still work?",
+                    "An attacker's cross-site page can never read this session's real token, but it doesn't need to: any non-empty string in the csrf_token field passes the server's check. A hidden field alongside the real display_name field, auto-submitted from a completely different origin, changes the victim's display name exactly as easily as if there were no token check at all.",
+                    "This is a common real-world CSRF-protection mistake: implementing 'does a token exist' instead of 'does the submitted token match the one this session was actually issued' -- the presence check makes the form LOOK protected in the page source without providing any actual protection.",
+                ],
+            ),
         ],
     )
 )
