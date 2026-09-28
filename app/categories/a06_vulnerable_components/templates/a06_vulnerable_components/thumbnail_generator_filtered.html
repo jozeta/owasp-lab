@@ -85,6 +85,9 @@ else:
 {% if output %}
 <pre class="mt-3">{{ output }}</pre>
 {% endif %}
+{% if error %}
+<p class="mt-3 text-danger">{{ error }}</p>
+{% endif %}
 {% if proof %}
 <div class="alert alert-danger mt-3">
   <strong>Proof of code execution</strong> (contents of

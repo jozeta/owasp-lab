@@ -64,6 +64,8 @@ def admin_tools_panel():
 @a06_bp.route("/thumbnail-generator", methods=["GET", "POST"])
 def thumbnail_generator():
     output = None
+    error = None
+    proof = None
     if request.method == "POST":
         os.makedirs(THUMBNAILS_DIR, exist_ok=True)
         image = request.files.get("image")
@@ -71,32 +73,39 @@ def thumbnail_generator():
             input_path = os.path.join(THUMBNAILS_DIR, image.filename)
             image.save(input_path)
             output_path = os.path.join(THUMBNAILS_DIR, "thumbnail.png")
-            # VULNERABLE: shells out to a genuinely vulnerable ImageMagick
-            # build (CVE-2016-3714 "ImageTragick") with zero validation of
-            # the uploaded file's actual content -- ImageMagick detects the
-            # real image format from the file's CONTENT, not its extension,
-            # so a file merely NAMED "photo.jpg" can still be parsed as an
-            # MVG vector-graphics script if that's what it actually contains.
-            result = subprocess.run(
-                ["convert", input_path, "-resize", "200x200", output_path],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            output = result.stdout or result.stderr or "(no output)"
-    proof = None
-    if os.path.exists(IMAGETRAGICK_PROOF_PATH):
-        with open(IMAGETRAGICK_PROOF_PATH) as f:
-            proof = f.read()
+            try:
+                # VULNERABLE: shells out to a genuinely vulnerable ImageMagick
+                # build (CVE-2016-3714 "ImageTragick") with zero validation of
+                # the uploaded file's actual content -- ImageMagick detects the
+                # real image format from the file's CONTENT, not its extension,
+                # so a file merely NAMED "photo.jpg" can still be parsed as an
+                # MVG vector-graphics script if that's what it actually contains.
+                result = subprocess.run(
+                    ["convert", input_path, "-resize", "200x200", output_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                output = result.stdout or result.stderr or "(no output)"
+            except Exception as e:
+                error = str(e)
+            if os.path.exists(IMAGETRAGICK_PROOF_PATH):
+                with open(IMAGETRAGICK_PROOF_PATH) as f:
+                    proof = f.read()
     return render_template(
-        "a06_vulnerable_components/thumbnail_generator.html", output=output, proof=proof
+        "a06_vulnerable_components/thumbnail_generator.html",
+        output=output,
+        error=error,
+        proof=proof,
     )
 
 
 @a06_bp.route("/thumbnail-generator-filtered", methods=["GET", "POST"])
 def thumbnail_generator_filtered():
     output = None
+    error = None
     blocked = False
+    proof = None
     if request.method == "POST":
         os.makedirs(THUMBNAILS_DIR, exist_ok=True)
         image = request.files.get("image")
@@ -107,25 +116,28 @@ def thumbnail_generator_filtered():
                 input_path = os.path.join(THUMBNAILS_DIR, image.filename)
                 image.save(input_path)
                 output_path = os.path.join(THUMBNAILS_DIR, "thumbnail_filtered.png")
-                # VULNERABLE: the extension check above only confirms the
-                # FILENAME looks like an image -- ImageMagick still detects
-                # the real file format from its CONTENT, so the identical
-                # MVG payload, merely named "poc.jpg", sails through this
-                # check completely unchanged.
-                result = subprocess.run(
-                    ["convert", input_path, "-resize", "200x200", output_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                )
-                output = result.stdout or result.stderr or "(no output)"
-    proof = None
-    if os.path.exists(IMAGETRAGICK_PROOF_PATH):
-        with open(IMAGETRAGICK_PROOF_PATH) as f:
-            proof = f.read()
+                try:
+                    # VULNERABLE: the extension check above only confirms the
+                    # FILENAME looks like an image -- ImageMagick still detects
+                    # the real file format from its CONTENT, so the identical
+                    # MVG payload, merely named "poc.jpg", sails through this
+                    # check completely unchanged.
+                    result = subprocess.run(
+                        ["convert", input_path, "-resize", "200x200", output_path],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+                    output = result.stdout or result.stderr or "(no output)"
+                except Exception as e:
+                    error = str(e)
+                if os.path.exists(IMAGETRAGICK_PROOF_PATH):
+                    with open(IMAGETRAGICK_PROOF_PATH) as f:
+                        proof = f.read()
     return render_template(
         "a06_vulnerable_components/thumbnail_generator_filtered.html",
         output=output,
+        error=error,
         blocked=blocked,
         proof=proof,
     )

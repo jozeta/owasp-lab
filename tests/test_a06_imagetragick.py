@@ -61,6 +61,40 @@ def test_filtered_route_blocks_a_non_image_extension(client):
     assert not os.path.exists(IMAGETRAGICK_PROOF_PATH)
 
 
+def test_get_thumbnail_generator_never_shows_stale_proof(client):
+    os.makedirs(os.path.dirname(IMAGETRAGICK_PROOF_PATH), exist_ok=True)
+    with open(IMAGETRAGICK_PROOF_PATH, "w") as f:
+        f.write("uid=0(root) gid=0(root) groups=0(root)\n")
+
+    response = client.get("/a06/thumbnail-generator")
+    assert response.status_code == 200
+    assert b"Proof of code execution" not in response.data
+
+
+def test_get_thumbnail_generator_filtered_never_shows_stale_proof(client):
+    os.makedirs(os.path.dirname(IMAGETRAGICK_PROOF_PATH), exist_ok=True)
+    with open(IMAGETRAGICK_PROOF_PATH, "w") as f:
+        f.write("uid=0(root) gid=0(root) groups=0(root)\n")
+
+    response = client.get("/a06/thumbnail-generator-filtered")
+    assert response.status_code == 200
+    assert b"Proof of code execution" not in response.data
+
+
+def test_filtered_route_rejection_does_not_show_stale_proof(client):
+    os.makedirs(os.path.dirname(IMAGETRAGICK_PROOF_PATH), exist_ok=True)
+    with open(IMAGETRAGICK_PROOF_PATH, "w") as f:
+        f.write("uid=0(root) gid=0(root) groups=0(root)\n")
+
+    data = {"image": (io.BytesIO(b"not an image at all"), "payload.mvg")}
+    response = client.post(
+        "/a06/thumbnail-generator-filtered", data=data, content_type="multipart/form-data"
+    )
+    assert response.status_code == 200
+    assert b"Rejected" in response.data
+    assert b"Proof of code execution" not in response.data
+
+
 @requires_vulnerable_imagemagick
 def test_imagetragick_payload_achieves_rce_via_thumbnail_generator(client):
     data = {"image": (io.BytesIO(IMAGETRAGICK_PAYLOAD), "poc.jpg")}
