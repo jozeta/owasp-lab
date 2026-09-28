@@ -6,6 +6,7 @@ from app.core.auth import get_current_user
 from app.core.models import ExampleProgress, Settings, User, compute_points, record_activity
 from app.core.nav import CATEGORIES
 from app.core.seed import reset_database
+from app.core.stats import compute_user_stats
 from app.extensions import db
 
 core_bp = Blueprint("core", __name__, template_folder="templates")
@@ -73,6 +74,42 @@ def home():
         earned_points_total=earned_points_total,
         max_points_total=max_points_total,
         viewer=viewer,
+    )
+
+
+@core_bp.route("/leaderboard")
+def leaderboard():
+    valid_sorts = {"completed", "score", "streak"}
+    sort = request.args.get("sort", "completed")
+    if sort not in valid_sorts:
+        sort = "completed"
+
+    total_examples = sum(len(c.examples) for c in CATEGORIES)
+    rows = []
+    for user in User.query.order_by(User.username).all():
+        stats = compute_user_stats(user.id)
+        rows.append(
+            {
+                "user": user,
+                "completed_total": stats["completed_total"],
+                "score_total": stats["score_total"],
+                "streak_days": stats["streak_days"],
+                "badge_count": len(stats["badges"]),
+            }
+        )
+    sort_key = {
+        "completed": lambda r: r["completed_total"],
+        "score": lambda r: r["score_total"],
+        "streak": lambda r: r["streak_days"],
+    }[sort]
+    rows.sort(key=sort_key, reverse=True)
+
+    return render_template(
+        "core/leaderboard.html",
+        rows=rows,
+        sort=sort,
+        total_examples=total_examples,
+        total_badges=len(CATEGORIES),
     )
 
 
