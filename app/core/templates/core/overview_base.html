@@ -1,41 +1,58 @@
 {% extends "core/base.html" %}
 
 {% block content %}
-<h1>{{ category_short_id }}: {{ category_title }}</h1>
+<h1 class="d-flex align-items-center gap-2">
+  <span class="icon-box">
+    <svg class="category-icon" viewBox="0 0 24 24">
+      <use href="{{ url_for('static', filename='icons/category-icons.svg') }}#icon-{{ active_category.id[:3] }}"></use>
+    </svg>
+  </span>
+  {{ category_short_id }}: {{ category_title }}
+</h1>
 
-<section class="mb-4">
-  <h2>What It Is</h2>
-  {% block what_it_is %}{% endblock %}
-</section>
-
-<section class="mb-4">
-  <h2>Why It Matters</h2>
-  {% block why_it_matters %}{% endblock %}
-</section>
-
-<section class="mb-4">
-  <h2>How It's Exploited</h2>
-  {% block how_exploited %}{% endblock %}
-  <div class="mermaid">
-{% block attack_flow_diagram %}{% endblock %}
+<section class="card mb-4 fjord-card">
+  <div class="card-body">
+    <h2 class="h5">What It Is</h2>
+    {% block what_it_is %}{% endblock %}
   </div>
 </section>
 
-<section class="mb-4">
-  <h2>Real-World Impact</h2>
-  {% block real_world_impact %}{% endblock %}
+<section class="card mb-4 fjord-card">
+  <div class="card-body">
+    <h2 class="h5">Why It Matters</h2>
+    {% block why_it_matters %}{% endblock %}
+  </div>
 </section>
 
-<section class="mb-4">
-  <h2>Vulnerable vs. Secure</h2>
-  <div class="row">
-    <div class="col-md-6">
-      <h6>Vulnerable</h6>
-      <pre><code class="language-python">{% block vulnerable_code %}{% endblock %}</code></pre>
+<section class="card mb-4 fjord-card">
+  <div class="card-body">
+    <h2 class="h5">How It's Exploited</h2>
+    {% block how_exploited %}{% endblock %}
+    <div class="mermaid">
+{% block attack_flow_diagram %}{% endblock %}
     </div>
-    <div class="col-md-6">
-      <h6>Secure</h6>
-      <pre><code class="language-python">{% block secure_code %}{% endblock %}</code></pre>
+  </div>
+</section>
+
+<section class="card mb-4 fjord-card">
+  <div class="card-body">
+    <h2 class="h5">Real-World Impact</h2>
+    {% block real_world_impact %}{% endblock %}
+  </div>
+</section>
+
+<section class="card mb-4 fjord-card">
+  <div class="card-body">
+    <h2 class="h5">Vulnerable vs. Secure</h2>
+    <div class="row">
+      <div class="col-md-6">
+        <h6>Vulnerable</h6>
+        <pre><code class="language-python">{% block vulnerable_code %}{% endblock %}</code></pre>
+      </div>
+      <div class="col-md-6">
+        <h6>Secure</h6>
+        <pre><code class="language-python">{% block secure_code %}{% endblock %}</code></pre>
+      </div>
     </div>
   </div>
 </section>

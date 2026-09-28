@@ -24,7 +24,7 @@
 </div>
 
 {% if settings.show_explanations %}
-<section class="card mb-4">
+<section class="card mb-4 fjord-card">
   <div class="card-header">Explanation</div>
   <div class="card-body">
     {% block explanation %}{% endblock %}
@@ -35,7 +35,7 @@
 {% if settings.show_exploit_instructions and not settings.scoring_enabled %}
 {% set detect_content = self.detect() %}
 {% if detect_content|trim %}
-<section class="card mb-4">
+<section class="card mb-4 fjord-card">
   <div class="card-header">Detect</div>
   <div class="card-body">
     {% block detect %}{% endblock %}
@@ -52,7 +52,7 @@
 
 {% set tasks_content = self.tasks() %}
 {% if tasks_content|trim %}
-<section class="card mb-4">
+<section class="card mb-4 fjord-card">
   <div class="card-header">Tasks</div>
   <div class="card-body">
     {% block tasks %}{% endblock %}
@@ -85,7 +85,7 @@
 {% set vulnerable_content = self.vulnerable_code() %}
 {% set secure_content = self.secure_code() %}
 {% if vulnerable_content|trim or secure_content|trim %}
-<section class="card mb-4">
+<section class="card mb-4 fjord-card">
   <div class="card-header">Vulnerable vs. Secure</div>
   <div class="card-body">
     <div class="row">
