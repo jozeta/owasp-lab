@@ -42,10 +42,15 @@ class ExampleProgress(db.Model):
     __tablename__ = "example_progress"
 
     id = db.Column(db.Integer, primary_key=True)
-    example_id = db.Column(db.String(80), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    example_id = db.Column(db.String(80), nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     hints_used = db.Column(db.Integer, nullable=False, default=0)
     points_awarded = db.Column(db.Integer, nullable=True)
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "example_id", name="uq_progress_user_example"),
+    )
 
 
 def compute_points(example, hints_used):

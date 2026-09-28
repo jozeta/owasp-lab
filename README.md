@@ -129,7 +129,8 @@ provided) or by clearing your browser's cookies for this site.
 
 If you're running under Docker and your Postgres data volume was created before a
 schema change landed (for example, an older checkout without the A07 MFA examples'
-`pending_mfa_code` column), clicking "Reset lab" in the UI reseeds rows but won't add
+`pending_mfa_code` column, or without per-user progress tracking's `user_id` column
+on `example_progress`), clicking "Reset lab" in the UI reseeds rows but won't add
 new columns to already-existing tables. In that case, run
 `docker compose down -v && docker compose up -d` once to drop the old volume and let
 the app recreate the schema from scratch, then use "Reset lab" as normal afterward.

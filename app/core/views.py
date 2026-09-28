@@ -2,6 +2,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, session, url_for
 
+from app.core.auth import get_current_user
 from app.core.models import ExampleProgress, Settings, User, compute_points
 from app.core.nav import CATEGORIES
 from app.core.seed import reset_database
@@ -28,7 +29,13 @@ def _find_example(example_id):
 
 @core_bp.route("/")
 def home():
-    progress_rows = {p.example_id: p for p in ExampleProgress.query.all()}
+    viewer = get_current_user()
+    if viewer is None:
+        progress_rows = {}
+    else:
+        progress_rows = {
+            p.example_id: p for p in ExampleProgress.query.filter_by(user_id=viewer.id).all()
+        }
     completed_ids = {
         example_id for example_id, p in progress_rows.items() if p.completed_at is not None
     }
@@ -65,6 +72,7 @@ def home():
         category_stats=category_stats,
         earned_points_total=earned_points_total,
         max_points_total=max_points_total,
+        viewer=viewer,
     )
 
 
@@ -140,13 +148,16 @@ def force_reset():
 # the app is meant to run on 127.0.0.1 only.
 @core_bp.route("/progress/toggle", methods=["POST"])
 def toggle_progress():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
     example_id = request.form.get("example_id", "")
     example = _find_example(example_id)
     if example is None:
         abort(404)
-    progress = ExampleProgress.query.filter_by(example_id=example_id).first()
+    progress = ExampleProgress.query.filter_by(user_id=viewer.id, example_id=example_id).first()
     if progress is None:
-        progress = ExampleProgress(example_id=example_id, hints_used=0)
+        progress = ExampleProgress(user_id=viewer.id, example_id=example_id, hints_used=0)
         db.session.add(progress)
     if progress.completed_at is None:
         progress.completed_at = datetime.utcnow()
@@ -160,13 +171,16 @@ def toggle_progress():
 
 @core_bp.route("/hints/reveal", methods=["POST"])
 def reveal_hint():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=request.path))
     example_id = request.form.get("example_id", "")
     example = _find_example(example_id)
     if example is None:
         abort(404)
-    progress = ExampleProgress.query.filter_by(example_id=example_id).first()
+    progress = ExampleProgress.query.filter_by(user_id=viewer.id, example_id=example_id).first()
     if progress is None:
-        progress = ExampleProgress(example_id=example_id, hints_used=0)
+        progress = ExampleProgress(user_id=viewer.id, example_id=example_id, hints_used=0)
         db.session.add(progress)
     if progress.hints_used < len(example.hints):
         progress.hints_used += 1

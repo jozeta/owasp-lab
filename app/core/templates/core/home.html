@@ -4,6 +4,14 @@
 <h1>OWASP Top 10 (2021) Training Lab</h1>
 <p class="lead">Pick a category below to see its overview and graduated, exploitable examples.</p>
 
+{% if not viewer %}
+<div class="alert alert-info">
+  Your progress isn't being tracked yet.
+  <a href="{{ url_for('core.switch_user', next=request.path) }}">Pick a user</a>
+  to track completions, hints, and score under your own name.
+</div>
+{% endif %}
+
 <div class="card mb-4">
   <div class="card-body">
     <div class="d-flex justify-content-between mb-1">
