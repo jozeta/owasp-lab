@@ -20,16 +20,16 @@ Sub-project 3 of 4 (per-user foundation ✅ → gamification ✅ → **Fjord vis
 
 ### Color tokens
 
-New CSS custom properties, defined on `:root` (light) and redefined under `[data-bs-theme="dark"]` (dark) — added to `static/css/lab.css`, not a new file, matching this app's existing single-stylesheet convention:
+**Implementation mechanism (confirmed by inspecting the vendored Bootstrap build):** this app vendors Bootstrap 5.3.3, which themes entirely through its own `--bs-*` CSS custom properties (`--bs-body-bg`, `--bs-body-color`, `--bs-border-color`, `--bs-tertiary-bg`, `--bs-link-color`, etc.), redefined once for `:root,[data-bs-theme="light"]` and again for `[data-bs-theme="dark"]` inside `bootstrap.min.css` itself. Rather than inventing a parallel `--fjord-*` namespace and manually re-skinning every Bootstrap component one at a time, `lab.css` (which already loads after `bootstrap.min.css`) overrides Bootstrap's *own* variables directly — every existing component (cards, tables, list-groups, nav) re-themes automatically, and a `--fjord-accent` custom property is added alongside purely for the one brand-accent use Bootstrap has no native slot for (progress-bar fill, icon color, card-hover accents).
 
-| Token | Light | Dark |
+| Bootstrap variable overridden | Light | Dark |
 | --- | --- | --- |
-| `--fjord-bg` | `#f4f6f7` | `#10151c` |
-| `--fjord-surface` | `#ffffff` | `#171f2a` |
-| `--fjord-border` | `#dde3e7` | `#29323f` |
-| `--fjord-fg` | `#172029` | `#e8edf2` |
-| `--fjord-muted` | `#5b6b78` | `#8a97a6` |
-| `--fjord-accent` | `#1f8f84` | `#6dd3c9` |
+| `--bs-body-bg` | `#f4f6f7` | `#10151c` |
+| `--bs-tertiary-bg` (cards, sidebar) | `#ffffff` | `#171f2a` |
+| `--bs-border-color` | `#dde3e7` | `#29323f` |
+| `--bs-body-color` | `#172029` | `#e8edf2` |
+| `--bs-secondary-color` (muted text) | `#5b6b78` | `#8a97a6` |
+| `--bs-link-color` / new `--fjord-accent` | `#1f8f84` | `#6dd3c9` |
 
 The light accent (`#1f8f84`) is deliberately a darker shade than the dark mode's `#6dd3c9`, not the same value reused — `#6dd3c9` fails WCAG AA contrast against a white/near-white background for text and icon use, so light mode needs its own accent dark enough to stay accessible while dark mode's can stay pale and glow-like against near-black.
 
