@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, session, url_for
 
 from app.core.auth import get_current_user
-from app.core.models import ExampleProgress, Settings, User, compute_points
+from app.core.models import ExampleProgress, Settings, User, compute_points, record_activity
 from app.core.nav import CATEGORIES
 from app.core.seed import reset_database
 from app.extensions import db
@@ -166,6 +166,7 @@ def toggle_progress():
     else:
         progress.completed_at = None
         progress.points_awarded = None
+    record_activity(viewer.id)
     db.session.commit()
     return redirect(url_for(example.endpoint))
 
@@ -186,6 +187,7 @@ def reveal_hint():
         db.session.add(progress)
     if progress.hints_used < len(example.hints):
         progress.hints_used += 1
+    record_activity(viewer.id)
     db.session.commit()
     return redirect(url_for(example.endpoint))
 
