@@ -248,3 +248,14 @@ code, pre, kbd, samp, .navuser {
     animation: none;
   }
 }
+
+/* ===================================================================
+   Fjord: light-mode sidebar (dark mode's #sidebar rule already exists
+   above and now picks up Task 1's --bs-tertiary-bg/--bs-border-color
+   overrides automatically)
+   =================================================================== */
+
+[data-bs-theme="light"] #sidebar {
+  background-color: var(--bs-tertiary-bg);
+  border-color: var(--bs-border-color) !important;
+}

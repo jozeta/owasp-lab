@@ -47,9 +47,16 @@
     <button type="button" class="btn-close float-end" aria-label="Dismiss" onclick="dismissLabBanner()"></button>
   </div>
 
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{{ url_for('core.home') }}">OWASP Top 10 Lab</a>
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('core.home') }}">
+        <span class="icon-box" style="width: 26px; height: 26px; border-radius: 7px;">
+          <svg class="category-icon" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+            <use href="{{ url_for('static', filename='icons/category-icons.svg') }}#icon-shield"></use>
+          </svg>
+        </span>
+        OWASP Top 10 Lab
+      </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -65,10 +72,10 @@
         </ul>
         <ul class="navbar-nav">
           {% if settings.scoring_enabled %}
-          <li class="nav-item d-flex align-items-center text-light me-3">Score: {{ nav_score_earned }} / {{ nav_score_max }}</li>
+          <li class="nav-item d-flex align-items-center me-3 navuser">Score: {{ nav_score_earned }} / {{ nav_score_max }}</li>
           {% endif %}
           {% if current_user %}
-          <li class="nav-item d-flex align-items-center text-light me-3">Logged in as {{ current_user.username }}</li>
+          <li class="nav-item d-flex align-items-center me-3">Logged in as {{ current_user.username }}</li>
           {% else %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('core.switch_user') }}">Log in</a></li>
           {% endif %}
