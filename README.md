@@ -69,10 +69,16 @@ enables internal port scanning, PDF generator reads local files via
 file:// URL, alternate IP representation bypasses a naive blocklist, open
 redirect bypasses a trusted-domain allowlist).
 
+## Screenshots
+
+| Dashboard | Category overview | Example walkthrough |
+| --- | --- | --- |
+| [![Home dashboard showing per-category completion progress](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png) | [![A03 Injection category overview with an attack-flow diagram](docs/screenshots/category-overview.png)](docs/screenshots/category-overview.png) | [![An example page's Explanation, Detect, and Exploitation blocks](docs/screenshots/example-page.png)](docs/screenshots/example-page.png) |
+
 ## Quick start
 
 ```bash
-git clone <YOUR_GITHUB_REMOTE_URL_HERE> owasp-lab
+git clone https://github.com/jozeta/owasp-lab.git
 cd owasp-lab
 cp .env.example .env      # edit SECRET_KEY if you like; defaults work for local use
 docker compose up --build
@@ -166,3 +172,8 @@ python -m venv .venv
 ```
 
 Tests run against an in-memory SQLite database and do not require Docker or Postgres.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Like every OWASP-style training lab, this code is
+intentionally insecure; do not reuse any of it in a real application.
