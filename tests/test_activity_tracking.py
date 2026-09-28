@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 
 from app.core.models import ActivityDay, User
 from app.core.nav import CATEGORIES
@@ -31,7 +31,7 @@ def test_toggle_progress_records_activity_today(app, client):
     with app.app_context():
         rows = ActivityDay.query.filter_by(user_id=user_id).all()
         assert len(rows) == 1
-        assert rows[0].date == date.today()
+        assert rows[0].date == datetime.utcnow().date()
 
 
 def test_toggle_progress_activity_is_idempotent_same_day(app, client):
@@ -56,7 +56,7 @@ def test_reveal_hint_records_activity_today(app, client):
     with app.app_context():
         rows = ActivityDay.query.filter_by(user_id=user_id).all()
         assert len(rows) == 1
-        assert rows[0].date == date.today()
+        assert rows[0].date == datetime.utcnow().date()
 
 
 def test_activity_recorded_separately_per_user(app, client):
