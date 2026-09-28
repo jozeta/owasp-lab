@@ -90,6 +90,32 @@ CATEGORIES.append(
                     "The visibility check is roughly if (({}).isAdmin) { showPanel(); } against a brand-new empty object — once Object.prototype.isAdmin is polluted by your payload, that check (and every other naive check like it across the whole page) starts passing, revealing the hidden Admin Tools panel with no legitimate access at all.",
                 ],
             ),
+            ExampleNav(
+                id="imagetragick-rce",
+                title="ImageTragick RCE via Image Upload",
+                group="Vulnerable Library: ImageMagick ImageTragick RCE",
+                difficulty="Medium",
+                endpoint="a06_vulnerable_components.thumbnail_generator",
+                hints=[
+                    "This 'generate a thumbnail' feature shells out to a real ImageMagick binary to resize whatever you upload. Look up what version of ImageMagick this app vendors and check it against a public CVE database.",
+                    "The vendored build is ImageMagick 6.9.2-10 -- the last release before CVE-2016-3714 ('ImageTragick') was fixed. ImageMagick detects a file's real format from its CONTENT, not its extension -- what happens if you upload a file that LOOKS like a .jpg but actually contains a different kind of script ImageMagick understands?",
+                    "Upload a file named poc.jpg containing MVG (Magick Vector Graphics) script instead of real image data: push graphic-context / viewbox 0 0 640 480 / fill 'url(https://example.com/image.jpg\"|id > /tmp/a06_imagetragick_proof.txt;false\")' / pop graphic-context",
+                    "ImageMagick's HTTPS delegate shells out to curl using your crafted string as part of its command line -- the injected id > /tmp/a06_imagetragick_proof.txt command genuinely executes on the server, and the page shows you the proof file's real content afterward.",
+                ],
+            ),
+            ExampleNav(
+                id="imagetragick-extension-bypass",
+                title="ImageTragick Bypasses an Image-Extension Allowlist",
+                group="Vulnerable Library: ImageMagick ImageTragick RCE",
+                difficulty="Hard",
+                endpoint="a06_vulnerable_components.thumbnail_generator_filtered",
+                hints=[
+                    "This version only accepts files whose name ends in .jpg, .jpeg, .png, or .gif before processing them. Confirm the filter genuinely blocks a file named poc.mvg first.",
+                    "The check only ever looks at the FILENAME's extension -- it never inspects what the file actually contains. Does the sibling 'ImageTragick RCE via Image Upload' example's payload already have a filename that would pass this check?",
+                    "Upload the exact same MVG payload from the sibling example, but save it as poc.jpg (it already is, in that example) -- the extension check passes, ImageMagick still detects the real content as MVG script regardless, and the identical command execution fires.",
+                    "This is the same class of mistake as this lab's other filter-bypass examples: a check on one property of the input (here, the filename) provides zero protection against a bug that depends on a COMPLETELY DIFFERENT property (here, the actual file content) -- the 'fix' didn't touch the real vulnerability at all.",
+                ],
+            ),
         ],
     )
 )

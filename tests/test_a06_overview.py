@@ -18,6 +18,8 @@ def test_a06_registered_in_nav(app):
         "Medium",
         "Hard",
         "Hard",
+        "Medium",
+        "Hard",
     ]
 
 
@@ -30,10 +32,12 @@ def test_a06_examples_grouped_by_vulnerability_subtype(app):
         "Component Reconnaissance",
         "Vulnerable Library: jQuery HTML Sanitization Bypass",
         "Vulnerable Library: Lodash Prototype Pollution",
+        "Vulnerable Library: ImageMagick ImageTragick RCE",
     ]
     assert [e.id for e in grouped[0][1]] == ["version-disclosure", "outdated-jquery-detection"]
     assert [e.id for e in grouped[1][1]] == ["jquery-dom-xss", "jquery-xss-session-theft"]
     assert [e.id for e in grouped[2][1]] == ["lodash-prototype-pollution", "prototype-pollution-bypass"]
+    assert [e.id for e in grouped[3][1]] == ["imagetragick-rce", "imagetragick-extension-bypass"]
     difficulty_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
     for _, examples in grouped:
         ranks = [difficulty_rank[e.difficulty] for e in examples]
@@ -46,3 +50,4 @@ def test_a06_overview_shows_vulnerability_subtype_group_headings(client):
     assert "Component Reconnaissance" in body
     assert "Vulnerable Library: jQuery HTML Sanitization Bypass" in body
     assert "Vulnerable Library: Lodash Prototype Pollution" in body
+    assert "Vulnerable Library: ImageMagick ImageTragick RCE" in body
