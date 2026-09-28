@@ -144,6 +144,13 @@ the app recreate the schema from scratch, then use "Reset lab" as normal afterwa
   anonymous visitor sees an empty dashboard with a prompt to pick a user. The
   Settings toggles above remain global and shared by every visitor, unlike
   progress.
+- **Leaderboard** (`/leaderboard`) — every seeded account's completed-example
+  count, streak, and badge count, sortable by most completed, highest score
+  (when scoring is enabled), or longest streak. No login required to view.
+- **Instructor view** (`/instructor`) — the same per-user stats as the
+  leaderboard, in one table, for every seeded account including ones with no
+  progress yet. Only visible to a user whose account has the `admin` role
+  (the seeded `admin` account).
 - **Tools** (`/tools`) — what tools are useful for which kinds of exercises, with
   download links.
 - **About** (`/about`) — what this app is, its infrastructure, and its safety model.
