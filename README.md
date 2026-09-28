@@ -46,7 +46,9 @@ internal-network pivot, CORS origin-allowlist regex bypass), **A06 Vulnerable
 and Outdated Components** (component version disclosure, outdated JS library detection,
 jQuery DOM XSS via a real CVE, jQuery XSS chained to session-token theft, Lodash
 prototype pollution via a real CVE, prototype pollution bypassing a client-side access
-check), **A07 Identification and Authentication Failures** (no rate limiting
+check, remote code execution via a real, unpatched ImageMagick build [CVE-2016-3714,
+"ImageTragick"], and that same RCE bypassing a naive image-extension allowlist),
+**A07 Identification and Authentication Failures** (no rate limiting
 enables brute force, credential stuffing across multiple accounts, session
 identifier exposed in a URL, session not invalidated on logout, full
 session fixation, bypassable multi-factor authentication, an MFA
@@ -83,6 +85,10 @@ cd owasp-lab
 cp .env.example .env      # edit SECRET_KEY if you like; defaults work for local use
 docker compose up --build
 ```
+
+The first build compiles a vendored, intentionally-unpatched ImageMagick release
+from source (for the A06 ImageTragick example) and takes noticeably longer than a
+typical rebuild — later rebuilds are fast again since Docker caches that layer.
 
 Then open <http://127.0.0.1:5001>. The database auto-seeds on first run with
 synthetic accounts (`alice`, `bob`, `carol`, `admin`) — no real data is ever used.
@@ -144,7 +150,7 @@ the app recreate the schema from scratch, then use "Reset lab" as normal afterwa
 | A03 Injection | Implemented | SQLi Auth Bypass (Easy), UNION SQLi Exfiltration (Medium), Error-Based SQLi (Medium), Reflected XSS (Medium), Blind Time-Based SQLi (Hard), OS Command Injection (Hard), SQLi to RCE (Hard), Stored XSS (Hard), XXE File Disclosure (Easy), XXE SSRF (Hard), CSS Attribute-Selector Data Exfiltration (Hard), Argument Injection via tar Export (Hard), CSV Formula Injection (Medium), Unicode Normalization Filter Bypass (Hard), LFI-to-SSTI via Snippet Include (Hard), Second-Order SQLi via Department Report (Hard), Stored XSS via SVG Upload (Hard) |
 | A04 Insecure Design | Implemented | Unlimited Coupon Reuse (Easy), Free Shipping via Client-Trusted Flag (Easy), Negative Quantity Price Manipulation (Medium), Overselling — No Stock-Limit Check (Medium), Discount Code Stacking via Parameter Pollution (Medium), Multi-Step Checkout Bypass (Hard), Password Reset Poisoning via Host Header (Hard), Premium Access Persists After Cancellation (Medium), Store-Credit Rounding Exploit (Hard) |
 | A05 Security Misconfiguration | Implemented | Exposed Database Backup File (Easy), Directory Listing Exposed (Easy), Verbose Error Message Disclosure (Medium), Permissive CORS with Credentials (Medium), CORS: Null Origin Whitelisted (Medium), CORS: Wildcard Origin, Internal Network Pivot (Medium), CORS: Origin Allowlist Regex Bypass (Hard), Exposed Debug Console (Hard), Forgotten Admin Panel with Default Credentials (Hard), Clickjacking on a Sensitive Action Page (Easy) |
-| A06 Vulnerable and Outdated Components | Implemented | Component Version Disclosure (Easy), Outdated Vulnerable JS Library Detection (Easy), jQuery DOM XSS via Vulnerable htmlPrefilter (Medium), Lodash Prototype Pollution via _.defaultsDeep() (Medium), jQuery DOM XSS Chained to Session Token Theft (Hard), Prototype Pollution Bypasses a Client-Side Access Check (Hard) |
+| A06 Vulnerable and Outdated Components | Implemented | Component Version Disclosure (Easy), Outdated Vulnerable JS Library Detection (Easy), jQuery DOM XSS via Vulnerable htmlPrefilter (Medium), Lodash Prototype Pollution via _.defaultsDeep() (Medium), jQuery DOM XSS Chained to Session Token Theft (Hard), Prototype Pollution Bypasses a Client-Side Access Check (Hard), ImageTragick RCE via Image Upload (Medium), ImageTragick Bypasses an Image-Extension Allowlist (Hard) |
 | A07 Identification and Authentication Failures | Implemented | No Rate Limiting Enables Brute Force (Easy), Credential Stuffing Across Multiple Accounts (Medium), Session Identifier Exposed in URL (Easy), Session Not Invalidated on Logout (Medium), Session Fixation (Hard), MFA Bypass via Magic/Null Value (Easy), MFA Code Leaked to Client (Easy), MFA Code Reusability (Medium), MFA Brute-Force (Medium), Bypassable Multi-Factor Authentication (Hard), MFA Code Not Bound to Session (Hard), Password Reset Silently Disables 2FA (Medium), Password Reset via Username Collision (Hard), Account Takeover via Unicode Normalization (Hard), CSRF on Disabling 2FA (Medium) |
 | A08 Software and Data Integrity Failures | Implemented | Pickle Cart Tampering (Easy), Unsigned Plugin Content Trust (Medium), Unchecked Signature on Preferences Cookie (Easy), JWT alg:none Signature Bypass (Medium), Pickle Deserialization RCE (Hard), Unsigned Plugin Installation Leads to RCE (Hard) |
 | A09 Security Logging and Monitoring Failures | Implemented | Failed Login Attempts Never Logged (Easy), High-Value Admin Action With No Audit Trail (Medium), Sensitive Data Leaked Into Log Files (Easy), Unauthenticated Log File Exposure (Hard), No Alert Threshold for Repeated Failures (Medium), Attack Signature Logged But Never Flagged (Hard), Audit Log Forged via Unescaped Display Name (Medium) |
