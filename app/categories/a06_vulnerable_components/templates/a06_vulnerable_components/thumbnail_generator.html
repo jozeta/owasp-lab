@@ -63,7 +63,7 @@ result = subprocess.run(
 # independently restrict policy.xml to the small set of coders this
 # feature genuinely needs (defense in depth, since delegate-based bugs
 # in this family have recurred more than once):
-#   <policy domain="coder" rights="none" pattern="{MVG,MSL,EPHEMERAL,URL,HTTPS,HTTP}" />
+#   &lt;policy domain="coder" rights="none" pattern="{MVG,MSL,EPHEMERAL,URL,HTTPS,HTTP}" /&gt;
 image.save(input_path)
 result = subprocess.run(
     ["convert", input_path, "-resize", "200x200", output_path],

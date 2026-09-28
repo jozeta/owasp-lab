@@ -53,7 +53,7 @@ else:
 
 {% block secure_code %}# An extension allowlist alone never validates file CONTENT.
 # Verify the actual decoded format matches what was claimed, e.g. via
-# `identify -format %m <path>` compared against the extension, AND apply
+# `identify -format %m &lt;path&gt;` compared against the extension, AND apply
 # the same policy.xml coder restriction as the sibling example:
 if not image.filename.lower().endswith((".jpg", ".jpeg", ".png", ".gif")):
     blocked = True
