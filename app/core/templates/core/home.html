@@ -19,7 +19,7 @@
       <span>{{ completed_total }} of {{ total }} completed — {{ overall_percent }}%</span>
     </div>
     <div class="progress" role="progressbar" aria-label="Overall progress" aria-valuenow="{{ completed_total }}" aria-valuemin="0" aria-valuemax="{{ total }}">
-      <div class="progress-bar" style="width: {{ overall_percent }}%"></div>
+      <div class="progress-bar fjord-fill" style="width: {{ overall_percent }}%"></div>
     </div>
     {% if settings.scoring_enabled %}
     <div class="mt-2 text-muted">Score: {{ earned_points_total }} / {{ max_points_total }} points</div>
@@ -30,10 +30,17 @@
 <div class="row row-cols-1 row-cols-md-2 g-3 mt-2">
   {% for cs in category_stats %}
   <div class="col">
-    <div class="card h-100">
+    <div class="card h-100 fjord-card">
       <div class="card-body">
         <h5 class="card-title d-flex justify-content-between align-items-center">
-          <span>{{ cs.category.short_id }}: {{ cs.category.title }}</span>
+          <span class="d-flex align-items-center gap-2">
+            <span class="icon-box" style="width: 28px; height: 28px; border-radius: 8px;">
+              <svg class="category-icon" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+                <use href="{{ url_for('static', filename='icons/category-icons.svg') }}#icon-{{ cs.category.id[:3] }}"></use>
+              </svg>
+            </span>
+            {{ cs.category.short_id }}: {{ cs.category.title }}
+          </span>
           {% if cs.badge_earned %}
           <span class="badge text-bg-success" title="All {{ cs.category.short_id }} examples completed">🏅 {{ cs.category.short_id }}</span>
           {% else %}
@@ -42,7 +49,7 @@
         </h5>
         <div class="mb-1">{{ cs.completed }} of {{ cs.total }} completed</div>
         <div class="progress mb-3" role="progressbar" aria-label="{{ cs.category.short_id }} progress" aria-valuenow="{{ cs.completed }}" aria-valuemin="0" aria-valuemax="{{ cs.total }}">
-          <div class="progress-bar" style="width: {{ cs.percent }}%"></div>
+          <div class="progress-bar fjord-fill" style="width: {{ cs.percent }}%"></div>
         </div>
         {% if settings.scoring_enabled %}
         <div class="mb-2 text-muted small">Score: {{ cs.earned_points }} / {{ cs.max_points }} points</div>
