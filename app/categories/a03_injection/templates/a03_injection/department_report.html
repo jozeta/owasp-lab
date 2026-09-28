@@ -88,6 +88,9 @@ for department in distinct_departments:
 <h3 class="h6 mt-3">Department report</h3>
 {% for department, rows in report.items() %}
 <h4 class="h6 mt-2">{{ department }}</h4>
+{% if rows is string %}
+<div class="alert alert-danger">Error: {{ rows }}</div>
+{% else %}
 <table class="table table-sm">
   <thead><tr><th>Name</th><th>Email</th><th>Salary</th></tr></thead>
   <tbody>
@@ -96,5 +99,6 @@ for department in distinct_departments:
     {% endfor %}
   </tbody>
 </table>
+{% endif %}
 {% endfor %}
 {% endblock %}

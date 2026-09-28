@@ -40,3 +40,22 @@ def test_department_report_shows_normal_departments_unaffected(app, client):
     assert response.status_code == 200
     assert b"Engineering" in response.data
     assert b"Alice Chen" in response.data
+
+
+def test_department_report_survives_malformed_department_value(app, client):
+    seed_database(app)
+    client.post(
+        "/a03/roster/add-employee",
+        data={
+            "name": "Bob",
+            "email": "bob@example.com",
+            "department": "Sales'",
+            "salary": "1",
+        },
+    )
+    response = client.get("/a03/roster/department-report")
+    assert response.status_code == 200
+    # The other, well-formed departments still render correctly even
+    # though one department's query blew up.
+    assert b"Engineering" in response.data
+    assert b"Alice Chen" in response.data

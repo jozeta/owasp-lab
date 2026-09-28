@@ -762,7 +762,11 @@ def department_report():
         # provides no protection at all against this unsafe read: this
         # is second-order SQL injection.
         query = f"SELECT name, email, salary FROM a03_employees WHERE department = '{department}'"
-        report[department] = db.session.execute(text(query)).all()
+        try:
+            report[department] = db.session.execute(text(query)).all()
+        except Exception as e:
+            db.session.rollback()
+            report[department] = str(e)
     return render_template("a03_injection/department_report.html", report=report)
 
 

@@ -353,7 +353,7 @@ CATEGORIES.append(
                 hints=[
                     "This 'upload an attachment' feature accepts any file at all -- check whether there's any restriction on file extension or content before it's saved.",
                     "Uploaded files are served back later via Flask's send_from_directory() with no override at all -- the file's own extension decides its Content-Type, exactly like any static file on the web.",
-                    "Upload a file named poc.svg containing <svg onload=\"alert(document.cookie)\"></svg>. It's accepted with zero validation.",
+                    "Upload a file named poc.svg containing <svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"alert(document.cookie)\"></svg>. It's accepted with zero validation.",
                     "Open the uploaded file's link directly (as its own page, not embedded in an <img> tag). The server serves it as image/svg+xml with no forced download -- your browser renders it as a real SVG document and the onload handler fires immediately.",
                     "This is persistent stored XSS with no template-escaping bug anywhere in sight: the vulnerability is entirely in trusting an uploaded file's own extension to decide how the browser interprets it, rather than in any HTML-rendering code path.",
                 ],
