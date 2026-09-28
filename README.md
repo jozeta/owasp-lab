@@ -14,62 +14,68 @@ Top 10 category; each category has an Overview page (what the vulnerability clas
 is, why it matters, how it's exploited, real-world impact) plus multiple graduated
 examples (Easy → Medium → Hard) that are genuinely exploitable, not simulated.
 
-Currently implemented: **A01 Broken Access Control** (IDOR, missing function-level
-authorization, mass assignment / role escalation, IDOR on a password-change API,
-CSRF-based email-address takeover, CSRF via token presence-only validation,
-arbitrary file read via document download, path traversal filter bypass via
-absolute path, IDOR via a wildcard pattern-matched lookup, an unvalidated open
-redirect, an open-redirect allowlist bypass via domain suffix, HTTP
-parameter pollution enabling role escalation, and path traversal via an
-unsanitized avatar-upload filename), **A02 Cryptographic Failures**
-(leaked credential dump, weak ECB encryption, predictable password-reset token,
-reset token leaked via the Referer header, reset token leaked in an API response,
-and a predictable API key via a time-seeded PRNG),
-**A03 Injection** (SQL injection auth bypass, UNION-based exfiltration, reflected XSS,
-blind time-based SQLi, error-based SQLi, OS command injection, SQL injection escalating
-to remote code execution, stored XSS, XXE file disclosure, XXE SSRF, CSS
-attribute-selector data exfiltration via a profile theme, argument injection via an
-unsanitized tar export, CSV formula injection via comment export, Unicode
-normalization filter bypass, LFI-to-SSTI via an unsanitized snippet include,
-second-order SQL injection via a stored department value, and stored XSS via an
-untrusted SVG upload),
-**A04 Insecure Design** (unlimited coupon reuse, negative-quantity price manipulation,
-multi-step checkout bypass, password-reset poisoning via the Host header,
-free shipping via a client-trusted flag, overselling with no stock-limit
-check, discount-code stacking via parameter pollution, premium access
-persisting after cancellation, a store-credit rounding exploit),
-**A05 Security Misconfiguration** (exposed database backup,
-directory listing, verbose error disclosure, permissive CORS with credentials, exposed
-debug console, forgotten admin panel with default credentials, clickjacking on a
-sensitive action page, CORS null-origin whitelisting, CORS wildcard-origin
-internal-network pivot, CORS origin-allowlist regex bypass), **A06 Vulnerable
-and Outdated Components** (component version disclosure, outdated JS library detection,
-jQuery DOM XSS via a real CVE, jQuery XSS chained to session-token theft, Lodash
-prototype pollution via a real CVE, prototype pollution bypassing a client-side access
-check, remote code execution via a real, unpatched ImageMagick build [CVE-2016-3714,
-"ImageTragick"], and that same RCE bypassing a naive image-extension allowlist),
-**A07 Identification and Authentication Failures** (no rate limiting
-enables brute force, credential stuffing across multiple accounts, session
-identifier exposed in a URL, session not invalidated on logout, full
-session fixation, bypassable multi-factor authentication, an MFA
-backdoor magic value, an MFA code leaked through a debug API field, MFA
-code reuse, MFA code not bound to its session, MFA brute force with no
-rate limiting, password reset via username-whitespace collision,
-account takeover via Unicode normalization, password reset silently
-disabling 2FA, CSRF on disabling 2FA), **A08
-Software and Data Integrity Failures** (pickle cart tampering, pickle
-deserialization RCE, unsigned plugin content trust, unsigned plugin
-installation leading to RCE, unchecked signature on a preferences cookie,
-JWT alg:none signature bypass), **A09 Security Logging and Monitoring
-Failures** (failed login attempts never logged, high-value admin action
-with no audit trail, sensitive data leaked into log files, unauthenticated
-log file exposure, no alert threshold for repeated failures, attack
-signature logged but never flagged, and an audit log forged via an
-unescaped display name), and **A10 Server-Side Request
-Forgery** (webhook tester reaches internal metadata endpoint, same fetcher
-enables internal port scanning, PDF generator reads local files via
-file:// URL, alternate IP representation bypasses a naive blocklist, open
-redirect bypasses a trusted-domain allowlist).
+Currently implemented, by category:
+
+- **A01 Broken Access Control** — IDOR, missing function-level authorization, mass
+  assignment / role escalation, IDOR on a password-change API, CSRF-based
+  email-address takeover, CSRF via token presence-only validation, arbitrary file
+  read via document download, path traversal filter bypass via absolute path, IDOR
+  via a wildcard pattern-matched lookup, an unvalidated open redirect, an
+  open-redirect allowlist bypass via domain suffix, HTTP parameter pollution
+  enabling role escalation, and path traversal via an unsanitized avatar-upload
+  filename.
+- **A02 Cryptographic Failures** — leaked credential dump, weak ECB encryption,
+  predictable password-reset token, reset token leaked via the Referer header,
+  reset token leaked in an API response, and a predictable API key via a
+  time-seeded PRNG.
+- **A03 Injection** — SQL injection auth bypass, UNION-based exfiltration,
+  reflected XSS, blind time-based SQLi, error-based SQLi, OS command injection,
+  SQL injection escalating to remote code execution, stored XSS, XXE file
+  disclosure, XXE SSRF, CSS attribute-selector data exfiltration via a profile
+  theme, argument injection via an unsanitized tar export, CSV formula injection
+  via comment export, Unicode normalization filter bypass, LFI-to-SSTI via an
+  unsanitized snippet include, second-order SQL injection via a stored department
+  value, and stored XSS via an untrusted SVG upload.
+- **A04 Insecure Design** — unlimited coupon reuse, negative-quantity price
+  manipulation, multi-step checkout bypass, password-reset poisoning via the Host
+  header, free shipping via a client-trusted flag, overselling with no
+  stock-limit check, discount-code stacking via parameter pollution, premium
+  access persisting after cancellation, and a store-credit rounding exploit.
+- **A05 Security Misconfiguration** — exposed database backup, directory listing,
+  verbose error disclosure, permissive CORS with credentials, exposed debug
+  console, forgotten admin panel with default credentials, clickjacking on a
+  sensitive action page, CORS null-origin whitelisting, CORS wildcard-origin
+  internal-network pivot, and CORS origin-allowlist regex bypass.
+- **A06 Vulnerable and Outdated Components** — component version disclosure,
+  outdated JS library detection, jQuery DOM XSS via a real CVE, jQuery XSS
+  chained to session-token theft, Lodash prototype pollution via a real CVE,
+  prototype pollution bypassing a client-side access check, remote code
+  execution via a real, unpatched ImageMagick build (CVE-2016-3714,
+  "ImageTragick"), and that same RCE bypassing a naive image-extension allowlist.
+- **A07 Identification and Authentication Failures** — no rate limiting enables
+  brute force, credential stuffing across multiple accounts, session identifier
+  exposed in a URL, session not invalidated on logout, full session fixation,
+  bypassable multi-factor authentication, an MFA backdoor magic value, an MFA
+  code leaked through a debug API field, MFA code reuse, MFA code not bound to
+  its session, MFA brute force with no rate limiting, password reset via
+  username-whitespace collision, account takeover via Unicode normalization,
+  password reset silently disabling 2FA, and CSRF on disabling 2FA.
+- **A08 Software and Data Integrity Failures** — pickle cart tampering, pickle
+  deserialization RCE, unsigned plugin content trust, unsigned plugin
+  installation leading to RCE, unchecked signature on a preferences cookie, and
+  JWT alg:none signature bypass.
+- **A09 Security Logging and Monitoring Failures** — failed login attempts never
+  logged, high-value admin action with no audit trail, sensitive data leaked
+  into log files, unauthenticated log file exposure, no alert threshold for
+  repeated failures, attack signature logged but never flagged, and an audit
+  log forged via an unescaped display name.
+- **A10 Server-Side Request Forgery** — webhook tester reaches internal metadata
+  endpoint, same fetcher enables internal port scanning, PDF generator reads
+  local files via a `file://` URL, alternate IP representation bypasses a naive
+  blocklist, and open redirect bypasses a trusted-domain allowlist.
+
+See the [category summary](#category-summary) table below for the full list of
+examples with their difficulty ratings.
 
 ## Screenshots
 
