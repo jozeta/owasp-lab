@@ -256,6 +256,6 @@ code, pre, kbd, samp, .navuser {
    =================================================================== */
 
 [data-bs-theme="light"] #sidebar {
-  background-color: var(--bs-tertiary-bg);
+  background-color: var(--bs-tertiary-bg) !important;
   border-color: var(--bs-border-color) !important;
 }
