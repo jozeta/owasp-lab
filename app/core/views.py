@@ -40,6 +40,7 @@ def home():
     completed_ids = {
         example_id for example_id, p in progress_rows.items() if p.completed_at is not None
     }
+    badges = compute_user_stats(viewer.id)["badges"] if viewer is not None else {}
     category_stats = []
     for category in sorted(CATEGORIES, key=lambda c: c.short_id):
         completed = sum(1 for e in category.examples if e.id in completed_ids)
@@ -58,6 +59,7 @@ def home():
                 "percent": round(completed / category_total * 100) if category_total else 0,
                 "earned_points": earned_points,
                 "max_points": max_points,
+                "badge_earned": category.id in badges,
             }
         )
     completed_total = sum(cs["completed"] for cs in category_stats)
