@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+{% block title %}Instructor view — OWASP Top 10 Training Lab{% endblock %}
+{% block content %}
+<h1>Instructor view</h1>
+<p class="lead">Aggregate progress across every seeded account.</p>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>User</th>
+      <th>Completed</th>
+      {% if settings.scoring_enabled %}<th>Score</th>{% endif %}
+      <th>Streak</th>
+      <th>Badges</th>
+      <th>Last active</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.user.username }}</td>
+      <td>{{ row.completed_total }} / {{ total_examples }}</td>
+      {% if settings.scoring_enabled %}<td>{{ row.score_total }}</td>{% endif %}
+      <td>{{ row.streak_days }} day{{ "s" if row.streak_days != 1 else "" }}</td>
+      <td>{{ row.badge_count }} / {{ total_badges }}</td>
+      <td>{% if row.last_active %}{{ row.last_active.isoformat() }}{% else %}Never{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

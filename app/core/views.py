@@ -113,6 +113,38 @@ def leaderboard():
     )
 
 
+@core_bp.route("/instructor")
+def instructor_view():
+    viewer = get_current_user()
+    if viewer is None:
+        return redirect(url_for("core.switch_user", next=url_for("core.instructor_view")))
+    if viewer.role != "admin":
+        abort(403)
+
+    total_examples = sum(len(c.examples) for c in CATEGORIES)
+    rows = []
+    for user in User.query.order_by(User.username).all():
+        stats = compute_user_stats(user.id)
+        rows.append(
+            {
+                "user": user,
+                "completed_total": stats["completed_total"],
+                "score_total": stats["score_total"],
+                "streak_days": stats["streak_days"],
+                "badge_count": len(stats["badges"]),
+                "last_active": stats["last_active"],
+            }
+        )
+    rows.sort(key=lambda r: r["completed_total"], reverse=True)
+
+    return render_template(
+        "core/instructor.html",
+        rows=rows,
+        total_examples=total_examples,
+        total_badges=len(CATEGORIES),
+    )
+
+
 @core_bp.route("/switch-user", methods=["GET", "POST"])
 def switch_user():
     if request.method == "POST":

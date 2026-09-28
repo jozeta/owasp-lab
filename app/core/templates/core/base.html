@@ -87,6 +87,9 @@
               <li><a class="dropdown-item" href="{{ url_for('core.about_page') }}">About</a></li>
               <li><a class="dropdown-item" href="{{ url_for('core.settings_page') }}">Settings</a></li>
               <li><a class="dropdown-item" href="{{ url_for('core.leaderboard') }}">Leaderboard</a></li>
+              {% if current_user and current_user.role == "admin" %}
+              <li><a class="dropdown-item" href="{{ url_for('core.instructor_view') }}">Instructor view</a></li>
+              {% endif %}
               {% if current_user %}
               <li><hr class="dropdown-divider"></li>
               <li>
