@@ -148,11 +148,12 @@ def force_reset():
 # the app is meant to run on 127.0.0.1 only.
 @core_bp.route("/progress/toggle", methods=["POST"])
 def toggle_progress():
-    viewer = get_current_user()
-    if viewer is None:
-        return redirect(url_for("core.switch_user", next=request.path))
     example_id = request.form.get("example_id", "")
     example = _find_example(example_id)
+    viewer = get_current_user()
+    if viewer is None:
+        dest = url_for(example.endpoint) if example else url_for("core.home")
+        return redirect(url_for("core.switch_user", next=dest))
     if example is None:
         abort(404)
     progress = ExampleProgress.query.filter_by(user_id=viewer.id, example_id=example_id).first()
@@ -171,11 +172,12 @@ def toggle_progress():
 
 @core_bp.route("/hints/reveal", methods=["POST"])
 def reveal_hint():
-    viewer = get_current_user()
-    if viewer is None:
-        return redirect(url_for("core.switch_user", next=request.path))
     example_id = request.form.get("example_id", "")
     example = _find_example(example_id)
+    viewer = get_current_user()
+    if viewer is None:
+        dest = url_for(example.endpoint) if example else url_for("core.home")
+        return redirect(url_for("core.switch_user", next=dest))
     if example is None:
         abort(404)
     progress = ExampleProgress.query.filter_by(user_id=viewer.id, example_id=example_id).first()

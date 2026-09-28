@@ -40,6 +40,26 @@ def test_reveal_hint_increments_hints_used(app, client):
         assert progress.hints_used == 1
 
 
+def test_anonymous_reveal_hint_redirects_to_switch_user_with_example_page_as_next(app, client):
+    seed_database(app)
+    example = _a10_example("webhook-internal-metadata")
+
+    with app.test_request_context():
+        example_path = url_for(example.endpoint)
+
+    response = client.post("/hints/reveal", data={"example_id": example.id})
+    assert response.status_code == 302
+    location = response.headers["Location"]
+    assert location.startswith("/switch-user")
+    assert f"next={example_path}" in location
+
+    # Following the redirect chain (switch-user's GET page, not logging in)
+    # must land on the example's own real page, never a 405 on the POST
+    # endpoint itself.
+    follow_up = client.get(location)
+    assert follow_up.status_code == 200
+
+
 def test_reveal_hint_is_capped_at_the_examples_hint_count(app, client):
     seed_database(app)
     user_id = _login_as(client, app, "alice")

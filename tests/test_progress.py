@@ -80,6 +80,28 @@ def test_toggle_progress_redirects_to_the_example_page(app, client):
     assert response.headers["Location"] == expected
 
 
+def test_anonymous_toggle_redirects_to_switch_user_with_example_page_as_next(app, client):
+    from flask import url_for
+
+    seed_database(app)
+    example = _safe_test_example()
+
+    with app.test_request_context():
+        example_path = url_for(example.endpoint)
+
+    response = client.post("/progress/toggle", data={"example_id": example.id})
+    assert response.status_code == 302
+    location = response.headers["Location"]
+    assert location.startswith("/switch-user")
+    assert f"next={example_path}" in location
+
+    # Following the redirect chain (switch-user's GET page, not logging in)
+    # must land on the example's own real page, never a 405 on the POST
+    # endpoint itself.
+    follow_up = client.get(location)
+    assert follow_up.status_code == 200
+
+
 def test_mark_as_done_button_appears_on_example_page(app, client):
     from flask import url_for
 

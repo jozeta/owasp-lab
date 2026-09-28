@@ -137,11 +137,13 @@ the app recreate the schema from scratch, then use "Reset lab" as normal afterwa
 
 ## More pages
 
-- **Home** (`/`) — your progress across every example, overall and per category,
-  plus your running score when the scoring system is enabled. Progress is global
-  and shared by every visitor to this instance — marking an example "done" updates
-  what everyone sees here, the same way the Settings toggles above are shared, not
-  per-browser.
+- **Home** (`/`) — your own progress across every example, overall and per category,
+  plus your running score when the scoring system is enabled. Progress is tracked
+  per user: pick a user via the top nav's "Switch user" link (or any gated example
+  page) to have your completions and hints counted under your own name. An
+  anonymous visitor sees an empty dashboard with a prompt to pick a user. The
+  Settings toggles above remain global and shared by every visitor, unlike
+  progress.
 - **Tools** (`/tools`) — what tools are useful for which kinds of exercises, with
   download links.
 - **About** (`/about`) — what this app is, its infrastructure, and its safety model.
