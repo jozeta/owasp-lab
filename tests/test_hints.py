@@ -1,9 +1,18 @@
 from flask import url_for
 
-from app.core.models import ExampleProgress, Settings
+from app.core.models import ExampleProgress, Settings, User
 from app.core.nav import CATEGORIES
 from app.core.seed import seed_database
 from app.extensions import db
+
+
+def _login_as(client, app, username):
+    with app.app_context():
+        user = User.query.filter_by(username=username).first()
+        user_id = user.id
+    with client.session_transaction() as sess:
+        sess["user_id"] = user_id
+    return user_id
 
 
 def _a10_example(example_id):
@@ -20,18 +29,20 @@ def _enable_scoring(app):
 
 def test_reveal_hint_increments_hints_used(app, client):
     seed_database(app)
+    user_id = _login_as(client, app, "alice")
     _enable_scoring(app)
     example = _a10_example("webhook-internal-metadata")
 
     client.post("/hints/reveal", data={"example_id": example.id})
 
     with app.app_context():
-        progress = ExampleProgress.query.filter_by(example_id=example.id).first()
+        progress = ExampleProgress.query.filter_by(example_id=example.id, user_id=user_id).first()
         assert progress.hints_used == 1
 
 
 def test_reveal_hint_is_capped_at_the_examples_hint_count(app, client):
     seed_database(app)
+    user_id = _login_as(client, app, "alice")
     _enable_scoring(app)
     example = _a10_example("webhook-internal-metadata")
     assert len(example.hints) == 3
@@ -40,12 +51,13 @@ def test_reveal_hint_is_capped_at_the_examples_hint_count(app, client):
         client.post("/hints/reveal", data={"example_id": example.id})
 
     with app.app_context():
-        progress = ExampleProgress.query.filter_by(example_id=example.id).first()
+        progress = ExampleProgress.query.filter_by(example_id=example.id, user_id=user_id).first()
         assert progress.hints_used == 3
 
 
 def test_revealed_hint_text_appears_on_the_example_page(app, client):
     seed_database(app)
+    _login_as(client, app, "alice")
     _enable_scoring(app)
     example = _a10_example("webhook-internal-metadata")
 
@@ -60,6 +72,7 @@ def test_revealed_hint_text_appears_on_the_example_page(app, client):
 
 def test_mark_as_done_button_previews_exact_point_value(app, client):
     seed_database(app)
+    _login_as(client, app, "alice")
     _enable_scoring(app)
     example = _a10_example("webhook-internal-metadata")
 
@@ -73,6 +86,7 @@ def test_mark_as_done_button_previews_exact_point_value(app, client):
 
 def test_points_freeze_at_completion_and_survive_later_hint_reveals(app, client):
     seed_database(app)
+    user_id = _login_as(client, app, "alice")
     _enable_scoring(app)
     example = _a10_example("fetch-based-port-scan")
 
@@ -80,24 +94,25 @@ def test_points_freeze_at_completion_and_survive_later_hint_reveals(app, client)
     client.post("/progress/toggle", data={"example_id": example.id})
 
     with app.app_context():
-        progress = ExampleProgress.query.filter_by(example_id=example.id).first()
+        progress = ExampleProgress.query.filter_by(example_id=example.id, user_id=user_id).first()
         assert progress.points_awarded == 15
 
     client.post("/hints/reveal", data={"example_id": example.id})
 
     with app.app_context():
-        progress = ExampleProgress.query.filter_by(example_id=example.id).first()
+        progress = ExampleProgress.query.filter_by(example_id=example.id, user_id=user_id).first()
         assert progress.points_awarded == 15
 
 
 def test_unmarking_and_recompleting_recomputes_points_fresh(app, client):
     seed_database(app)
+    user_id = _login_as(client, app, "alice")
     _enable_scoring(app)
     example = _a10_example("blocklist-redirect-bypass")
 
     client.post("/progress/toggle", data={"example_id": example.id})
     with app.app_context():
-        progress = ExampleProgress.query.filter_by(example_id=example.id).first()
+        progress = ExampleProgress.query.filter_by(example_id=example.id, user_id=user_id).first()
         assert progress.points_awarded == 30
 
     client.post("/progress/toggle", data={"example_id": example.id})
@@ -106,7 +121,7 @@ def test_unmarking_and_recompleting_recomputes_points_fresh(app, client):
     client.post("/progress/toggle", data={"example_id": example.id})
 
     with app.app_context():
-        progress = ExampleProgress.query.filter_by(example_id=example.id).first()
+        progress = ExampleProgress.query.filter_by(example_id=example.id, user_id=user_id).first()
         assert progress.points_awarded == 18
 
 
@@ -148,6 +163,7 @@ def test_settings_post_does_not_clear_show_exploit_instructions_while_enabling_s
 
 def test_home_page_shows_score_totals_when_scoring_enabled(app, client):
     seed_database(app)
+    _login_as(client, app, "alice")
     _enable_scoring(app)
     example = _a10_example("webhook-internal-metadata")
     client.post("/progress/toggle", data={"example_id": example.id})
@@ -159,6 +175,7 @@ def test_home_page_shows_score_totals_when_scoring_enabled(app, client):
 
 def test_nav_bar_shows_running_score_on_any_page_when_scoring_enabled(app, client):
     seed_database(app)
+    _login_as(client, app, "alice")
     _enable_scoring(app)
     example = _a10_example("webhook-internal-metadata")
     client.post("/progress/toggle", data={"example_id": example.id})
