@@ -49,7 +49,7 @@ Each node is a single `<a href="{{ url_for(cs.category.overview_endpoint) }}">` 
 - The "Overall" summary card and its progress bar (unchanged, stays above the trail).
 - The anonymous-visitor "pick a user" alert (unchanged).
 - `settings.scoring_enabled` gating logic (unchanged — same conditional, now guarding the score line inside a node instead of inside a card).
-- Badge semantics (`text-bg-success`/`text-bg-secondary` classes, `cs.badge_earned` condition) — carried over unchanged, just repositioned as a marker on the ring instead of a badge pill in a card header.
+- **Badge semantics, refined (not identical) during plan-writing:** the *earned* case is carried over unchanged — the same `text-bg-success` pill with the same 🏅 content, just repositioned as a corner marker on the ring instead of a badge pill in a card header (existing tests asserting on `text-bg-success`'s presence/absence keep passing unmodified). The *unearned* case's `text-bg-secondary` pill (which today just repeats the category's own short_id) is dropped, not carried over — the ring's own partial/empty conic-gradient fill already conveys "not yet complete" visually, and the short_id already appears in the node's title text, so an additional grey pill would be redundant clutter unique to the old card-grid layout. No existing test depends on that pill's presence (verified: `tests/test_home_badges.py`'s two non-earned-state tests only assert the *absence* of `text-bg-success`, never the presence of `text-bg-secondary`).
 - No new routes, no new template files elsewhere — this is a `home.html`-only change (plus its supporting CSS in `static/css/lab.css`), the smallest-scope sub-project of the four.
 
 ## Data Model Approach
