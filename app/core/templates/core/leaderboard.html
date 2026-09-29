@@ -18,26 +18,30 @@
   </li>
 </ul>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th>User</th>
-      <th>Completed</th>
-      {% if settings.scoring_enabled %}<th>Score</th>{% endif %}
-      <th>Streak</th>
-      <th>Badges</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in rows %}
-    <tr>
-      <td>{{ row.user.username }}</td>
-      <td>{{ row.completed_total }} / {{ total_examples }}</td>
-      {% if settings.scoring_enabled %}<td>{{ row.score_total }}</td>{% endif %}
-      <td>{{ row.streak_days }} day{{ "s" if row.streak_days != 1 else "" }}</td>
-      <td>{{ row.badge_count }} / {{ total_badges }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="card fjord-card mb-3">
+  <div class="card-body">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Completed</th>
+          {% if settings.scoring_enabled %}<th>Score</th>{% endif %}
+          <th>Streak</th>
+          <th>Badges</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.user.username }}</td>
+          <td>{{ row.completed_total }} / {{ total_examples }}</td>
+          {% if settings.scoring_enabled %}<td>{{ row.score_total }}</td>{% endif %}
+          <td>{{ row.streak_days }} day{{ "s" if row.streak_days != 1 else "" }}</td>
+          <td>{{ row.badge_count }} / {{ total_badges }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}
