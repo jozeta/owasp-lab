@@ -2,10 +2,10 @@ from datetime import datetime
 
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, session, url_for
 
+from app.core.badges import BADGE_CATALOG, compute_badges
 from app.core.models import ExampleProgress, Settings, User, compute_points, record_activity
 from app.core.nav import CATEGORIES
 from app.core.seed import reset_database
-from app.core.stats import compute_stats
 from app.extensions import db
 
 core_bp = Blueprint("core", __name__, template_folder="templates")
@@ -33,7 +33,6 @@ def home():
     completed_ids = {
         example_id for example_id, p in progress_rows.items() if p.completed_at is not None
     }
-    badges = compute_stats()["badges"]
     category_stats = []
     for category in sorted(CATEGORIES, key=lambda c: c.short_id):
         completed = sum(1 for e in category.examples if e.id in completed_ids)
@@ -52,7 +51,6 @@ def home():
                 "percent": round(completed / category_total * 100) if category_total else 0,
                 "earned_points": earned_points,
                 "max_points": max_points,
-                "badge_earned": category.id in badges,
             }
         )
     completed_total = sum(cs["completed"] for cs in category_stats)
@@ -60,6 +58,12 @@ def home():
     overall_percent = round(completed_total / total * 100) if total else 0
     earned_points_total = sum(cs["earned_points"] for cs in category_stats)
     max_points_total = sum(cs["max_points"] for cs in category_stats)
+
+    settings = Settings.get()
+    earned_badges = compute_badges()
+    visible_badges = [b for b in BADGE_CATALOG if not b.scoring_only or settings.scoring_enabled]
+    badges_earned_count = sum(1 for b in visible_badges if earned_badges[b.id])
+
     return render_template(
         "core/home.html",
         completed_total=completed_total,
@@ -68,6 +72,9 @@ def home():
         category_stats=category_stats,
         earned_points_total=earned_points_total,
         max_points_total=max_points_total,
+        visible_badges=visible_badges,
+        earned_badges=earned_badges,
+        badges_earned_count=badges_earned_count,
     )
 
 

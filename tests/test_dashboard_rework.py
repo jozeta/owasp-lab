@@ -3,7 +3,7 @@ from app.core.seed import seed_database
 from app.extensions import db
 
 
-def test_stat_strip_has_three_tiles_when_scoring_enabled(app, client):
+def test_stat_strip_has_four_tiles_when_scoring_enabled(app, client):
     seed_database(app)
     with app.app_context():
         settings = Settings.get()
@@ -12,12 +12,12 @@ def test_stat_strip_has_three_tiles_when_scoring_enabled(app, client):
 
     response = client.get("/")
     body = response.data.decode()
-    assert 'class="stat-strip"' in body
-    assert "stat-strip-2col" not in body
+    assert 'class="stat-strip stat-strip-4col"' in body
     assert "Score" in body
+    assert "Badges" in body
 
 
-def test_stat_strip_has_two_tiles_when_scoring_disabled(app, client):
+def test_stat_strip_has_three_tiles_when_scoring_disabled(app, client):
     seed_database(app)
     with app.app_context():
         settings = Settings.get()
@@ -26,8 +26,10 @@ def test_stat_strip_has_two_tiles_when_scoring_disabled(app, client):
 
     response = client.get("/")
     body = response.data.decode()
-    assert 'class="stat-strip stat-strip-2col"' in body
+    assert 'class="stat-strip"' in body
+    assert "stat-strip-4col" not in body
     assert "Score" not in body
+    assert "Badges" in body
 
 
 def test_nav_category_links_use_the_quiet_navcat_style(app, client):

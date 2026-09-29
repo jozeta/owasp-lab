@@ -169,6 +169,11 @@ def test_nav_bar_shows_running_score_on_any_page_when_scoring_enabled(app, clien
     assert b"Score: 10 / 2270" in response.data
 
 
-def test_score_ui_absent_when_scoring_disabled(client):
+def test_score_ui_absent_when_scoring_disabled(app, client):
+    with app.app_context():
+        settings = Settings.get()
+        settings.scoring_enabled = False
+        db.session.commit()
+
     response = client.get("/")
     assert b"Score:" not in response.data

@@ -1,18 +1,20 @@
 from datetime import datetime
 
-from app.core.models import ExampleProgress
+from app.core.models import ExampleProgress, Settings
 from app.core.nav import CATEGORIES
 from app.core.seed import seed_database
 from app.extensions import db
 
 
-def test_no_badges_shown_when_nothing_completed(app, client):
+def test_badge_case_shows_all_visible_badges_locked_by_default(app, client):
     seed_database(app)
     response = client.get("/")
-    assert b"text-bg-success" not in response.data
+    body = response.data.decode()
+    assert body.count('class="badge-chip earned"') == 1  # only participation-trophy
+    assert body.count('class="badge-chip locked"') >= 20
 
 
-def test_completing_a_whole_category_shows_its_badge(app, client):
+def test_earning_a_category_badge_marks_its_chip_earned(app, client):
     seed_database(app)
     a10 = next(c for c in CATEGORIES if c.id == "a10_ssrf")
 
@@ -28,22 +30,36 @@ def test_completing_a_whole_category_shows_its_badge(app, client):
         db.session.commit()
 
     response = client.get("/")
-    assert b"text-bg-success" in response.data
+    body = response.data.decode()
+    assert "Request Forger" in body
+    request_forger_index = body.index("Request Forger")
+    # Note: search for the enclosing chip *div*'s opening tag specifically
+    # (trailing space after "badge-chip"), not just the substring
+    # 'class="badge-chip' -- that substring also matches the nested
+    # `class="badge-chip-name"` span immediately wrapping the badge name
+    # text, which is closer to request_forger_index and would otherwise be
+    # picked up by a plain rindex instead of the actual chip div.
+    chip_start = body.rindex('<div class="badge-chip ', 0, request_forger_index)
+    assert "earned" in body[chip_start:request_forger_index]
 
 
-def test_partial_category_completion_shows_no_badge_for_it(app, client):
+def test_leet_badge_hidden_when_scoring_disabled(app, client):
     seed_database(app)
-    a10 = next(c for c in CATEGORIES if c.id == "a10_ssrf")
-
     with app.app_context():
-        db.session.add(
-            ExampleProgress(
-                example_id=a10.examples[0].id,
-                completed_at=datetime.utcnow(),
-                points_awarded=a10.examples[0].base_points(),
-            )
-        )
+        settings = Settings.get()
+        settings.scoring_enabled = False
         db.session.commit()
 
     response = client.get("/")
-    assert b"text-bg-success" not in response.data
+    assert b"Cross 1337 points" not in response.data
+
+
+def test_leet_badge_shown_when_scoring_enabled(app, client):
+    seed_database(app)
+    with app.app_context():
+        settings = Settings.get()
+        settings.scoring_enabled = True
+        db.session.commit()
+
+    response = client.get("/")
+    assert b"Cross 1337 points" in response.data

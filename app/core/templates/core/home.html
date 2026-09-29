@@ -4,7 +4,7 @@
 <h1>OWASP Top 10 (2021) Training Lab</h1>
 <p class="lead">Pick a category below to see its overview and graduated, exploitable examples.</p>
 
-<div class="stat-strip{% if not settings.scoring_enabled %} stat-strip-2col{% endif %}">
+<div class="stat-strip{% if settings.scoring_enabled %} stat-strip-4col{% endif %}">
   <div class="stat stat-accent">
     <div class="stat-num">{{ completed_total }}<small>/{{ total }}</small></div>
     <div class="stat-lbl">Examples completed</div>
@@ -19,6 +19,24 @@
     <div class="stat-lbl">Score</div>
   </div>
   {% endif %}
+  <div class="stat">
+    <div class="stat-num">{{ badges_earned_count }}<small>/{{ visible_badges|length }}</small></div>
+    <div class="stat-lbl">Badges</div>
+  </div>
+</div>
+
+<div class="badge-case-grid">
+  {% for badge in visible_badges %}
+  <div class="badge-chip {% if earned_badges[badge.id] %}earned{% else %}locked{% endif %}" title="{{ badge.description }}">
+    <span class="icon-box" style="width: 40px; height: 40px; border-radius: 10px;">
+      <svg class="category-icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24">
+        <use href="{{ url_for('static', filename='icons/badge-icons.svg') }}#{{ badge.icon }}"></use>
+      </svg>
+    </span>
+    <span class="badge-chip-name">{{ badge.name }}</span>
+    <span class="badge-chip-desc">{{ badge.description }}</span>
+  </div>
+  {% endfor %}
 </div>
 
 <div class="dash-grid">
@@ -30,12 +48,7 @@
           <use href="{{ url_for('static', filename='icons/category-icons.svg') }}#icon-{{ cs.category.id[:3] }}"></use>
         </svg>
       </span>
-      <span class="dash-card-code">
-        {{ cs.category.short_id }}
-        {% if cs.badge_earned %}
-        <span class="badge text-bg-success" title="All {{ cs.category.short_id }} examples completed">🏅</span>
-        {% endif %}
-      </span>
+      <span class="dash-card-code">{{ cs.category.short_id }}</span>
     </div>
     <div class="dash-card-name">{{ cs.category.title }}</div>
     <div class="dash-bar-track"><div class="dash-bar-fill fjord-fill" style="width: {{ cs.percent }}%"></div></div>
