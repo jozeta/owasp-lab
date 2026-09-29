@@ -135,22 +135,22 @@ new columns to already-existing tables. In that case, run
 `docker compose down -v && docker compose up -d` once to drop the old volume and let
 the app recreate the schema from scratch, then use "Reset lab" as normal afterward.
 
+This release goes further than a normal additive schema change: it *removes* the
+`user_id` column from `example_progress` and `activity_days`. `db.create_all()`
+never drops or alters an existing column, so on an old volume the stale `user_id`
+column's `NOT NULL` constraint will make every new completion or hint action fail
+outright (not just silently miss a feature) until you run the
+`docker compose down -v` reset described above.
+
 ## More pages
 
 - **Home** (`/`) — your own progress across every example, overall and per category,
-  plus your running score when the scoring system is enabled. Progress is tracked
-  per user: pick a user via the top nav's "Switch user" link (or any gated example
-  page) to have your completions and hints counted under your own name. An
-  anonymous visitor sees an empty dashboard with a prompt to pick a user. The
-  Settings toggles above remain global and shared by every visitor, unlike
-  progress.
-- **Leaderboard** (`/leaderboard`) — every seeded account's completed-example
-  count, streak, and badge count, sortable by most completed, highest score
-  (when scoring is enabled), or longest streak. No login required to view.
-- **Instructor view** (`/instructor`) — the same per-user stats as the
-  leaderboard, in one table, for every seeded account including ones with no
-  progress yet. Only visible to a user whose account has the `admin` role
-  (the seeded `admin` account).
+  plus your running score when the scoring system is enabled. Progress, score,
+  and badges are shared across the whole instance regardless of which seeded
+  identity (if any) is currently active. The top nav's "Switch user" link (or
+  any gated example page) lets you act as a specific seeded account so that
+  exploit examples depending on account context work correctly — it has no
+  effect on what's tracked on this page.
 - **Tools** (`/tools`) — what tools are useful for which kinds of exercises, with
   download links.
 - **About** (`/about`) — what this app is, its infrastructure, and its safety model.
