@@ -27,37 +27,29 @@
   </div>
 </div>
 
-<div class="row row-cols-1 row-cols-md-2 g-3 mt-2">
+<div class="roadmap">
+  <div class="roadmap-track"></div>
+  <div class="roadmap-track-fill" style="height: {{ overall_percent }}%"></div>
   {% for cs in category_stats %}
-  <div class="col">
-    <div class="card h-100 fjord-card">
-      <div class="card-body">
-        <h5 class="card-title d-flex justify-content-between align-items-center">
-          <span class="d-flex align-items-center gap-2">
-            <span class="icon-box" style="width: 28px; height: 28px; border-radius: 8px;">
-              <svg class="category-icon" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
-                <use href="{{ url_for('static', filename='icons/category-icons.svg') }}#icon-{{ cs.category.id[:3] }}"></use>
-              </svg>
-            </span>
-            {{ cs.category.short_id }}: {{ cs.category.title }}
-          </span>
-          {% if cs.badge_earned %}
-          <span class="badge text-bg-success" title="All {{ cs.category.short_id }} examples completed">🏅 {{ cs.category.short_id }}</span>
-          {% else %}
-          <span class="badge text-bg-secondary" title="Complete every {{ cs.category.short_id }} example to earn this badge">{{ cs.category.short_id }}</span>
-          {% endif %}
-        </h5>
-        <div class="mb-1">{{ cs.completed }} of {{ cs.total }} completed</div>
-        <div class="progress mb-3" role="progressbar" aria-label="{{ cs.category.short_id }} progress" aria-valuenow="{{ cs.completed }}" aria-valuemin="0" aria-valuemax="{{ cs.total }}">
-          <div class="progress-bar fjord-fill" style="width: {{ cs.percent }}%"></div>
-        </div>
-        {% if settings.scoring_enabled %}
-        <div class="mb-2 text-muted small">Score: {{ cs.earned_points }} / {{ cs.max_points }} points</div>
-        {% endif %}
-        <a href="{{ url_for(cs.category.overview_endpoint) }}" class="btn btn-outline-primary btn-sm">Open overview</a>
-      </div>
-    </div>
-  </div>
+  <a href="{{ url_for(cs.category.overview_endpoint) }}" class="roadmap-node">
+    <span class="roadmap-node-ring" style="--pct: {{ cs.percent }}">
+      <span class="roadmap-node-inner">
+        <svg class="category-icon" viewBox="0 0 24 24">
+          <use href="{{ url_for('static', filename='icons/category-icons.svg') }}#icon-{{ cs.category.id[:3] }}"></use>
+        </svg>
+      </span>
+      {% if cs.badge_earned %}
+      <span class="badge text-bg-success roadmap-badge" title="All {{ cs.category.short_id }} examples completed">🏅</span>
+      {% endif %}
+    </span>
+    <span class="roadmap-node-info">
+      <span class="roadmap-node-title">{{ cs.category.short_id }}: {{ cs.category.title }}</span>
+      <span class="text-muted small">{{ cs.completed }} of {{ cs.total }} completed</span>
+      {% if settings.scoring_enabled %}
+      <span class="text-muted small">Score: {{ cs.earned_points }} / {{ cs.max_points }} points</span>
+      {% endif %}
+    </span>
+  </a>
   {% endfor %}
 </div>
 {% endblock %}
