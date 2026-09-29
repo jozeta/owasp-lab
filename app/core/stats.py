@@ -4,15 +4,13 @@ from app.core.models import ActivityDay, ExampleProgress
 from app.core.nav import CATEGORIES
 
 
-def compute_user_stats(user_id):
-    """Completed/score/streak/badge summary for one user.
+def compute_stats():
+    """Completed/score/streak/badge summary for this instance.
 
     Runs exactly two queries (ExampleProgress, ActivityDay) regardless of
-    how many categories or examples exist -- callers such as the
-    leaderboard and instructor view call this once per user, so this must
-    stay flat rather than growing with category count.
+    how many categories or examples exist.
     """
-    progress_rows = ExampleProgress.query.filter_by(user_id=user_id).all()
+    progress_rows = ExampleProgress.query.all()
     completed_by_id = {
         p.example_id: p for p in progress_rows if p.completed_at is not None
     }
@@ -28,9 +26,7 @@ def compute_user_stats(user_id):
                 for example_id in category_example_ids
             )
 
-    activity_dates = {
-        row.date for row in ActivityDay.query.filter_by(user_id=user_id).all()
-    }
+    activity_dates = {row.date for row in ActivityDay.query.all()}
     streak_days = _compute_streak(activity_dates)
     last_active = max(activity_dates) if activity_dates else None
 

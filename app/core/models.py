@@ -42,39 +42,29 @@ class ExampleProgress(db.Model):
     __tablename__ = "example_progress"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    example_id = db.Column(db.String(80), nullable=False)
+    example_id = db.Column(db.String(80), nullable=False, unique=True)
     completed_at = db.Column(db.DateTime, nullable=True)
     hints_used = db.Column(db.Integer, nullable=False, default=0)
     points_awarded = db.Column(db.Integer, nullable=True)
-
-    __table_args__ = (
-        db.UniqueConstraint("user_id", "example_id", name="uq_progress_user_example"),
-    )
 
 
 class ActivityDay(db.Model):
     __tablename__ = "activity_days"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    date = db.Column(db.Date, nullable=False)
-
-    __table_args__ = (
-        db.UniqueConstraint("user_id", "date", name="uq_activity_user_date"),
-    )
+    date = db.Column(db.Date, nullable=False, unique=True)
 
 
-def record_activity(user_id):
-    """Idempotently mark that `user_id` practiced today (UTC).
+def record_activity():
+    """Idempotently mark that today (UTC) had activity on this instance.
 
     Adds to the session but does not commit -- callers already commit once
     at the end of their own request handler.
     """
     today = datetime.utcnow().date()
-    already_recorded = ActivityDay.query.filter_by(user_id=user_id, date=today).first()
+    already_recorded = ActivityDay.query.filter_by(date=today).first()
     if already_recorded is None:
-        db.session.add(ActivityDay(user_id=user_id, date=today))
+        db.session.add(ActivityDay(date=today))
 
 
 def compute_points(example, hints_used):

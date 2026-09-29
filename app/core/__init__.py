@@ -23,13 +23,7 @@ def register_core(app):
             (e for c in CATEGORIES for e in c.examples if e.endpoint == request.endpoint),
             None,
         )
-        viewer = get_current_user()
-        if viewer is None:
-            progress_rows = {}
-        else:
-            progress_rows = {
-                p.example_id: p for p in ExampleProgress.query.filter_by(user_id=viewer.id).all()
-            }
+        progress_rows = {p.example_id: p for p in ExampleProgress.query.all()}
         completed_example_ids = {
             example_id
             for example_id, p in progress_rows.items()
@@ -51,7 +45,7 @@ def register_core(app):
         return dict(
             settings=Settings.get(),
             categories=sorted(CATEGORIES, key=lambda c: c.short_id),
-            current_user=viewer,
+            current_user=get_current_user(),
             active_category=active_category,
             registered_endpoints=set(current_app.view_functions.keys()),
             current_example=current_example,
