@@ -8,6 +8,7 @@ def test_plugin_marketplace_rce_demo_page_renders(app, client):
 
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a08/plugin-marketplace-rce-demo")
     assert response.status_code == 200

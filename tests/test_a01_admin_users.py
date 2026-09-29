@@ -45,6 +45,7 @@ def test_admin_users_shows_detect_content(app, client, login):
 
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a01/admin/users")
     assert response.status_code == 200

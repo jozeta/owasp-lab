@@ -9,6 +9,7 @@ def test_session_fixation_demo_page_renders(app, client):
 
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a07/session-fixation-demo")
     assert response.status_code == 200

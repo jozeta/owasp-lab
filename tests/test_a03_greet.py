@@ -48,6 +48,7 @@ def test_greet_shows_detect_content(app, client):
 
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a03/greet")
     assert response.status_code == 200

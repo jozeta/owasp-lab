@@ -70,6 +70,7 @@ def test_encrypted_notes_shows_detect_content(app, client):
 
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a02/encrypted-notes")
     assert response.status_code == 200

@@ -47,6 +47,7 @@ def test_email_preview_static_teaching_text_shows_literal_braces_not_evaluated(a
 
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a03/email-preview")
     assert response.status_code == 200

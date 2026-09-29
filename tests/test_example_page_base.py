@@ -37,6 +37,7 @@ def test_example_page_shows_detect_with_exploit_instructions_on(app, client, log
         settings = Settings.get()
         settings.show_explanations = True
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
 
     response = client.get("/a01/profile/1")

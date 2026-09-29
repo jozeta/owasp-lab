@@ -68,6 +68,7 @@ def test_idor_shows_detect_content(app, client, login):
     with app.app_context():
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a01/profile/1")
     assert response.status_code == 200

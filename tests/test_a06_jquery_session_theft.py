@@ -22,6 +22,7 @@ def test_account_preview_shows_the_python_collector_command(app, client):
 
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a06/account-preview")
     body = response.data.decode()

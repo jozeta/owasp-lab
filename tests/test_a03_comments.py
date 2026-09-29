@@ -62,6 +62,7 @@ def test_comments_shows_detect_content(app, client):
 
         settings = Settings.get()
         settings.show_exploit_instructions = True
+        settings.scoring_enabled = False
         db.session.commit()
     response = client.get("/a03/comments")
     assert response.status_code == 200
