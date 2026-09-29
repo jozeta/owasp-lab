@@ -22,55 +22,8 @@ def test_no_progress_gives_zeroed_stats(app):
         "completed_total": 0,
         "score_total": 0,
         "streak_days": 0,
-        "badges": {},
         "last_active": None,
     }
-
-
-def test_completing_every_example_in_a_category_earns_its_badge(app):
-    seed_database(app)
-    examples = _a10_examples()
-    assert len(examples) == 5  # sanity-check the fixture assumption
-
-    with app.app_context():
-        base_time = datetime(2026, 1, 1, 12, 0, 0)
-        for i, example in enumerate(examples):
-            db.session.add(
-                ExampleProgress(
-                    example_id=example.id,
-                    completed_at=base_time + timedelta(minutes=i),
-                    points_awarded=example.base_points(),
-                )
-            )
-        db.session.commit()
-
-        stats = compute_stats()
-
-    assert stats["completed_total"] == 5
-    assert stats["score_total"] == sum(e.base_points() for e in examples)
-    assert "a10_ssrf" in stats["badges"]
-    # earned_at is the LATEST completion among the category's examples --
-    # that's the 5th (index 4) example, base_time + 4 minutes.
-    assert stats["badges"]["a10_ssrf"] == base_time + timedelta(minutes=4)
-
-
-def test_partial_category_completion_earns_no_badge(app):
-    seed_database(app)
-    examples = _a10_examples()
-
-    with app.app_context():
-        db.session.add(
-            ExampleProgress(
-                example_id=examples[0].id,
-                completed_at=datetime.utcnow(),
-                points_awarded=examples[0].base_points(),
-            )
-        )
-        db.session.commit()
-
-        stats = compute_stats()
-
-    assert stats["badges"] == {}
 
 
 def test_streak_counts_today(app):

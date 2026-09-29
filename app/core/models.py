@@ -9,7 +9,7 @@ class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     show_explanations = db.Column(db.Boolean, nullable=False, default=True)
     show_exploit_instructions = db.Column(db.Boolean, nullable=False, default=False)
-    scoring_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    scoring_enabled = db.Column(db.Boolean, nullable=False, default=True)
 
     @classmethod
     def get(cls):
@@ -18,7 +18,7 @@ class Settings(db.Model):
             settings = cls(
                 show_explanations=True,
                 show_exploit_instructions=False,
-                scoring_enabled=False,
+                scoring_enabled=True,
             )
             db.session.add(settings)
             db.session.commit()
