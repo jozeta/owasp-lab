@@ -41,7 +41,7 @@ def test_lab_css_defines_fjord_tokens_for_both_themes():
     assert '[data-bs-theme="dark"] {' in css
     assert "--bs-body-bg: #f4f6f7;" in css
     assert "--bs-body-bg: #10151c;" in css
-    assert "--fjord-accent: #1f8f84;" in css
+    assert "--fjord-accent: #19756c;" in css
     assert "--fjord-accent: #6dd3c9;" in css
 
 
