@@ -190,7 +190,7 @@ def test_home_page_shows_score_totals_when_scoring_enabled(app, client):
 
     response = client.get("/")
     body = response.data.decode()
-    assert "Score: 10 / 2270 points" in body
+    assert "10<small>/2270</small>" in body
 
 
 def test_nav_bar_shows_running_score_on_any_page_when_scoring_enabled(app, client):

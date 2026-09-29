@@ -9,10 +9,10 @@ def test_home_page_category_cards_have_icons(app, client):
         assert f"#icon-a{n:02d}" in body
 
 
-def test_home_page_category_cards_have_fjord_card_class(app, client):
+def test_home_page_category_cards_have_dash_card_class(app, client):
     seed_database(app)
     response = client.get("/")
-    assert b"fjord-card" in response.data
+    assert b"dash-card" in response.data
 
 
 def test_home_page_progress_bars_animate_on_load(app, client):

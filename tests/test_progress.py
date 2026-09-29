@@ -170,7 +170,8 @@ def test_home_page_shows_zero_percent_when_nothing_completed(app, client):
     examples = [e for category in CATEGORIES for e in category.examples]
     response = client.get("/")
     body = response.data.decode()
-    assert f"0 of {len(examples)} completed — 0%" in body
+    assert f"0<small>/{len(examples)}</small>" in body
+    assert "0<small>%</small>" in body
 
 
 def test_home_page_shows_correct_overall_count(app, client):
@@ -185,7 +186,8 @@ def test_home_page_shows_correct_overall_count(app, client):
     response = client.get("/")
     body = response.data.decode()
     expected_percent = round(2 / len(examples) * 100)
-    assert f"2 of {len(examples)} completed — {expected_percent}%" in body
+    assert f"2<small>/{len(examples)}</small>" in body
+    assert f"{expected_percent}<small>%</small>" in body
 
 
 def test_home_page_shows_correct_per_category_count(app, client):
@@ -198,8 +200,8 @@ def test_home_page_shows_correct_per_category_count(app, client):
 
     response = client.get("/")
     body = response.data.decode()
-    assert f"1 of {len(a03.examples)} completed" in body
-    assert "A03: Injection" in body
+    assert f"1 / {len(a03.examples)}" in body
+    assert "Injection" in body
 
 
 def test_stats_page_and_dropdown_link_are_removed(client):

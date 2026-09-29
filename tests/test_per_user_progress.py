@@ -50,7 +50,8 @@ def test_two_users_progress_on_the_same_example_is_isolated(app, client):
     # Same text format as test_progress.py's
     # test_home_page_shows_zero_percent_when_nothing_completed: bob's own
     # progress is untouched by alice's completion above.
-    assert f"0 of {len(examples)} completed — 0%" in body
+    assert f"0<small>/{len(examples)}</small>" in body
+    assert "0<small>%</small>" in body
 
     with app.app_context():
         alice_id = User.query.filter_by(username="alice").first().id

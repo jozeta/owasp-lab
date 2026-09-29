@@ -64,7 +64,7 @@
         <ul class="navbar-nav me-auto">
           {% for category in categories %}
           <li class="nav-item">
-            <a class="nav-link {% if active_category and active_category.id == category.id %}active{% endif %}"
+            <a class="nav-link navcat-link {% if active_category and active_category.id == category.id %}active{% endif %}"
                href="{{ url_for(category.overview_endpoint) }}"
                data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ category.blurb }}">{{ category.short_id }}</a>
           </li>

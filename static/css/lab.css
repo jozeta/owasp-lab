@@ -263,3 +263,156 @@ code, pre, kbd, samp, .navuser {
   background-color: var(--bs-tertiary-bg) !important;
   border-color: var(--bs-border-color) !important;
 }
+
+/* ===================================================================
+   Dashboard: stat strip + dense category cards
+   =================================================================== */
+
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--bs-border-color);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.stat-strip.stat-strip-2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.stat {
+  background: var(--bs-card-bg);
+  padding: 16px 20px;
+}
+
+.stat .stat-num {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat .stat-num small {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bs-secondary-color);
+  margin-left: 3px;
+}
+
+.stat .stat-lbl {
+  font-size: 12px;
+  color: var(--bs-secondary-color);
+  margin-top: 4px;
+}
+
+.stat.stat-accent .stat-num {
+  color: var(--fjord-accent);
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.dash-card {
+  background: var(--bs-card-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  padding: 15px 15px 14px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.dash-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--fjord-accent);
+}
+
+.dash-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dash-card-code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--bs-secondary-color);
+  letter-spacing: 0.04em;
+}
+
+.dash-card-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin: 0 0 11px;
+  line-height: 1.3;
+}
+
+.dash-bar-track {
+  height: 4px;
+  border-radius: 99px;
+  background: var(--bs-border-color);
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+
+.dash-bar-fill {
+  height: 100%;
+  background: var(--fjord-accent);
+  border-radius: 99px;
+}
+
+.dash-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--bs-secondary-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-card-meta .dash-card-pts {
+  color: var(--fjord-accent);
+}
+
+@media (max-width: 700px) {
+  .stat-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===================================================================
+   Nav: quiet category links (mono, letter-spaced, matching the
+   dashboard's own calm aesthetic instead of a bold always-on tab bar)
+   =================================================================== */
+
+.navcat-link {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--bs-secondary-color) !important;
+  padding: 0.4rem 0.55rem !important;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.navcat-link:hover {
+  color: var(--bs-body-color) !important;
+  background: var(--fjord-accent-dim);
+}
+
+.navcat-link.active {
+  color: var(--bs-body-color) !important;
+  font-weight: 600;
+}
