@@ -110,7 +110,7 @@ Visit **Settings** in the top nav to:
 - **Reset the lab** to its clean seeded state (useful between training sessions or
   between developers sharing the same instance).
 
-All toggles are global and stored in the database — they affect every example page
+The scoring system is enabled by default. All toggles are global and stored in the database — they affect every example page
 immediately for every visitor. Hiding the teaching text never disables the underlying
 vulnerability; it only conceals the walkthrough, so you can attempt exploitation blind.
 
@@ -145,7 +145,10 @@ outright (not just silently miss a feature) until you run the
 ## More pages
 
 - **Home** (`/`) — your own progress across every example, overall and per category,
-  plus your running score when the scoring system is enabled. Progress, score,
+  plus your running score when the scoring system is enabled. The home page also
+  displays your earned achievements: 24 badges spanning category mastery (all examples
+  in a category), difficulty sweeps (all Easy/Medium/Hard tiers), hint-based challenges,
+  daily streaks, and a few just-for-fun ones, shown dimmed until earned. Progress, score,
   and badges are shared across the whole instance regardless of which seeded
   identity (if any) is currently active. The top nav's "Switch user" link (or
   any gated example page) lets you act as a specific seeded account so that
