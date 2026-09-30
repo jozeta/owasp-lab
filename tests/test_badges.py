@@ -1,6 +1,12 @@
 from datetime import datetime, timedelta
 
-from app.core.badges import BADGE_CATALOG, compute_badges
+from app.core.badges import (
+    BADGE_CATALOG,
+    CODE_EXECUTION_EXAMPLE_IDS,
+    REVERSE_SHELL_EXAMPLE_IDS,
+    SQLI_EXAMPLE_IDS,
+    compute_badges,
+)
 from app.core.models import ActivityDay, ExampleProgress
 from app.core.nav import CATEGORIES
 from app.core.seed import seed_database
@@ -193,7 +199,102 @@ def test_the_answer_badge(app):
     assert badges["the-answer"] is True
 
 
-def test_badge_catalog_has_24_entries_with_unique_ids():
+def test_badge_catalog_has_32_entries_with_unique_ids():
     ids = [b.id for b in BADGE_CATALOG]
-    assert len(ids) == 24
-    assert len(set(ids)) == 24
+    assert len(ids) == 32
+    assert len(set(ids)) == 32
+
+
+def test_milestone_badges_earned_at_each_threshold(app):
+    seed_database(app)
+    examples = [e for c in CATEGORIES for e in c.examples]
+    assert len(examples) >= 100
+
+    with app.app_context():
+        for example in examples[:75]:
+            _complete(example.id)
+        db.session.commit()
+
+        badges = compute_badges()
+
+    assert badges["foothold-established"] is True
+    assert badges["privilege-escalation"] is True
+    assert badges["lateral-movement"] is True
+    assert badges["domain-admin"] is True
+    assert badges["total-pwnage"] is False
+
+
+def test_milestone_badge_not_earned_below_threshold(app):
+    seed_database(app)
+    examples = [e for c in CATEGORIES for e in c.examples][:9]
+
+    with app.app_context():
+        for example in examples:
+            _complete(example.id)
+        db.session.commit()
+
+        badges = compute_badges()
+
+    assert badges["foothold-established"] is False
+
+
+def test_sqli_example_ids_exist_in_the_real_nav(app):
+    with app.app_context():
+        all_ids = {e.id for c in CATEGORIES for e in c.examples}
+
+    assert SQLI_EXAMPLE_IDS.issubset(all_ids)
+    assert CODE_EXECUTION_EXAMPLE_IDS.issubset(all_ids)
+    assert REVERSE_SHELL_EXAMPLE_IDS.issubset(all_ids)
+    assert REVERSE_SHELL_EXAMPLE_IDS.issubset(CODE_EXECUTION_EXAMPLE_IDS)
+
+
+def test_bobby_tables_badge_requires_every_sqli_example(app):
+    seed_database(app)
+
+    with app.app_context():
+        sqli_ids = sorted(SQLI_EXAMPLE_IDS)
+        for example_id in sqli_ids[:-1]:
+            _complete(example_id)
+        db.session.commit()
+        assert compute_badges()["bobby-tables"] is False
+
+        _complete(sqli_ids[-1])
+        db.session.commit()
+
+        badges = compute_badges()
+
+    assert badges["bobby-tables"] is True
+
+
+def test_code_red_badge_earned_by_any_single_rce_example(app):
+    seed_database(app)
+
+    with app.app_context():
+        assert compute_badges()["code-red"] is False
+
+        _complete("debug-console-rce")
+        db.session.commit()
+
+        badges = compute_badges()
+
+    assert badges["code-red"] is True
+
+
+def test_popped_a_shell_badge_earned_by_command_injection_or_sqli_to_rce(app):
+    seed_database(app)
+
+    with app.app_context():
+        assert compute_badges()["popped-a-shell"] is False
+
+        # A code-execution example NOT in the reverse-shell set should not
+        # trip this badge, even though it earns code-red.
+        _complete("debug-console-rce")
+        db.session.commit()
+        assert compute_badges()["popped-a-shell"] is False
+
+        _complete("command-injection")
+        db.session.commit()
+
+        badges = compute_badges()
+
+    assert badges["popped-a-shell"] is True

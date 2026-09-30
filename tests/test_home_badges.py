@@ -31,8 +31,15 @@ def test_earning_a_category_badge_marks_its_chip_earned(app, client):
 
     response = client.get("/")
     body = response.data.decode()
-    assert "Request Forger" in body
-    request_forger_index = body.index("Request Forger")
+    assert ">Request Forger<" in body
+    # Anchor on the closing tag boundary, not a bare substring search: the
+    # A10 category card's title "Server-Side Request Forgery" contains
+    # "Request Forger" as a substring (Forge-ry), so a plain body.index()
+    # for "Request Forger" can match inside that card's title instead of
+    # the badge chip's name once the dash-grid renders before the badge
+    # case. ">Request Forger<" only matches the badge-chip-name span's
+    # exact text, never "...Request Forgery</div>".
+    request_forger_index = body.index(">Request Forger<")
     # Note: search for the enclosing chip *div*'s opening tag specifically
     # (trailing space after "badge-chip"), not just the substring
     # 'class="badge-chip' -- that substring also matches the nested

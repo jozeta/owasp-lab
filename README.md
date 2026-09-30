@@ -146,9 +146,11 @@ outright (not just silently miss a feature) until you run the
 
 - **Home** (`/`) — your own progress across every example, overall and per category,
   plus your running score when the scoring system is enabled. The home page also
-  displays your earned achievements: 24 badges spanning category mastery (all examples
+  displays your earned achievements: 32 badges spanning category mastery (all examples
   in a category), difficulty sweeps (all Easy/Medium/Hard tiers), hint-based challenges,
-  daily streaks, and a few just-for-fun ones, shown dimmed until earned. Progress, score,
+  daily streaks, progress milestones (10/25/50/75/100 examples completed), SQL-injection
+  mastery, first code execution, and a few just-for-fun ones, shown dimmed until earned.
+  Hover a badge to see its full unlock condition. Progress, score,
   and badges are shared across the whole instance regardless of which seeded
   identity (if any) is currently active. The top nav's "Switch user" link (or
   any gated example page) lets you act as a specific seeded account so that

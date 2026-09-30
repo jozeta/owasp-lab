@@ -25,26 +25,12 @@
   </div>
 </div>
 
-<div class="badge-case-grid">
-  {% for badge in visible_badges %}
-  <div class="badge-chip {% if earned_badges[badge.id] %}earned{% else %}locked{% endif %}" title="{{ badge.description }}">
-    <span class="icon-box" style="width: 40px; height: 40px; border-radius: 10px;">
-      <svg class="category-icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24">
-        <use href="{{ url_for('static', filename='icons/badge-icons.svg') }}#{{ badge.icon }}"></use>
-      </svg>
-    </span>
-    <span class="badge-chip-name">{{ badge.name }}</span>
-    <span class="badge-chip-desc">{{ badge.description }}</span>
-  </div>
-  {% endfor %}
-</div>
-
 <div class="dash-grid">
   {% for cs in category_stats %}
   <a href="{{ url_for(cs.category.overview_endpoint) }}" class="dash-card">
     <div class="dash-card-top">
-      <span class="icon-box" style="width: 32px; height: 32px; border-radius: 8px;">
-        <svg class="category-icon" style="width: 17px; height: 17px;" viewBox="0 0 24 24">
+      <span class="icon-box" style="width: 36px; height: 36px; border-radius: 9px;">
+        <svg class="category-icon" style="width: 19px; height: 19px;" viewBox="0 0 24 24">
           <use href="{{ url_for('static', filename='icons/category-icons.svg') }}#icon-{{ cs.category.id[:3] }}"></use>
         </svg>
       </span>
@@ -57,6 +43,20 @@
       {% if settings.scoring_enabled %}<span class="dash-card-pts">{{ cs.earned_points }} pts</span>{% endif %}
     </div>
   </a>
+  {% endfor %}
+</div>
+
+<div class="badge-case-grid">
+  {% for badge in visible_badges %}
+  <div class="badge-chip {% if earned_badges[badge.id] %}earned{% else %}locked{% endif %}">
+    <span class="icon-box" style="width: 44px; height: 44px; border-radius: 11px;">
+      <svg class="category-icon" style="width: 22px; height: 22px;" viewBox="0 0 24 24">
+        <use href="{{ url_for('static', filename='icons/badge-icons.svg') }}#{{ badge.icon }}"></use>
+      </svg>
+    </span>
+    <span class="badge-chip-name">{{ badge.name }}</span>
+    <span class="badge-chip-tooltip">{{ badge.description }}</span>
+  </div>
   {% endfor %}
 </div>
 {% endblock %}
