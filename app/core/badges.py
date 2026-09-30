@@ -5,8 +5,6 @@ from app.core.models import ActivityDay, ExampleProgress
 from app.core.nav import CATEGORIES
 from app.core.stats import compute_streak
 
-TOTAL_EXAMPLES = sum(len(c.examples) for c in CATEGORIES)
-
 
 @dataclass
 class Badge:
@@ -111,7 +109,7 @@ BADGE_CATALOG = [
     Badge("script-kiddie", "Script Kiddie", "badge-script-kiddie", "Complete every Easy example, in any category.", _difficulty_sweep("Easy")),
     Badge("grey-hat", "Grey Hat", "badge-grey-hat", "Complete every Medium example, in any category.", _difficulty_sweep("Medium")),
     Badge("1337-haxor", "1337 Haxor", "badge-1337-haxor", "Complete every Hard example, in any category.", _difficulty_sweep("Hard")),
-    Badge("red-team-legend", "Red Team Legend", "badge-red-team-legend", f"Complete all {TOTAL_EXAMPLES} examples.", _grand_completion),
+    Badge("red-team-legend", "Red Team Legend", "badge-red-team-legend", "Complete every example in every category.", _grand_completion),
     Badge("purist", "Purist", "badge-purist", "Complete a whole category without revealing a single hint.", _purist),
     Badge("tell-me-everything", "Tell Me Everything", "badge-tell-me-everything", "Reveal every hint on one example.", _tell_me_everything),
     Badge("google-is-my-copilot", "Google Is My Copilot", "badge-google-is-my-copilot", "Reveal 25 hints, lab-wide.", _google_is_my_copilot),
