@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+# Intentionally no pip/docker entries: this lab's vulnerable dependencies are part of the exercises
+# (e.g. A06 Vulnerable Components). Updating them would break the lab.
