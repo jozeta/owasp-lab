@@ -12,3 +12,13 @@ instance/
 .idea/
 .vscode/
 *.log
+
+# --- Baseline: macOS, Claude Code and secrets ---
+._*
+.remember/
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
