@@ -6,6 +6,7 @@ The project has no tagged releases yet, so changes are grouped by date. Entries 
 
 ## 2026-11-02
 
+- Security: upgrade Flask 3.1.3, python-dotenv 1.2.4 and pytest 9.2.0 (3 Dependabot alerts). None of them is part of an exercise; all exploit tests still pass.
 - Add CI workflow, Dependabot config, security policy
 
 ## 2026-11-01
