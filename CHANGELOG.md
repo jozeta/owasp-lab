@@ -4,6 +4,8 @@ All notable changes to owasp-lab are listed here, newest first.
 
 The project has no tagged releases yet, so changes are grouped by date. Entries before November 2026 were reconstructed from the commit history.
 
+## Unreleased
+
 ## 2026-11-02
 
 - Security: upgrade Flask 3.1.3, python-dotenv 1.2.4 and pytest 9.2.0 (3 Dependabot alerts). None of them is part of an exercise; all exploit tests still pass.
