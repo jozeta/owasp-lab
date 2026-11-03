@@ -123,13 +123,17 @@ def greet():
 @a03_bp.route("/check-username")
 def check_username():
     username = request.args.get("username", "")
-    exists = None
+    checked = False
     if username:
-        # VULNERABLE: raw string-concatenated SQL, no parameterization
+        # VULNERABLE: raw string-concatenated SQL, no parameterization.
+        # The response text below is intentionally identical regardless
+        # of the result -- this example's lesson is that even with NO
+        # visible signal at all, a conditional timing side-channel
+        # (see this example's hints) can still extract data.
         query = f"SELECT COUNT(*) FROM injection_accounts WHERE username = '{username}'"
-        count = db.session.execute(text(query)).scalar()
-        exists = bool(count)
-    return render_template("a03_injection/check_username.html", username=username, exists=exists)
+        db.session.execute(text(query)).scalar()
+        checked = True
+    return render_template("a03_injection/check_username.html", username=username, checked=checked)
 
 
 @a03_bp.route("/host-lookup", methods=["GET", "POST"])

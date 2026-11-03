@@ -94,10 +94,7 @@ count = db.session.execute(query, {"username": username}).scalar()
     <button type="submit" class="btn btn-primary">Check</button>
   </div>
 </form>
-{% if exists is not none %}
-<p>
-  {% if exists %}That username is <strong>already taken</strong>.
-  {% else %}That username is <strong>available</strong>.{% endif %}
-</p>
+{% if checked %}
+<p>Checked.</p>
 {% endif %}
 {% endblock %}
