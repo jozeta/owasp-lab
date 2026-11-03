@@ -1,0 +1,20 @@
+# Known fake keys for claude-audit (tools/audit-all.sh): one <commit>:<path> per reviewed finding.
+# Intentionally vulnerable lab: the lab's seeded fake secrets and exercise fixtures.
+# Reviewed 2026-11-03. Exact entries only, so any new finding is still reported.
+001e324:tests/test_a03_search.py
+0085f98:app/categories/a06_vulnerable_components/templates/a06_vulnerable_components/account_preview.html
+0085f98:tests/test_a06_jquery_session_theft.py
+57b3782:docs/superpowers/specs/2026-09-22-owasp-lab-a10-ssrf-design.md
+5d2d6d9:docs/superpowers/plans/2026-09-21-owasp-lab-a05-security-misconfiguration.md
+7bce6f4:docs/superpowers/plans/2026-09-20-owasp-lab-a03-sqli-deepening.md
+7fcd199:docs/superpowers/plans/2026-09-22-owasp-lab-a10-ssrf.md
+90a5ad8:app/categories/a03_injection/seed.py
+b174c31:tests/test_a03_product_lookup.py
+b2135b4:docs/superpowers/plans/2026-09-18-owasp-lab-a03-injection.md
+b5a9153:docs/superpowers/specs/2026-09-21-owasp-lab-a06-vulnerable-components-design.md
+da49e04:docs/superpowers/plans/2026-09-22-owasp-lab-a03-sqli-expansion.md
+e225bd9:app/categories/a10_ssrf/routes.py
+e225bd9:tests/test_a10_webhook_internal_metadata.py
+e804155:app/categories/a05_security_misconfiguration/backups/db_backup_2024-01-15.sql.bak
+e804155:tests/test_a05_backup_exposure.py
+fd2c536:docs/superpowers/plans/2026-09-21-owasp-lab-a06-vulnerable-components.md
