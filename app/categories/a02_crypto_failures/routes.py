@@ -98,30 +98,28 @@ def legacy_login():
 
 @a02_bp.route("/reset-password-referrer", methods=["GET", "POST"])
 def reset_password_referrer():
-    # A demo token for the seeded "admin" account is used when none is
-    # supplied, so this page is directly viewable without first walking
-    # through a real "request a reset" step.
-    token = request.args.get("token") or generate_reset_token("admin")
+    # VULNERABLE: the reset token lives in this page's own URL (query
+    # string), and nothing anywhere in this app sets a Referrer-Policy
+    # header -- any outbound link on this page (see the "Security Tips"
+    # link below) carries the full current URL, token included, to
+    # whatever it links to.
+    token = request.args.get("token")
     error = None
     success = False
     if request.method == "POST":
         new_password = request.form.get("new_password", "")
         matched_credential = None
-        for credential in LegacyCredential.query.all():
-            if generate_reset_token(credential.username) == token:
-                matched_credential = credential
-                break
+        if token:
+            for credential in LegacyCredential.query.all():
+                if generate_reset_token(credential.username) == token:
+                    matched_credential = credential
+                    break
         if matched_credential is None:
             error = "This reset token is invalid or expired."
         else:
             matched_credential.weak_password_hash = hashlib.md5(new_password.encode()).hexdigest()
             db.session.commit()
             success = True
-    # VULNERABLE: the reset token lives in this page's own URL (query
-    # string), and nothing anywhere in this app sets a Referrer-Policy
-    # header -- any outbound link on this page (see the "Security Tips"
-    # link below) carries the full current URL, token included, to
-    # whatever it links to.
     return render_template(
         "a02_crypto_failures/reset_password_referrer.html", token=token, error=error, success=success
     )
