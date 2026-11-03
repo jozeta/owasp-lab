@@ -31,6 +31,17 @@ def test_bio_preview_blacklist_bypass_achieves_real_command_execution(client):
     assert b"uid=" in response.data
 
 
+def test_bio_preview_blacklist_blocks_subclasses_traversal(client):
+    payload = (
+        "{{ ''.__class__.__mro__[1].__subclasses__()[193]"
+        "('id',shell=True,stdout=-1).communicate() }}"
+    )
+    response = client.post("/a03/bio-preview", data={"bio_template": payload})
+    assert response.status_code == 200
+    assert b"uid=" not in response.data
+    assert b"Blocked" in response.data
+
+
 def test_bio_preview_static_teaching_text_shows_literal_braces_not_evaluated(app, client):
     with app.app_context():
         from app.core.models import Settings

@@ -292,7 +292,20 @@ def email_preview():
     )
 
 
-SSTI_BLOCKED_KEYWORDS = ["os", "import", "exec", "eval", "popen", "subprocess", "system"]
+SSTI_BLOCKED_KEYWORDS = [
+    "os",
+    "import",
+    "exec",
+    "eval",
+    "popen",
+    "subprocess",
+    "system",
+    "__class__",
+    "__mro__",
+    "__subclasses__",
+    "__base__",
+    "__bases__",
+]
 
 
 @a03_bp.route("/bio-preview", methods=["GET", "POST"])
