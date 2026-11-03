@@ -1,5 +1,6 @@
 import os
 import secrets
+import urllib.parse
 
 from flask import abort, flash, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
@@ -210,11 +211,13 @@ def continue_redirect_filtered():
     next_url = request.args.get("next")
     if next_url is None:
         return render_template("a01_access_control/continue_redirect_filtered.html")
-    # VULNERABLE: only checks whether the trusted hostname appears
-    # ANYWHERE in the string, never that it's genuinely the URL's host --
-    # a URL whose real host is entirely different can still contain this
-    # substring, e.g. as part of a longer, attacker-controlled subdomain.
-    if "trusted-partner.example" in next_url:
+    # VULNERABLE: checks whether the trusted hostname is a PREFIX of the
+    # URL's actual host, never that it's genuinely the URL's host (or a
+    # real subdomain of it) -- an attacker who registers
+    # trusted-partner.example.evil.example.com still passes this check,
+    # the classic "substring/prefix allowlist" open-redirect mistake.
+    host = (urllib.parse.urlparse(next_url).hostname or "").lower()
+    if host.startswith("trusted-partner.example"):
         return redirect(next_url)
     return "Invalid redirect target", 400
 
