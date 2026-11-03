@@ -412,7 +412,7 @@ def filter_level_2(payload: str) -> str:
     # reconstruct a real <script> tag from the leftover fragments. Other
     # dangerous tags, inline event-handler attributes, and the
     # javascript: URI scheme are rejected outright, so the reconstruction
-    # trick is the only way through.
+    # trick remains exploitable.
     if re.search(r"<\s*/?\s*(iframe|svg|img|body|object|embed)\b", payload, flags=re.IGNORECASE):
         return "[blocked: dangerous tag detected]"
     if re.search(r"\bon\w+\s*=", payload, flags=re.IGNORECASE):
