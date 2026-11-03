@@ -97,6 +97,23 @@ def test_filter_challenge_level2_blocks_trivial_non_script_bypass(client):
     assert payload.encode() not in response.data
 
 
+def test_filter_challenge_level2_blocks_javascript_uri_scheme(client):
+    # A "javascript:" href doesn't contain any of the blocked tags or an
+    # on\w+= event-handler attribute, and it needs no <script> tag at all
+    # -- so it must be its own, explicit rejection rather than slipping
+    # through as a second, unintended way to defeat Level 2.
+    payload = '<a href="javascript:alert(1)">click me</a>'
+    response = client.get(
+        "/a03/filter-challenge", query_string={"level": "2", "payload": payload}
+    )
+    assert response.status_code == 200
+    assert (
+        b'<div id="output" class="border rounded p-2">'
+        b"[blocked: javascript URI scheme detected]</div>"
+    ) in response.data
+    assert payload.encode() not in response.data
+
+
 def test_filter_challenge_level3_legitimate_input_passes_through(client):
     response = client.get(
         "/a03/filter-challenge", query_string={"level": "3", "payload": "hello"}
