@@ -106,8 +106,9 @@ def import_avatar():
     if request.method == "POST":
         avatar_url = request.form.get("avatar_url", "")
         hostname = urllib.parse.urlparse(avatar_url).hostname
-        # VULNERABLE: blocks the exact strings "127.0.0.1"/"localhost" --
-        # any other representation of the same address sails right
+        # VULNERABLE: blocks a small, incomplete list of known loopback
+        # spellings (BLOCKED_HOSTS above) via exact string matching --
+        # any representation not spelled out verbatim sails right
         # through.
         if hostname is not None and hostname.lower() in BLOCKED_HOSTS:
             error = "That host is not allowed."

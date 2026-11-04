@@ -59,7 +59,7 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a10_ssrf.import_avatar",
                 hints=[
-                    "This form blocks the literal strings '127.0.0.1' and 'localhost'. Is there more than one way to write the loopback address that doesn't contain either of those exact strings?",
+                    "This form blocks a small, incomplete list of known loopback spellings via exact string matching. Is there more than one way to write the loopback address that isn't spelled out verbatim in that list?",
                     "IP addresses can be written in several equivalent forms — decimal integer, hexadecimal, or a shortened dotted form — that all resolve to the exact same address but don't match a blocklist doing exact string comparison.",
                     "Try http://2130706433:5000/a10/internal/metadata (decimal form of 127.0.0.1) or http://0x7f000001:5000/a10/internal/metadata (hex form) or http://127.1:5000/a10/internal/metadata (short form) as the avatar URL — none of these contain the strings '127.0.0.1' or 'localhost', so the blocklist never blocks them, but they all resolve to the same loopback address.",
                 ],

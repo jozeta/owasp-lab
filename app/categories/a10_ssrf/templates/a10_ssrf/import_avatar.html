@@ -6,10 +6,10 @@
 {% block explanation %}
 <p>
   This "import your avatar from a URL" feature checks the submitted
-  URL's host against a blocklist before fetching it -- but the check
-  only recognizes the exact strings <code>127.0.0.1</code> and
-  <code>localhost</code>. Any other way of writing the same address
-  sails straight through.
+  URL's host against a blocklist before fetching it -- but the blocklist
+  only recognizes a small, incomplete list of known loopback spellings,
+  matched by exact string comparison. Any other way of writing the same
+  address sails straight through.
 </p>
 {% endblock %}
 
@@ -44,7 +44,8 @@ if hostname is not None and hostname.lower() in BLOCKED_HOSTS:
 else:
     with urllib.request.urlopen(avatar_url, timeout=5) as resp:
         result = resp.read().decode("utf-8", errors="replace")
-# BLOCKED_HOSTS = {"127.0.0.1", "localhost"} -- exact-string matching only
+# BLOCKED_HOSTS = {a small, incomplete set of known loopback spellings} --
+# exact-string matching only
 {% endblock %}
 
 {% block secure_code %}import ipaddress, socket

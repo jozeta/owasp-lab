@@ -45,8 +45,11 @@
 </p>
 {% endblock %}
 
-{% block vulnerable_code %}next_url = request.args.get("next", "/")
-if "trusted-partner.example" in next_url:
+{% block vulnerable_code %}import urllib.parse
+
+next_url = request.args.get("next", "/")
+host = (urllib.parse.urlparse(next_url).hostname or "").lower()
+if host.startswith("trusted-partner.example"):
     return redirect(next_url)
 return "Invalid redirect target", 400
 {% endblock %}
