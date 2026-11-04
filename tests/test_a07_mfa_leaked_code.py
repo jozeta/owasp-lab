@@ -43,3 +43,10 @@ def test_leaked_code_from_api_completes_mfa(app, client):
     )
     assert verify_response.status_code == 200
     assert b"dana" in verify_response.data
+
+
+def test_password_reset_shortcut_does_not_unlock_this_dashboard(app, client):
+    seed_database(app)
+    client.post("/a07/mfa-forgot-password", data={"username": "dana", "new_password": "x"})
+    response = client.get("/a07/mfa-leaked-code/dashboard", follow_redirects=True)
+    assert b"Welcome, dana" not in response.data

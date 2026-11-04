@@ -119,6 +119,7 @@ def mfa_login():
         if account_row and check_password_hash(account_row.password_hash, password):
             session_row.username = account_row.username
             session_row.mfa_verified = False
+            session_row.active_mfa_flow = "bypass"
             db.session.commit()
             return _redirect("a07_auth_failures.mfa_verify", session_row)
         error = "Invalid username or password."
@@ -144,9 +145,14 @@ def mfa_dashboard():
     session_row = get_or_create_session()
     if not session_row.username:
         return _redirect("a07_auth_failures.mfa_login", session_row)
-    # VULNERABLE: only checks that a username is set on the session --
-    # never checks session_row.mfa_verified, so step 2 (the code) can be
-    # skipped entirely and this destination reached right after step 1.
+    # VULNERABLE (mfa-bypass's own intended lesson): a session that
+    # authenticated via the plain MFA login flow reaches this dashboard
+    # with just a username, no code verification required at all. Every
+    # OTHER example sharing this dashboard already sets mfa_verified on
+    # its own real success, so this only exempts the one flow it's meant
+    # to exempt.
+    if session_row.active_mfa_flow != "bypass" and not session_row.mfa_verified:
+        return _redirect("a07_auth_failures.mfa_login", session_row)
     return _render("a07_auth_failures/mfa_dashboard.html", session_row)
 
 
@@ -211,16 +217,26 @@ def account_lookup():
     if request.method == "POST":
         query_username = request.form.get("username", "")
         normalized_query = _normalize_username(query_username)
-        # VULNERABLE: treats any two usernames that normalize to the same
-        # string as the SAME account for recovery purposes -- a Unicode
-        # lookalike character that NFKC-normalizes to an ASCII letter
-        # collides with a completely different, real ASCII-only account.
-        for account_row in A07Account.query.order_by(A07Account.id).all():
-            if _normalize_username(account_row.username) == normalized_query:
-                matched_username = account_row.username
-                session_row.username = account_row.username
-                db.session.commit()
-                break
+        accounts = A07Account.query.order_by(A07Account.id).all()
+        # The submitted string must itself be a real, already-registered
+        # username -- a random guess with no prior registration, however
+        # it's cased or accented, is not a Unicode-collision technique.
+        submitted_is_registered = any(a.username == query_username for a in accounts)
+        if submitted_is_registered:
+            for account_row in accounts:
+                # VULNERABLE: treats any two DIFFERENT usernames that
+                # normalize to the same string as the SAME account for
+                # recovery purposes -- a Unicode lookalike character
+                # that NFKC-normalizes to an ASCII letter collides with
+                # a completely different, real ASCII-only account.
+                if (
+                    account_row.username != query_username
+                    and _normalize_username(account_row.username) == normalized_query
+                ):
+                    matched_username = account_row.username
+                    session_row.username = account_row.username
+                    db.session.commit()
+                    break
         if matched_username is None:
             error = "No account found."
     return _render(
@@ -250,6 +266,7 @@ def mfa_forgot_password():
             # second factor) is never required at all after a reset,
             # silently disabling MFA protection for the account.
             session_row.mfa_verified = True
+            session_row.active_mfa_flow = "password_reset"
             db.session.commit()
             success = True
     return _render(
@@ -268,6 +285,7 @@ def mfa_leaked_login():
         if account_row and check_password_hash(account_row.password_hash, password):
             session_row.username = account_row.username
             session_row.mfa_verified = False
+            session_row.active_mfa_flow = "leaked_code"
             session_row.pending_mfa_code = f"{secrets.randbelow(1_000_000):06d}"
             db.session.commit()
             return _redirect("a07_auth_failures.mfa_leaked_verify", session_row)
@@ -307,7 +325,11 @@ def mfa_leaked_verify():
 @a07_bp.route("/mfa-leaked-code/dashboard")
 def mfa_leaked_dashboard():
     session_row = get_or_create_session()
-    if not session_row.username or not session_row.mfa_verified:
+    if (
+        not session_row.username
+        or not session_row.mfa_verified
+        or session_row.active_mfa_flow != "leaked_code"
+    ):
         return _redirect("a07_auth_failures.mfa_leaked_login", session_row)
     return _render("a07_auth_failures/mfa_leaked_dashboard.html", session_row)
 
@@ -323,6 +345,7 @@ def mfa_reusable_login():
         if account_row and check_password_hash(account_row.password_hash, password):
             session_row.username = account_row.username
             session_row.mfa_verified = False
+            session_row.active_mfa_flow = "reusable_code"
             session_row.pending_mfa_code = f"{secrets.randbelow(1_000_000):06d}"
             db.session.commit()
             return _redirect("a07_auth_failures.mfa_reusable_verify", session_row)
@@ -356,7 +379,11 @@ def mfa_reusable_verify():
 @a07_bp.route("/mfa-reusable-code/dashboard")
 def mfa_reusable_dashboard():
     session_row = get_or_create_session()
-    if not session_row.username or not session_row.mfa_verified:
+    if (
+        not session_row.username
+        or not session_row.mfa_verified
+        or session_row.active_mfa_flow != "reusable_code"
+    ):
         return _redirect("a07_auth_failures.mfa_reusable_login", session_row)
     return _render("a07_auth_failures/mfa_reusable_dashboard.html", session_row)
 
@@ -372,6 +399,7 @@ def mfa_login_bruteforce():
         if account_row and check_password_hash(account_row.password_hash, password):
             session_row.username = account_row.username
             session_row.mfa_verified = False
+            session_row.active_mfa_flow = "bruteforce"
             # A fresh 6-digit code per login, exactly like a real
             # deployment -- the flaw isn't in code generation, it's that
             # nothing throttles how many guesses the verify step accepts.
@@ -411,6 +439,7 @@ def mfa_login_unbound():
         if account_row and check_password_hash(account_row.password_hash, password):
             session_row.username = account_row.username
             session_row.mfa_verified = False
+            session_row.active_mfa_flow = "unbound"
             db.session.commit()
             # VULNERABLE: the pending code is stored in a plain global
             # keyed only by username -- not scoped to this session_row or
@@ -464,6 +493,7 @@ def mfa_login_magic_value():
         if account_row and check_password_hash(account_row.password_hash, password):
             session_row.username = account_row.username
             session_row.mfa_verified = False
+            session_row.active_mfa_flow = "magic_value"
             session_row.pending_mfa_code = f"{secrets.randbelow(1000000):06d}"
             db.session.commit()
             return _redirect("a07_auth_failures.mfa_verify_magic_value", session_row)

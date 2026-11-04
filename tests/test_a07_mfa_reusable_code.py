@@ -45,3 +45,10 @@ def test_same_code_can_be_submitted_twice(app, client):
     assert second.status_code == 200
     assert b"Incorrect code" not in second.data
     assert b"morgan" in second.data
+
+
+def test_password_reset_shortcut_does_not_unlock_this_dashboard(app, client):
+    seed_database(app)
+    client.post("/a07/mfa-forgot-password", data={"username": "dana", "new_password": "x"})
+    response = client.get("/a07/mfa-reusable-code/dashboard", follow_redirects=True)
+    assert b"Welcome, dana" not in response.data

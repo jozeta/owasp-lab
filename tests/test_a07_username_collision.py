@@ -1,6 +1,7 @@
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.categories.a07_auth_failures.models import A07Account
+from app.core.seed import seed_database
 from app.extensions import db
 
 
@@ -49,3 +50,9 @@ def test_username_collision_password_reset_hits_victim_account(app, client):
     with app.app_context():
         attacker_account = A07Account.query.filter_by(username="admin ").first()
         assert check_password_hash(attacker_account.password_hash, "attacker-pw")
+
+
+def test_bare_username_no_longer_grants_account_lookup_access(app, client):
+    seed_database(app)
+    response = client.post("/a07/account-lookup", data={"username": "dana"})
+    assert b"No account found." in response.data
