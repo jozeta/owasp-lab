@@ -89,6 +89,7 @@ def reset_database(app):
     # Import locally, same reason as above.
     from app.categories.a03_injection.routes import (
         ARCHIVE_EXPORT_DIR,
+        ARGUMENT_INJECTION_PROOF_PATH,
         ATTACHMENTS_DIR,
         CSS_EXFIL_LOG_PATH,
         SNIPPETS_DIR,
@@ -96,7 +97,12 @@ def reset_database(app):
     from app.categories.a06_vulnerable_components.routes import IMAGETRAGICK_PROOF_PATH
     from app.categories.a09_logging_monitoring_failures.routes import LOG_FILE_PATH
 
-    for stale_file in (CSS_EXFIL_LOG_PATH, LOG_FILE_PATH, IMAGETRAGICK_PROOF_PATH):
+    for stale_file in (
+        CSS_EXFIL_LOG_PATH,
+        LOG_FILE_PATH,
+        IMAGETRAGICK_PROOF_PATH,
+        ARGUMENT_INJECTION_PROOF_PATH,
+    ):
         if os.path.exists(stale_file):
             os.remove(stale_file)
     for stale_dir in (SNIPPETS_DIR, ATTACHMENTS_DIR, ARCHIVE_EXPORT_DIR):

@@ -4,6 +4,7 @@ from werkzeug.security import check_password_hash
 
 from app.categories.a03_injection.routes import (
     ARCHIVE_EXPORT_DIR,
+    ARGUMENT_INJECTION_PROOF_PATH,
     ATTACHMENTS_DIR,
     CSS_EXFIL_LOG_PATH,
     SNIPPETS_DIR,
@@ -65,6 +66,7 @@ def test_reset_database_clears_stale_files_and_dirs(app):
     _touch(CSS_EXFIL_LOG_PATH)
     _touch(LOG_FILE_PATH)
     _touch(IMAGETRAGICK_PROOF_PATH)
+    _touch(ARGUMENT_INJECTION_PROOF_PATH)
     os.makedirs(SNIPPETS_DIR, exist_ok=True)
     _touch(os.path.join(SNIPPETS_DIR, "leftover.txt"))
     os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
@@ -77,6 +79,7 @@ def test_reset_database_clears_stale_files_and_dirs(app):
     assert not os.path.exists(CSS_EXFIL_LOG_PATH)
     assert not os.path.exists(LOG_FILE_PATH)
     assert not os.path.exists(IMAGETRAGICK_PROOF_PATH)
+    assert not os.path.exists(ARGUMENT_INJECTION_PROOF_PATH)
     assert not os.path.isdir(SNIPPETS_DIR)
     assert not os.path.isdir(ATTACHMENTS_DIR)
     assert not os.path.isdir(ARCHIVE_EXPORT_DIR)
