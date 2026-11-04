@@ -76,7 +76,7 @@ def test_newly_closed_alternate_encodings_are_blocked(client):
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
-        for host in ["127.00.0.1", "localhost.", "[::1]"]:
+        for host in ["127.00.0.1", "localhost.", "[::1]", "0.0.0.0"]:
             response = client.post(
                 "/a10/import-avatar", data={"avatar_url": f"http://{host}:{port}/"}
             )
@@ -85,6 +85,46 @@ def test_newly_closed_alternate_encodings_are_blocked(client):
                 f"payload {host!r} should now be blocked"
             )
             assert b'<p class="mt-3 text-danger">That host is not allowed' in response.data
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+
+def test_expanded_ipv6_loopback_is_blocked(client):
+    import socket
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"REACHED-VIA-ALTERNATE-ENCODING")
+
+        def log_message(self, *args):
+            pass
+
+    class HTTPServerV6(HTTPServer):
+        address_family = socket.AF_INET6
+
+    # urlparse(...).hostname strips the brackets from an IPv6 literal but
+    # does not compress it, so the fully-expanded form of ::1 resolves to
+    # the hostname string "0:0:0:0:0:0:0:1" -- distinct from "::1".
+    server = HTTPServerV6(("::1", 0), Handler)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        response = client.post(
+            "/a10/import-avatar",
+            data={"avatar_url": f"http://[0:0:0:0:0:0:0:1]:{port}/"},
+        )
+        assert response.status_code == 200
+        assert b"REACHED-VIA-ALTERNATE-ENCODING" not in response.data, (
+            "expanded IPv6 loopback literal should be blocked"
+        )
+        assert b'<p class="mt-3 text-danger">That host is not allowed' in response.data
     finally:
         server.shutdown()
         thread.join(timeout=5)
