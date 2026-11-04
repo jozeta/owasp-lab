@@ -87,7 +87,13 @@ def pdf_generator():
     )
 
 
-BLOCKED_HOSTS = {"127.0.0.1", "localhost"}
+BLOCKED_HOSTS = {
+    "127.0.0.1",
+    "localhost",
+    "127.00.0.1",
+    "localhost.",
+    "::1",
+}
 
 
 @a10_bp.route("/import-avatar", methods=["GET", "POST"])

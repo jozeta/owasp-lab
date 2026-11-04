@@ -57,6 +57,39 @@ def test_alternate_ip_encodings_bypass_the_blocklist(client):
         thread.join(timeout=5)
 
 
+def test_newly_closed_alternate_encodings_are_blocked(client):
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"REACHED-VIA-ALTERNATE-ENCODING")
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        for host in ["127.00.0.1", "localhost.", "[::1]"]:
+            response = client.post(
+                "/a10/import-avatar", data={"avatar_url": f"http://{host}:{port}/"}
+            )
+            assert response.status_code == 200
+            assert b"REACHED-VIA-ALTERNATE-ENCODING" not in response.data, (
+                f"payload {host!r} should now be blocked"
+            )
+            assert b'<p class="mt-3 text-danger">That host is not allowed' in response.data
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+
 def test_blocklist_alternate_ip_bypass_link_appears_in_overview_once_registered(client):
     response = client.get("/a10/")
     assert response.status_code == 200
