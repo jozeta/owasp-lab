@@ -4,6 +4,13 @@ All notable changes to owasp-lab are listed here, newest first.
 
 The project has no tagged releases yet, so changes are grouped by date. Entries before November 2026 were reconstructed from the commit history.
 
+## Unreleased
+
+- fix: close 16 unintended bypasses of this lab's own checks (open redirect, reset tokens, filter/blocklist logic, and more) found by a full-branch audit against their own hints and tests -- across A01-A04, A06, A07 and A10
+- fix: close 6+ caching/stale-state bugs where "Reset lab" left old filesystem-backed proof/log/upload state (A03, A06, A09) or in-memory per-example session state (A07) behind from a previous run
+- feat(a07): add `AuthSession.active_mfa_flow` to scope MFA session state to each example instead of sharing it across all 15 A07 examples -- if your Postgres volume predates this column, run `docker compose down -v && docker compose up -d` once before "Reset lab" works again (see README)
+- docs: correct hint/explanation/vulnerable_code text in A01, A02, A03 and A10 examples that still described already-fixed vulnerable behavior
+
 ## 2026-11-02
 
 - Security: upgrade Flask 3.1.3, python-dotenv 1.2.4 and pytest 9.2.0 (3 Dependabot alerts). None of them is part of an exercise; all exploit tests still pass.
