@@ -478,7 +478,15 @@ def mfa_verify_unbound():
     # is submitting a DIFFERENT username's code while staying in the
     # unbound flow (i.e. the attacker reached this page through their own
     # mfa-login-unbound login), so this must not reject on username at all.
-    if session_row.active_mfa_flow != "unbound":
+    # A genuinely fresh session (active_mfa_flow is still None, never having
+    # entered ANY A07 flow) is also allowed through: the exercise's own
+    # documented technique is using a completely separate, never-logged-in
+    # session to submit the victim's username+code directly, with no
+    # mfa-login-unbound login of its own first. Every OTHER flow sets its
+    # own distinct, non-None active_mfa_flow value, so this still blocks
+    # cross-flow contamination from bruteforce/leaked/reusable/magic-value/
+    # bypass sessions.
+    if session_row.active_mfa_flow not in (None, "unbound"):
         return _redirect("a07_auth_failures.mfa_login_unbound", session_row)
     error = None
     if request.method == "POST":
