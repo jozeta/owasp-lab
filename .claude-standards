@@ -1,0 +1,1 @@
+waive=SEC-3P-1: intentionally vulnerable lab; the A06 ImageTragick exercise shows an exploit payload with a remote URL as text in <pre>, not a load
