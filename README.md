@@ -198,6 +198,9 @@ python -m venv .venv
 .venv/bin/pytest tests/ -v
 ```
 
+Requires Python 3.10+ (`python-dotenv`/`pytest` pins need it; CI runs 3.12). If your system
+`python3` is older, create the venv with a newer interpreter instead, e.g. `python3.12 -m venv .venv`.
+
 Tests run against an in-memory SQLite database and do not require Docker or Postgres.
 
 ## License

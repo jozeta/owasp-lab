@@ -23,6 +23,9 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/pytest tests/ -v           # in-memory SQLite, no Docker/Postgres needed
 ```
 
+Requires Python 3.10+ (`python-dotenv`/`pytest` pins need it; CI runs 3.12). If your system
+`python3` is older, create the venv with a newer interpreter instead, e.g. `python3.12 -m venv .venv`.
+
 `/force-reset` resets the DB and session even when the UI is broken. Production server is
 gunicorn (`gunicorn.conf.py`).
 

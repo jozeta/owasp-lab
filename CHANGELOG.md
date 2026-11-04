@@ -6,6 +6,9 @@ The project has no tagged releases yet, so changes are grouped by date. Entries 
 
 ## Unreleased
 
+- docs: document that local setup needs Python 3.10+ (matching CI) since `requirements.txt`'s
+  `python-dotenv` and `pytest` pins require it
+
 - fix: close 16 unintended bypasses of this lab's own checks (open redirect, reset tokens, filter/blocklist logic, and more) found by a full-branch audit against their own hints and tests -- across A01-A04, A06, A07 and A10
 - fix: close 6+ caching/stale-state bugs where "Reset lab" left old filesystem-backed proof/log/upload state (A03, A06, A09) or in-memory per-example session state (A07) behind from a previous run
 - feat(a07): add `AuthSession.active_mfa_flow` to scope MFA session state to each example instead of sharing it across all 15 A07 examples -- if your Postgres volume predates this column, run `docker compose down -v && docker compose up -d` once before "Reset lab" works again (see README)
