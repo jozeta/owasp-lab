@@ -76,7 +76,7 @@ CATEGORIES.append(
                 difficulty="Medium",
                 endpoint="a02_crypto_failures.reset_password_referrer",
                 hints=[
-                    "This reset-password page is reached via a link containing your token in the URL's query string. Look at what else is on this page — does it link out anywhere?",
+                    "This reset-password page expects a reset token in its URL's query string -- exactly like a real password-reset email link would supply. The page itself hands you nothing for free (visit it without a token and it shows '(none supplied)'). Look at what else is on the page once a token IS in the URL — does it link out anywhere?",
                     "There's a 'Security Tips' link at the bottom pointing to another page. Nothing on this page sets a Referrer-Policy header, so when a browser follows that link, it sends the full current URL — token included — as the Referer header to whatever it links to.",
                     "Click the Security Tips link on this page — the destination page reads request.headers['Referer'] and recovers your reset token without you ever giving it up directly. In a real deployment that link could point anywhere, including an attacker-controlled domain.",
                     "Exact reproduction: curl -s http://127.0.0.1:5000/a02/external-referrer-sink -H \"Referer: http://127.0.0.1:5000/a02/reset-password-referrer?token=<any token>\" — the response echoes the captured Referer header back, token and all.",
