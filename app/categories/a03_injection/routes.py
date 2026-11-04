@@ -423,15 +423,19 @@ def filter_level_2(payload: str) -> str:
     # VULNERABLE: strips "<script>" and "</script>" as two SEPARATE passes
     # -- doesn't re-scan its own output, so nested/interleaved tags
     # reconstruct a real <script> tag from the leftover fragments. Other
-    # dangerous tags, inline event-handler attributes, and the
-    # javascript: URI scheme are rejected outright, so the reconstruction
-    # trick remains exploitable.
+    # dangerous tags, inline event-handler attributes, the javascript:
+    # URI scheme, and any attribute-bearing <script ...> opening tag are
+    # all rejected outright, so the nested-reconstruction trick (which
+    # only ever produces the bare, attribute-less <script> tag these two
+    # passes strip) remains the sole way through.
     if re.search(r"<\s*/?\s*(iframe|svg|img|body|object|embed)\b", payload, flags=re.IGNORECASE):
         return "[blocked: dangerous tag detected]"
     if re.search(r"\bon\w+\s*=", payload, flags=re.IGNORECASE):
         return "[blocked: event handler attribute detected]"
     if re.search(r"java\s*script\s*:", payload, flags=re.IGNORECASE):
         return "[blocked: javascript URI scheme detected]"
+    if re.search(r"<\s*script[\s/][^>]*>", payload, flags=re.IGNORECASE):
+        return "[blocked: script tag with attributes detected]"
     payload = re.sub(r"<script>", "", payload, flags=re.IGNORECASE)
     payload = re.sub(r"</script>", "", payload, flags=re.IGNORECASE)
     return payload

@@ -114,6 +114,38 @@ def test_filter_challenge_level2_blocks_javascript_uri_scheme(client):
     assert payload.encode() not in response.data
 
 
+def test_filter_challenge_level2_blocks_attribute_bearing_script_tag(client):
+    # A <script src="..."> opening tag survives the two bare-tag strip
+    # passes untouched (they only ever match the exact literal substrings
+    # "<script>" and "</script>"), so an attribute-bearing opening tag is a
+    # distinct bypass that must be rejected explicitly.
+    payload = '<script src="data:text/javascript,alert(1)">x</script>'
+    response = client.get(
+        "/a03/filter-challenge", query_string={"level": "2", "payload": payload}
+    )
+    assert response.status_code == 200
+    assert (
+        b'<div id="output" class="border rounded p-2">'
+        b"[blocked: script tag with attributes detected]</div>"
+    ) in response.data
+    assert payload.encode() not in response.data
+
+
+def test_filter_challenge_level2_blocks_self_closing_slash_script_tag(client):
+    # Same gap, self-closing-slash variant: "<script/src=...>" has no
+    # whitespace before the attribute at all, just the slash.
+    payload = '<script/src="data:text/javascript,alert(1)">x</script>'
+    response = client.get(
+        "/a03/filter-challenge", query_string={"level": "2", "payload": payload}
+    )
+    assert response.status_code == 200
+    assert (
+        b'<div id="output" class="border rounded p-2">'
+        b"[blocked: script tag with attributes detected]</div>"
+    ) in response.data
+    assert payload.encode() not in response.data
+
+
 def test_filter_challenge_level3_legitimate_input_passes_through(client):
     response = client.get(
         "/a03/filter-challenge", query_string={"level": "3", "payload": "hello"}
