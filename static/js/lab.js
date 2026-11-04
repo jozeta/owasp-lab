@@ -32,6 +32,7 @@ function updateSidebarToggleIcon() {
     return;
   }
   var collapsed = document.documentElement.getAttribute("data-sidebar-collapsed") === "1";
+  // eslint-disable-next-line no-unsanitized/property -- reviewed: one of two fixed arrow entities
   icon.innerHTML = collapsed ? "&#9658;" : "&#9668;";
 }
 
