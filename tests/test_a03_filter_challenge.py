@@ -72,6 +72,80 @@ def test_filter_challenge_level2_bypass_reconstructs_script_tag(client):
     ) in response.data
 
 
+def test_filter_challenge_level2_blocks_trivial_non_script_bypass(client):
+    # The Level-1-intended payload must NOT also solve Level 2 -- Level 2
+    # is a distinct, harder challenge requiring the nested-script
+    # reconstruction trick specifically.
+    #
+    # Note: the raw, unfiltered payload is always echoed back (Jinja-escaped)
+    # into the form's "payload" input value regardless of what the filter
+    # does, so a bare "onerror=console.log" substring check against the
+    # whole response body would false-fail even on a correct fix (that
+    # substring contains no characters Jinja's autoescaping touches). Scope
+    # the assertions to the output div and to the raw, unescaped payload
+    # string, matching the pattern used by the other block-detection tests
+    # in this file (e.g. test_filter_challenge_level1_blocks_naive_script_tag).
+    payload = "<img src=x onerror=console.log('LEVEL-1-BYPASS')>"
+    response = client.get(
+        "/a03/filter-challenge", query_string={"level": "2", "payload": payload}
+    )
+    assert response.status_code == 200
+    assert (
+        b'<div id="output" class="border rounded p-2">'
+        b"[blocked: dangerous tag detected]</div>"
+    ) in response.data
+    assert payload.encode() not in response.data
+
+
+def test_filter_challenge_level2_blocks_javascript_uri_scheme(client):
+    # A "javascript:" href doesn't contain any of the blocked tags or an
+    # on\w+= event-handler attribute, and it needs no <script> tag at all
+    # -- so it must be its own, explicit rejection rather than slipping
+    # through as a second, unintended way to defeat Level 2.
+    payload = '<a href="javascript:alert(1)">click me</a>'
+    response = client.get(
+        "/a03/filter-challenge", query_string={"level": "2", "payload": payload}
+    )
+    assert response.status_code == 200
+    assert (
+        b'<div id="output" class="border rounded p-2">'
+        b"[blocked: javascript URI scheme detected]</div>"
+    ) in response.data
+    assert payload.encode() not in response.data
+
+
+def test_filter_challenge_level2_blocks_attribute_bearing_script_tag(client):
+    # A <script src="..."> opening tag survives the two bare-tag strip
+    # passes untouched (they only ever match the exact literal substrings
+    # "<script>" and "</script>"), so an attribute-bearing opening tag is a
+    # distinct bypass that must be rejected explicitly.
+    payload = '<script src="data:text/javascript,alert(1)">x</script>'
+    response = client.get(
+        "/a03/filter-challenge", query_string={"level": "2", "payload": payload}
+    )
+    assert response.status_code == 200
+    assert (
+        b'<div id="output" class="border rounded p-2">'
+        b"[blocked: script tag with attributes detected]</div>"
+    ) in response.data
+    assert payload.encode() not in response.data
+
+
+def test_filter_challenge_level2_blocks_self_closing_slash_script_tag(client):
+    # Same gap, self-closing-slash variant: "<script/src=...>" has no
+    # whitespace before the attribute at all, just the slash.
+    payload = '<script/src="data:text/javascript,alert(1)">x</script>'
+    response = client.get(
+        "/a03/filter-challenge", query_string={"level": "2", "payload": payload}
+    )
+    assert response.status_code == 200
+    assert (
+        b'<div id="output" class="border rounded p-2">'
+        b"[blocked: script tag with attributes detected]</div>"
+    ) in response.data
+    assert payload.encode() not in response.data
+
+
 def test_filter_challenge_level3_legitimate_input_passes_through(client):
     response = client.get(
         "/a03/filter-challenge", query_string={"level": "3", "payload": "hello"}

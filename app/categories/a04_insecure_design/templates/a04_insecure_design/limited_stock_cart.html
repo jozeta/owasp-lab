@@ -62,6 +62,7 @@ total_cents = DEMO_PRODUCT_PRICE_CENTS * quantity
   <input type="number" class="form-control" name="quantity" value="1">
   <button type="submit" class="btn btn-primary">Order</button>
 </form>
+{% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
 {% if ordered_quantity is not none %}
 <div class="alert alert-success">
   Order confirmed: {{ ordered_quantity }} units. Total: {{ total_display }}

@@ -178,17 +178,22 @@ def shipping_select():
 def limited_stock_cart():
     ordered_quantity = None
     total_cents = None
+    error = None
     if request.method == "POST":
         try:
             quantity = int(request.form.get("quantity", "1"))
         except (ValueError, OverflowError):
             quantity = 1
-        # VULNERABLE: the page displays a fixed "Only 3 left!" stock
-        # count, but this handler never validates the submitted quantity
-        # against STOCK_COUNT (or against any real inventory at all) --
-        # any positive quantity is accepted and priced normally.
-        ordered_quantity = quantity
-        total_cents = DEMO_PRODUCT_PRICE_CENTS * quantity
+        if quantity <= 0:
+            error = "Enter a quantity of at least 1."
+        else:
+            # VULNERABLE: the page displays a fixed "Only 3 left!" stock
+            # count, but this handler never validates the submitted
+            # quantity against STOCK_COUNT (or against any real inventory
+            # at all) -- any quantity above zero is accepted and priced
+            # normally.
+            ordered_quantity = quantity
+            total_cents = DEMO_PRODUCT_PRICE_CENTS * quantity
     return render_template(
         "a04_insecure_design/limited_stock_cart.html",
         product_name=DEMO_PRODUCT_NAME,
@@ -196,6 +201,7 @@ def limited_stock_cart():
         stock_count=STOCK_COUNT,
         ordered_quantity=ordered_quantity,
         total_display=_format_cents(total_cents) if total_cents is not None else None,
+        error=error,
     )
 
 
@@ -277,16 +283,22 @@ def loyalty_convert():
         except (ValueError, OverflowError):
             points = 0
         if points > 0:
-            true_value_cents = points * POINTS_TO_CENTS_RATE
-            # VULNERABLE: rounds UP to a minimum of 1 cent whenever the
-            # true fractional value is positive, with no minimum
-            # conversion amount enforced and no rate limit on repeated
-            # conversions -- a customer's balance never actually loses
-            # anything on the sending side of this "conversion", so
-            # repeating a tiny conversion many times mints real cents
-            # from a fractional value that should have rounded to zero.
-            credited_cents = max(1, round(true_value_cents))
-            session["a04_store_credit_cents"] = session.get("a04_store_credit_cents", 0) + credited_cents
+            try:
+                true_value_cents = points * POINTS_TO_CENTS_RATE
+                # VULNERABLE: rounds UP to a minimum of 1 cent whenever the
+                # true fractional value is positive, with no minimum
+                # conversion amount enforced and no rate limit on repeated
+                # conversions -- a customer's balance never actually loses
+                # anything on the sending side of this "conversion", so
+                # repeating a tiny conversion many times mints real cents
+                # from a fractional value that should have rounded to zero.
+                credited_cents = max(1, round(true_value_cents))
+            except OverflowError:
+                error = "That's too large a number of points to convert at once."
+            else:
+                session["a04_store_credit_cents"] = (
+                    session.get("a04_store_credit_cents", 0) + credited_cents
+                )
         else:
             error = "Enter a positive number of points."
     balance_cents = session.get("a04_store_credit_cents", 0)

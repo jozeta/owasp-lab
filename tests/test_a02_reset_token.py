@@ -108,3 +108,11 @@ def test_forgot_password_shows_detect_content(app, client):
     response = client.get("/a02/forgot-password")
     assert response.status_code == 200
     assert b"reset link has been sent, with no token shown" in response.data
+
+
+def test_reset_password_referrer_no_longer_hands_out_a_free_admin_token(app, client):
+    seed_database(app)
+
+    response = client.get("/a02/reset-password-referrer")
+    assert response.status_code == 200
+    assert _token_for("admin").encode() not in response.data

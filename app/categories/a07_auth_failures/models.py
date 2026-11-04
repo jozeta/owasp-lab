@@ -22,3 +22,11 @@ class AuthSession(db.Model):
     # checked at verify time by any MFA example that needs one. Reused
     # across multiple examples rather than each inventing its own column.
     pending_mfa_code = db.Column(db.String(6), nullable=True)
+    # Records which MFA login flow is currently in progress on this
+    # shared session row. Several examples in this category reuse the
+    # same username/mfa_verified fields on the same row, so a dashboard
+    # or proof route that only checked those two fields could be
+    # satisfied by a completely different example's login/reset flow.
+    # Set by every login/reset route in this category to its own
+    # identifier; checked by the matching dashboard/proof route.
+    active_mfa_flow = db.Column(db.String(30), nullable=True)

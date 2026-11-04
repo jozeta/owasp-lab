@@ -17,3 +17,17 @@ def test_ordering_far_more_than_stock_is_never_rejected(client):
     assert response.status_code == 200
     assert b"Order confirmed: 500" in response.data
     assert b"$14995.00" in response.data  # 500 * $29.99
+
+
+def test_negative_quantity_is_rejected(client):
+    response = client.post("/a04/limited-stock-cart", data={"quantity": "-5"})
+    assert response.status_code == 200
+    assert b"Order confirmed: -5" not in response.data
+    assert b"Enter a quantity of at least 1." in response.data
+
+
+def test_zero_quantity_is_rejected(client):
+    response = client.post("/a04/limited-stock-cart", data={"quantity": "0"})
+    assert response.status_code == 200
+    assert b"Order confirmed: 0" not in response.data
+    assert b"Enter a quantity of at least 1." in response.data

@@ -3,6 +3,7 @@ import unicodedata
 from werkzeug.security import generate_password_hash
 
 from app.categories.a07_auth_failures.models import A07Account
+from app.core.seed import seed_database
 from app.extensions import db
 
 
@@ -41,3 +42,11 @@ def test_unicode_lookalike_username_collides_with_real_account(app, client):
     account_response = client.get("/a07/account")
     assert b"Logged in as" in account_response.data
     assert b"demo" in account_response.data
+
+
+def test_account_lookup_rejects_the_real_username_submitted_plainly(app, client):
+    seed_database(app)
+    response = client.post("/a07/account-lookup", data={"username": "dana"})
+    assert response.status_code == 200
+    assert b"No account found." in response.data
+    assert b"Matched and logged in as" not in response.data

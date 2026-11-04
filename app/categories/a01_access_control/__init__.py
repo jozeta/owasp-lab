@@ -162,9 +162,9 @@ CATEGORIES.append(
                 endpoint="a01_access_control.continue_redirect_filtered",
                 hints=[
                     "This version only allows redirecting to trusted-partner.example -- confirm the filter genuinely blocks an unrelated domain first. Then think about exactly WHAT the check tests: is it really confirming the URL's host, or something weaker?",
-                    "The check is 'trusted-partner.example' in next_url -- a plain substring test, not a real URL-host comparison. Does that substring have to be at the START of the host to pass?",
-                    "Submit ?next=https://trusted-partner.example.evil.example.com/phish -- the substring 'trusted-partner.example' genuinely appears in this string, so the check passes, but the URL's real host is trusted-partner.example.evil.example.com, a domain entirely controlled by whoever registered evil.example.com.",
-                    "This is the classic 'substring allowlist' mistake, the same technique real-world open-redirect filter bypasses use against domains like 'whitelisted-site.com.evil.com' -- checking 'does this string contain the trusted name' is never equivalent to 'is this URL's actual host the trusted one.'",
+                    "The check is host.startswith('trusted-partner.example') on the URL's parsed hostname -- not a real equality comparison. It genuinely does require the trusted string to be at the START of the host now, but does being a PREFIX of the host guarantee the host actually IS trusted-partner.example, or could a longer hostname simply begin with those same characters?",
+                    "Submit ?next=https://trusted-partner.example.evil.example.com/phish -- the URL's parsed host, trusted-partner.example.evil.example.com, genuinely STARTS WITH the string 'trusted-partner.example', so the prefix check passes, but that full string is the real host, a domain entirely controlled by whoever registered evil.example.com.",
+                    "This is the classic 'prefix allowlist' mistake, the same technique real-world open-redirect filter bypasses use against domains like 'whitelisted-site.com.evil.com' -- checking 'does the host START WITH the trusted name' is never equivalent to 'IS this URL's actual host the trusted one.'",
                 ],
             ),
             ExampleNav(

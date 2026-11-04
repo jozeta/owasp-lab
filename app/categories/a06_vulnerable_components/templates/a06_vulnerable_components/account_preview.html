@@ -50,8 +50,30 @@
 &lt;/div&gt;
 
 &lt;script&gt;
+function isLikelyMaliciousMarkup(raw) {
+  // Naive, deliberately incomplete client-side filter: blocks common
+  // dangerous tags and inline event-handler attributes, but assumes
+  // anything starting with a &lt;style&gt; tag is harmless CSS and skips
+  // the check entirely -- CSS can't execute script... except this
+  // exact blind spot is what CVE-2020-11022 exploits: jQuery's own
+  // htmlPrefilter rewrites a self-closing &lt;style /&gt; into
+  // &lt;style&gt;&lt;/style&gt; BEFORE the browser parses it, closing the style
+  // context one tag early and turning what looked like inert
+  // style-block content into live, executable markup.
+  if (/^\s*&lt;style\b/i.test(raw)) {
+    return false;
+  }
+  var dangerousTag = /&lt;\s*\/?\s*(script|img|svg|iframe|body|object|embed)\b/i;
+  var eventHandler = /\bon\w+\s*=/i;
+  return dangerousTag.test(raw) || eventHandler.test(raw);
+}
+
 $('#preview-btn').on('click', function () {
   var raw = $('#comment-input').val();
+  if (isLikelyMaliciousMarkup(raw)) {
+    $('#comment-preview').text('[blocked: dangerous markup detected]');
+    return;
+  }
   // VULNERABLE: same flawed jQuery htmlPrefilter as the Medium-tier
   // example, but now this page also has a real secret worth stealing
   // sitting in the DOM right next to it.
@@ -81,8 +103,30 @@ $('#preview-btn').on('click', function () {
 
 <script src="{{ url_for('static', filename='vendor/jquery-vulnerable/jquery-1.12.4.js') }}"></script>
 <script>
+  function isLikelyMaliciousMarkup(raw) {
+    // Naive, deliberately incomplete client-side filter: blocks common
+    // dangerous tags and inline event-handler attributes, but assumes
+    // anything starting with a <style> tag is harmless CSS and skips
+    // the check entirely -- CSS can't execute script... except this
+    // exact blind spot is what CVE-2020-11022 exploits: jQuery's own
+    // htmlPrefilter rewrites a self-closing <style /> into
+    // <style></style> BEFORE the browser parses it, closing the style
+    // context one tag early and turning what looked like inert
+    // style-block content into live, executable markup.
+    if (/^\s*<style\b/i.test(raw)) {
+      return false;
+    }
+    var dangerousTag = /<\s*\/?\s*(script|img|svg|iframe|body|object|embed)\b/i;
+    var eventHandler = /\bon\w+\s*=/i;
+    return dangerousTag.test(raw) || eventHandler.test(raw);
+  }
+
   $('#preview-btn').on('click', function () {
     var raw = $('#comment-input').val();
+    if (isLikelyMaliciousMarkup(raw)) {
+      $('#comment-preview').text('[blocked: dangerous markup detected]');
+      return;
+    }
     // VULNERABLE: same flawed jQuery htmlPrefilter as the Medium-tier
     // example, but now this page also has a real secret worth stealing
     // sitting in the DOM right next to it.

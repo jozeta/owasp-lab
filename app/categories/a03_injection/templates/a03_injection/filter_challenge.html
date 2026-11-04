@@ -128,6 +128,14 @@
     return payload
 
 def filter_level_2(payload):
+    if re.search(r"&lt;\s*/?\s*(iframe|svg|img|body|object|embed)\b", payload, flags=re.IGNORECASE):
+        return "[blocked: dangerous tag detected]"
+    if re.search(r"\bon\w+\s*=", payload, flags=re.IGNORECASE):
+        return "[blocked: event handler attribute detected]"
+    if re.search(r"java\s*script\s*:", payload, flags=re.IGNORECASE):
+        return "[blocked: javascript URI scheme detected]"
+    if re.search(r"&lt;\s*script[\s/][^&gt;]*&gt;", payload, flags=re.IGNORECASE):
+        return "[blocked: script tag with attributes detected]"
     payload = re.sub(r"&lt;script&gt;", "", payload, flags=re.IGNORECASE)
     payload = re.sub(r"&lt;/script&gt;", "", payload, flags=re.IGNORECASE)
     return payload

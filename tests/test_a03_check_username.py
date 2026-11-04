@@ -1,32 +1,43 @@
+import pytest
+from sqlalchemy.exc import DBAPIError
+
 from app.core.seed import seed_database
 
 
-def test_check_username_reports_available_for_unknown_user(app, client):
+def test_check_username_response_is_identical_for_unknown_and_known_user(app, client):
     seed_database(app)
-    response = client.get(
+
+    unknown_response = client.get(
         "/a03/check-username", query_string={"username": "definitely-not-a-real-user"}
     )
-    assert response.status_code == 200
-    assert b"available" in response.data.lower()
+    known_response = client.get("/a03/check-username", query_string={"username": "alice"})
+
+    assert unknown_response.status_code == 200
+    assert known_response.status_code == 200
+    # Check against the exact removed oracle phrases, not a bare "available"
+    # substring match -- base.html's unrelated theme-detection script
+    # contains the literal word "unavailable" ("localStorage unavailable")
+    # on every page in this app, which would make a loose substring check
+    # a false positive here.
+    assert b"is <strong>available</strong>" not in unknown_response.data
+    assert b"already taken" not in known_response.data.lower()
+    assert b"Checked." in unknown_response.data
+    assert b"Checked." in known_response.data
 
 
-def test_check_username_reports_taken_for_known_user(app, client):
+def test_check_username_still_executes_raw_sql_unparameterized(app, client):
+    # The injection point itself must remain genuinely vulnerable -- only
+    # the visible available/taken signal was removed. A lone unescaped
+    # quote breaks the raw concatenated query, proving it's still built
+    # by string concatenation, not bound parameters. Under Flask's TESTING
+    # config, an unhandled exception propagates to the test client caller
+    # directly (verified empirically: TESTING=True disables Flask's
+    # default exception-to-500 conversion, same as test_a03_roster.py's
+    # column-count-discovery test) rather than becoming a 500 response --
+    # so this asserts on the raised exception, not a response object.
     seed_database(app)
-    response = client.get("/a03/check-username", query_string={"username": "alice"})
-    assert response.status_code == 200
-    assert b"already taken" in response.data.lower()
-
-
-def test_check_username_sqli_flips_result_via_boolean_injection(app, client):
-    # Proves the raw SQL is injectable using a portable boolean payload.
-    # The real exploitation instructions use PostgreSQL's pg_sleep() for a genuine
-    # timing side-channel -- that's verified live against Postgres in the plan's
-    # final Docker-verification task, not here (SQLite has no pg_sleep).
-    seed_database(app)
-    payload = "definitely-not-a-real-user' OR '1'='1"
-    response = client.get("/a03/check-username", query_string={"username": payload})
-    assert response.status_code == 200
-    assert b"already taken" in response.data.lower()
+    with pytest.raises(DBAPIError):
+        client.get("/a03/check-username", query_string={"username": "o'brien"})
 
 
 def test_check_username_sqli_still_works_with_teaching_text_hidden(app, client):
@@ -43,7 +54,7 @@ def test_check_username_sqli_still_works_with_teaching_text_hidden(app, client):
     payload = "definitely-not-a-real-user' OR '1'='1"
     response = client.get("/a03/check-username", query_string={"username": payload})
     assert response.status_code == 200
-    assert b"already taken" in response.data.lower()
+    assert b"Checked." in response.data
     assert b"Explanation" not in response.data
     assert b"Exploitation" not in response.data
 

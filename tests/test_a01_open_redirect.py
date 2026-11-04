@@ -25,6 +25,22 @@ def test_continue_filtered_bypassed_via_domain_suffix(client):
     assert response.headers["Location"] == payload
 
 
+def test_continue_filtered_rejects_substring_in_path_not_host(client):
+    response = client.get(
+        "/a01/continue-filtered",
+        query_string={"next": "https://evil.example.com/trusted-partner.example"},
+    )
+    assert response.status_code == 400
+
+
+def test_continue_filtered_rejects_substring_in_query_not_host(client):
+    response = client.get(
+        "/a01/continue-filtered",
+        query_string={"next": "https://evil.example.com/?x=trusted-partner.example"},
+    )
+    assert response.status_code == 400
+
+
 def test_continue_renders_explanation_page_on_bare_nav_visit(client):
     # Test that accessing /a01/continue without next param renders the explanation page
     response = client.get("/a01/continue")

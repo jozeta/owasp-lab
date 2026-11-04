@@ -123,13 +123,17 @@ def greet():
 @a03_bp.route("/check-username")
 def check_username():
     username = request.args.get("username", "")
-    exists = None
+    checked = False
     if username:
-        # VULNERABLE: raw string-concatenated SQL, no parameterization
+        # VULNERABLE: raw string-concatenated SQL, no parameterization.
+        # The response text below is intentionally identical regardless
+        # of the result -- this example's lesson is that even with NO
+        # visible signal at all, a conditional timing side-channel
+        # (see this example's hints) can still extract data.
         query = f"SELECT COUNT(*) FROM injection_accounts WHERE username = '{username}'"
-        count = db.session.execute(text(query)).scalar()
-        exists = bool(count)
-    return render_template("a03_injection/check_username.html", username=username, exists=exists)
+        db.session.execute(text(query)).scalar()
+        checked = True
+    return render_template("a03_injection/check_username.html", username=username, checked=checked)
 
 
 @a03_bp.route("/host-lookup", methods=["GET", "POST"])
@@ -288,7 +292,20 @@ def email_preview():
     )
 
 
-SSTI_BLOCKED_KEYWORDS = ["os", "import", "exec", "eval", "popen", "subprocess", "system"]
+SSTI_BLOCKED_KEYWORDS = [
+    "os",
+    "import",
+    "exec",
+    "eval",
+    "popen",
+    "subprocess",
+    "system",
+    "__class__",
+    "__mro__",
+    "__subclasses__",
+    "__base__",
+    "__bases__",
+]
 
 
 @a03_bp.route("/bio-preview", methods=["GET", "POST"])
@@ -403,9 +420,22 @@ def filter_level_1(payload: str) -> str:
 
 
 def filter_level_2(payload: str) -> str:
-    # VULNERABLE: strips "<script>" and "</script>" as two SEPARATE passes --
-    # doesn't re-scan its own output, so nested/interleaved tags reconstruct
-    # a real <script> tag from the leftover fragments
+    # VULNERABLE: strips "<script>" and "</script>" as two SEPARATE passes
+    # -- doesn't re-scan its own output, so nested/interleaved tags
+    # reconstruct a real <script> tag from the leftover fragments. Other
+    # dangerous tags, inline event-handler attributes, the javascript:
+    # URI scheme, and any attribute-bearing <script ...> opening tag are
+    # all rejected outright, so the nested-reconstruction trick (which
+    # only ever produces the bare, attribute-less <script> tag these two
+    # passes strip) remains the sole way through.
+    if re.search(r"<\s*/?\s*(iframe|svg|img|body|object|embed)\b", payload, flags=re.IGNORECASE):
+        return "[blocked: dangerous tag detected]"
+    if re.search(r"\bon\w+\s*=", payload, flags=re.IGNORECASE):
+        return "[blocked: event handler attribute detected]"
+    if re.search(r"java\s*script\s*:", payload, flags=re.IGNORECASE):
+        return "[blocked: javascript URI scheme detected]"
+    if re.search(r"<\s*script[\s/][^>]*>", payload, flags=re.IGNORECASE):
+        return "[blocked: script tag with attributes detected]"
     payload = re.sub(r"<script>", "", payload, flags=re.IGNORECASE)
     payload = re.sub(r"</script>", "", payload, flags=re.IGNORECASE)
     return payload
