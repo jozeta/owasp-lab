@@ -129,6 +129,12 @@ def mfa_login():
 @a07_bp.route("/mfa-verify", methods=["GET", "POST"])
 def mfa_verify():
     session_row = get_or_create_session()
+    # Scoped like the dashboard below: this route has no real protection of
+    # its own (mfa-bypass's whole lesson is that ANY code works here), but a
+    # DIFFERENT flow's session must not be able to use it as a side-door
+    # into mfa_verified=True.
+    if session_row.active_mfa_flow != "bypass":
+        return _redirect("a07_auth_failures.mfa_login", session_row)
     error = None
     if request.method == "POST":
         code = request.form.get("code", "")
@@ -296,6 +302,11 @@ def mfa_leaked_login():
 @a07_bp.route("/mfa-leaked-code/api/send-code", methods=["POST"])
 def mfa_leaked_send_code_api():
     session_row = get_or_create_session()
+    # Scoped so a different flow's session (e.g. one mid-way through
+    # mfa-brute-force) can't call this API to read ITS OWN pending code back
+    # out under the leaked-code example's cover.
+    if session_row.active_mfa_flow != "leaked_code":
+        return _redirect("a07_auth_failures.mfa_leaked_login", session_row)
     # VULNERABLE: this API exists to trigger sending the code via a real
     # SMS/email provider server-side -- but a leftover debug field echoes
     # the real code straight back in the JSON response. Any client that can
@@ -356,6 +367,11 @@ def mfa_reusable_login():
 @a07_bp.route("/mfa-reusable-code/verify", methods=["GET", "POST"])
 def mfa_reusable_verify():
     session_row = get_or_create_session()
+    # Scoped so a different flow's session can't use this page to read back
+    # (and reuse) ITS OWN pending_mfa_code under the reusable-code example's
+    # cover.
+    if session_row.active_mfa_flow != "reusable_code":
+        return _redirect("a07_auth_failures.mfa_reusable_login", session_row)
     error = None
     if request.method == "POST":
         code = request.form.get("code", "")
@@ -413,6 +429,10 @@ def mfa_login_bruteforce():
 @a07_bp.route("/mfa-verify-bruteforce", methods=["GET", "POST"])
 def mfa_verify_bruteforce():
     session_row = get_or_create_session()
+    # Scoped so a different flow's session can't use this route against
+    # whatever pending_mfa_code happens to already be on its own row.
+    if session_row.active_mfa_flow != "bruteforce":
+        return _redirect("a07_auth_failures.mfa_login_bruteforce", session_row)
     error = None
     if request.method == "POST":
         code = request.form.get("code", "")
@@ -454,6 +474,12 @@ def mfa_login_unbound():
 @a07_bp.route("/mfa-verify-unbound", methods=["GET", "POST"])
 def mfa_verify_unbound():
     session_row = get_or_create_session()
+    # Scoped by FLOW, not by username: the example's own intended technique
+    # is submitting a DIFFERENT username's code while staying in the
+    # unbound flow (i.e. the attacker reached this page through their own
+    # mfa-login-unbound login), so this must not reject on username at all.
+    if session_row.active_mfa_flow != "unbound":
+        return _redirect("a07_auth_failures.mfa_login_unbound", session_row)
     error = None
     if request.method == "POST":
         # VULNERABLE: trusts a client-supplied username field instead of
@@ -504,6 +530,10 @@ def mfa_login_magic_value():
 @a07_bp.route("/mfa-verify-magic-value", methods=["GET", "POST"])
 def mfa_verify_magic_value():
     session_row = get_or_create_session()
+    # Scoped so a different flow's session can't use the magic-value
+    # backdoor as a shortcut past its OWN verify step.
+    if session_row.active_mfa_flow != "magic_value":
+        return _redirect("a07_auth_failures.mfa_login_magic_value", session_row)
     error = None
     if request.method == "POST":
         code = request.form.get("code", "")

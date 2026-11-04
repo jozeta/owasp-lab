@@ -16,6 +16,14 @@ def test_code_generated_for_one_session_works_through_a_totally_different_sessio
     victim_client.post(
         "/a07/mfa-login-unbound", data={"username": "dana", "password": "welcome1"}
     )
+    # The attacker reaches the unbound flow through their OWN valid login
+    # (as a different account) -- the vulnerability is that, once in the
+    # flow, the verify step doesn't bind the submitted CODE to the
+    # submitted USERNAME's own session, not that the flow itself can be
+    # entered without any login at all.
+    attacker_client.post(
+        "/a07/mfa-login-unbound", data={"username": "morgan", "password": "Summer2023!"}
+    )
 
     with app.app_context():
         real_code = PENDING_MFA_CODES_BY_USERNAME["dana"]
