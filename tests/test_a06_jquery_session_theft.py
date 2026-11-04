@@ -15,6 +15,12 @@ def test_account_preview_wires_up_the_same_vulnerable_html_call(client):
     assert "jquery-vulnerable/jquery-3" not in body
 
 
+def test_account_preview_wires_up_a_client_side_filter_before_html_call(client):
+    response = client.get("/a06/account-preview")
+    body = response.data.decode()
+    assert "isLikelyMaliciousMarkup" in body
+
+
 def test_account_preview_shows_the_python_collector_command(app, client):
     with app.app_context():
         from app.core.models import Settings

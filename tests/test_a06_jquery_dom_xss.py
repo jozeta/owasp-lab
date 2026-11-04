@@ -22,6 +22,12 @@ def test_comment_preview_wires_up_the_vulnerable_html_call(client):
     assert "jquery-vulnerable/jquery-3" not in body
 
 
+def test_comment_preview_wires_up_a_client_side_filter_before_html_call(client):
+    response = client.get("/a06/comment-preview")
+    body = response.data.decode()
+    assert "isLikelyMaliciousMarkup" in body
+
+
 def test_vendored_jquery_file_is_the_real_vulnerable_release():
     path = os.path.join(BASE_DIR, "static", "vendor", "jquery-vulnerable", "jquery-1.12.4.js")
     with open(path, encoding="utf-8") as f:
