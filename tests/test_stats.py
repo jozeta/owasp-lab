@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from app.core.models import ActivityDay, ExampleProgress
+from app.core.models import ActivityDay
 from app.core.nav import CATEGORIES
 from app.core.seed import seed_database
 from app.core.stats import compute_stats

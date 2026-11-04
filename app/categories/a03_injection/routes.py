@@ -22,7 +22,7 @@ from sqlalchemy import text
 
 from app import BASE_DIR
 from app.categories.a03_injection import a03_bp, ldap_client
-from app.categories.a03_injection.models import Comment, Employee, InjectionAccount
+from app.categories.a03_injection.models import Comment, Employee
 from app.extensions import db
 
 XXE_SECRET_PATH = os.path.join(os.path.dirname(__file__), "xxe_secret.txt")

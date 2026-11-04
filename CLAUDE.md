@@ -59,3 +59,8 @@ README category summary in sync.
 - The persistent "intentionally vulnerable" warning banner must stay.
 - Vulnerabilities stay inside the lab's own app and containers: no exercise may reach out to
   or attack third-party systems.
+
+## App standards
+
+This repo follows the app standards in `~/Desktop/code/tools/standards/STANDARDS.md` (rule IDs,
+severities; decisions and waivers in `.claude-standards`). `claude-check --repo .` checks it.

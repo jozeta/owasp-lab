@@ -6,6 +6,9 @@ The project has no tagged releases yet, so changes are grouped by date. Entries 
 
 ## Unreleased
 
+- ruff (pyflakes and syntax checks only; no security rules, since the lab is vulnerable on purpose)
+  in `ruff.toml`; CI runs it before the tests
+
 - docs: document that local setup needs Python 3.10+ (matching CI) since `requirements.txt`'s
   `python-dotenv` and `pytest` pins require it
 
