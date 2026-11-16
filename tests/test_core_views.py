@@ -153,6 +153,14 @@ def test_about_page_loads(client):
     assert "127.0.0.1" in body
 
 
+def test_about_page_shows_version_from_version_file(client):
+    import pathlib
+
+    version = (pathlib.Path(__file__).resolve().parents[1] / "VERSION").read_text().strip()
+    assert f"Version {version}" in client.get("/about").data.decode()
+    assert f"**{version}**" in (pathlib.Path(__file__).resolve().parents[1] / "README.md").read_text()
+
+
 def test_home_page_has_hamburger_dropdown_menu(client):
     response = client.get("/")
     assert response.status_code == 200

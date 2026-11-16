@@ -77,11 +77,35 @@ Currently implemented, by category:
 See the [category summary](#category-summary) table below for the full list of
 examples with their difficulty ratings.
 
+Version: **1.0.0** (shown on the lab's About page; kept in the `VERSION` file)
+
+## What's new in 1.0.0
+
+- The lab now has a version number, shown on the About page and kept in one file (`VERSION`).
+- Fixes to 16 unintended bypasses of the lab's own checks and several stale-state bugs after "Reset lab" (details in the changelog).
+- A07 MFA examples keep their own session state; if your Postgres volume predates this, run `docker compose down -v && docker compose up -d` once (see above).
+- Local setup needs Python 3.10+, and ruff now runs in CI.
+
+Older changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
 ## Screenshots
 
-| Dashboard | Category overview | Example walkthrough |
-| --- | --- | --- |
-| [![Home dashboard showing per-category completion progress](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png) | [![A03 Injection category overview with an attack-flow diagram](docs/screenshots/category-overview.png)](docs/screenshots/category-overview.png) | [![An example page's Explanation, Detect, and Exploitation blocks](docs/screenshots/example-page.png)](docs/screenshots/example-page.png) |
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <a href="docs/screenshots/dashboard.png"><img src="docs/screenshots/dashboard.png" alt="Home dashboard showing per-category completion progress" width="100%"></a>
+      <br><sub><b>Dashboard.</b> Home dashboard showing per-category completion progress.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <a href="docs/screenshots/category-overview.png"><img src="docs/screenshots/category-overview.png" alt="A03 Injection category overview with an attack-flow diagram" width="100%"></a>
+      <br><sub><b>Category overview.</b> A03 Injection category overview with an attack-flow diagram.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <a href="docs/screenshots/example-page.png"><img src="docs/screenshots/example-page.png" alt="An example page's Explanation, Detect, and Exploitation blocks" width="100%"></a>
+      <br><sub><b>Example walkthrough.</b> An example page's Explanation, Detect, and Exploitation blocks.</sub>
+    </td>
+  </tr>
+</table>
 
 ## Quick start
 

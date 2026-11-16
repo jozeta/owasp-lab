@@ -2,10 +2,13 @@
 
 All notable changes to owasp-lab are listed here, newest first.
 
-The project has no tagged releases yet, so changes are grouped by date. Entries before November 2026 were reconstructed from the commit history.
+The project has no tagged releases yet; version numbering starts at 1.0.0 (2026-11-12) and changes are grouped by date. Entries before November 2026 were reconstructed from the commit history.
 
 ## Unreleased
 
+## 1.0.0 - 2026-11-12
+
+- Versioning: the lab now has a version number (`VERSION` file), shown on the About page. The README shows it, has a "What's new" section and a screenshot grid with captions. 1.0.0 is the first numbered version and includes the changes listed below. No exercise was changed.
 - ruff (pyflakes and syntax checks only; no security rules, since the lab is vulnerable on purpose)
   in `ruff.toml`; CI runs it before the tests
 

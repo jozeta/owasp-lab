@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, session, url_for
@@ -9,6 +10,16 @@ from app.core.seed import reset_database
 from app.extensions import db
 
 core_bp = Blueprint("core", __name__, template_folder="templates")
+
+
+def read_app_version():
+    """The lab's version: the single line in the VERSION file at the repo root."""
+    path = os.path.join(os.path.dirname(current_app.root_path), "VERSION")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read().strip() or "unknown"
+    except OSError:
+        return "unknown"
 
 
 def _is_safe_redirect_target(target):
@@ -193,4 +204,4 @@ def tools_page():
 
 @core_bp.route("/about")
 def about_page():
-    return render_template("core/about.html")
+    return render_template("core/about.html", app_version=read_app_version())
